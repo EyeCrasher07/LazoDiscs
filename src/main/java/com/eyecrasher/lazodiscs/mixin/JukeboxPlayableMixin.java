@@ -9,7 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.stats.Stats;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.JukeboxPlayable;
@@ -35,7 +35,7 @@ public abstract class JukeboxPlayableMixin {
      * only the custom URL audio.
      */
     @Inject(method = "tryInsertIntoJukebox", at = @At("HEAD"), cancellable = true, require = 0)
-    private static void lazodiscs$tryInsertIntoJukebox(Level level, BlockPos pos, ItemStack stack, Player player, CallbackInfoReturnable<ItemInteractionResult> cir) {
+    private static void lazodiscs$tryInsertIntoJukebox(Level level, BlockPos pos, ItemStack stack, Player player, CallbackInfoReturnable<InteractionResult> cir) {
         Optional<CustomDiscData> data = DiscDataUtil.read(stack);
         if (data.isEmpty()) {
             return;
@@ -73,6 +73,6 @@ public abstract class JukeboxPlayableMixin {
             }
         }
 
-        cir.setReturnValue(ItemInteractionResult.sidedSuccess(level.isClientSide()));
+        cir.setReturnValue(level.isClientSide() ? InteractionResult.SUCCESS : InteractionResult.SUCCESS_SERVER);
     }
 }
