@@ -1,12 +1,14 @@
-# LazoDiscs 1.0.0 for Minecraft 1.21.7
+# LazoDiscs 1.0.0 for Minecraft 1.21.8
 
 Target:
 
-- Minecraft: 1.21.7
-- NeoForge: 21.7.18-beta
-- Parchment: 1.21.7 / 2025.07.18
+- Minecraft: 1.21.8
+- NeoForge: 21.8.42
+- Parchment: 1.21.8 / 2025.07.20
 - Plasmo Voice API: 2.1.10
-- Output jar: `lazodiscs-1.0.0+mc1.21.7.jar`
+- Output jar: `lazodiscs-1.0.0+mc1.21.8.jar`
+
+Use the NeoForge Plasmo Voice build that supports Minecraft 1.21.7–1.21.8.
 
 Fixes kept:
 
