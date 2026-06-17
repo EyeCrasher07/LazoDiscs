@@ -9,8 +9,6 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
-import net.neoforged.fml.loading.FMLEnvironment;
-import net.neoforged.api.distmarker.Dist;
 import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,11 +26,8 @@ public final class LazoDiscs {
         NeoForge.EVENT_BUS.register(LazoDiscsLifecycleEvents.class);
 
         // LazoDiscs remains server-side for multiplayer.
-        // Dedicated servers load here; integrated singleplayer servers load from the lifecycle event.
-
-        if (FMLEnvironment.dist == Dist.DEDICATED_SERVER) {
-            LazoDiscsServerBootstrap.loadPlasmoAddon();
-        }
+        // Dedicated servers load here; integrated singleplayer servers also retry from the lifecycle event.
+        LazoDiscsServerBootstrap.loadPlasmoAddon();
 
         LOGGER.info("LazoDiscs initialized");
     }

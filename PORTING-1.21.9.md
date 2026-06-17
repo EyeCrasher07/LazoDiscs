@@ -1,14 +1,14 @@
-# LazoDiscs 1.0.0 for Minecraft 1.21.8
+# LazoDiscs 1.0.0 for Minecraft 1.21.9
 
 Target:
 
-- Minecraft: 1.21.8
-- NeoForge: 21.8.42
-- Parchment: 1.21.8 / 2025.07.20
-- Plasmo Voice API: 2.1.10
-- Output jar: `lazodiscs-1.0.0+mc1.21.8.jar`
+- Minecraft: 1.21.9
+- NeoForge: 21.9.16-beta
+- Parchment: 1.21.9 / 2025.10.05
+- Plasmo Voice API: 2.1.8
+- Output jar: `lazodiscs-1.0.0+mc1.21.9.jar`
 
-Use the NeoForge Plasmo Voice build that supports Minecraft 1.21.7–1.21.8.
+Use Plasmo Voice `neoforge-1.21.9-2.1.8`.
 
 Fixes kept:
 
@@ -19,3 +19,8 @@ Fixes kept:
 - `JukeboxBlockEntity#loadAdditional` mixin uses `ValueInput`.
 
 Do not use the `-thin` jar.
+
+Additional 1.21.9 API fixes:
+
+- `ServerPlayer#getServer()` usage was replaced with `CommandSourceStack#getServer()`.
+- Removed direct `FMLEnvironment.dist` usage and load the Plasmo addon through the guarded bootstrap.

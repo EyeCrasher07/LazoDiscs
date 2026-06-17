@@ -127,13 +127,14 @@ public final class LazoDiscsCommands {
         int safePage = Math.max(1, page);
         player.sendSystemMessage(Component.literal("Searching: " + cleanQuery).withStyle(ChatFormatting.GRAY));
 
+        var server = source.getServer();
         CompletableFuture.runAsync(() -> {
             try {
                 List<LavaPcmFeeder.SearchResult> results = LavaPcmFeeder.searchYoutubeMusic(cleanQuery, SEARCH_MAX_RESULTS);
-                player.getServer().execute(() -> sendSearchPage(player, cleanQuery, safePage, results));
+                server.execute(() -> sendSearchPage(player, cleanQuery, safePage, results));
             } catch (Throwable t) {
                 LazoDiscs.LOGGER.warn("LazoDiscs search failed for '{}': {}", cleanQuery, t.toString());
-                player.getServer().execute(() -> player.sendSystemMessage(Component.literal("Search failed: " + t.getMessage()).withStyle(ChatFormatting.RED)));
+                server.execute(() -> player.sendSystemMessage(Component.literal("Search failed: " + t.getMessage()).withStyle(ChatFormatting.RED)));
             }
         });
         return 1;
