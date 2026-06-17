@@ -4,13 +4,12 @@ import com.eyecrasher.lazodiscs.LazoDiscs;
 import com.eyecrasher.lazodiscs.access.LazoDiscJukeboxAccess;
 import com.eyecrasher.lazodiscs.data.DiscDataUtil;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.JukeboxBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.block.entity.JukeboxBlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -60,7 +59,7 @@ public abstract class JukeboxBlockEntityMixin implements LazoDiscJukeboxAccess {
     }
 
     @Inject(method = "loadAdditional", at = @At("RETURN"), require = 0)
-    private void lazodiscs$loadAdditional(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
+    private void lazodiscs$loadAdditional(ValueInput input, CallbackInfo ci) {
         lazodiscs$resync("loadAdditional");
     }
 
