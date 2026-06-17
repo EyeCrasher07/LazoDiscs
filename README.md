@@ -1,6 +1,6 @@
 # LazoDiscs
 
-**LazoDiscs** is a server-side NeoForge mod for Minecraft 1.21.1 that lets players burn custom audio links onto vanilla music discs and play them through **Plasmo Voice** positional audio.
+**LazoDiscs** is a server-side mod for Minecraft 1.21.1 that lets players burn custom audio links onto vanilla music discs and play them through **Plasmo Voice** positional audio.
 
 It is mainly made for modded servers that want custom music discs without requiring a client-side LazoDiscs installation.
 
