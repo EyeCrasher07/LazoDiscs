@@ -1,0 +1,140 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.113'
+}
+
+version = '1.0.0'
+group = 'com.eyecrasher'
+
+base {
+    archivesName = 'lazodiscs'
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.plasmoverse.com/releases' }
+    maven { url = 'https://repo.plo.su/' }
+    maven { url = 'https://maven.lavalink.dev/releases' }
+    maven { url = 'https://jitpack.io' }
+}
+
+configurations {
+    shade
+    implementation.extendsFrom(shade)
+}
+
+configurations.configureEach {
+    resolutionStrategy.force 'org.apache.httpcomponents:httpclient:4.5.13'
+}
+
+
+neoForge {
+    version = '21.1.186'
+
+    parchment {
+        minecraftVersion = '1.21.1'
+        mappingsVersion = '2024.11.17'
+    }
+
+    mods {
+        lazodiscs {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+dependencies {
+    implementation 'net.neoforged:neoforge:21.1.186'
+
+    // Plasmo Voice API is compile-only because the real Plasmo Voice mod provides it at runtime.
+    // Its transitive Guava/FastUtil versions conflict with Minecraft 1.21.1 strict dependency pins,
+    // so we keep Plasmo API transitives but exclude only the libraries Minecraft already provides.
+    compileOnly('su.plo.voice.api:server:2.1.10') {
+        exclude group: 'com.google.guava', module: 'guava'
+        exclude group: 'com.google.guava', module: 'failureaccess'
+        exclude group: 'com.google.guava', module: 'listenablefuture'
+        exclude group: 'com.google.code.findbugs', module: 'jsr305'
+        exclude group: 'org.checkerframework', module: 'checker-qual'
+        exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
+        exclude group: 'com.google.j2objc', module: 'j2objc-annotations'
+        exclude group: 'it.unimi.dsi', module: 'fastutil'
+        exclude group: 'com.google.code.gson', module: 'gson'
+    }
+
+    // Bundled MP3 decoder used as a stable fallback for direct .mp3 URLs.
+    shade 'javazoom:jlayer:1.0.1'
+
+    // Built-in audio resolver/player. This makes YouTube, SoundCloud, Bandcamp, Vimeo,
+    // Twitch, direct HTTP audio, mp3/flac/wav/ogg/m4a/etc work without yt-dlp/ffmpeg.
+    // YouTube support is provided by youtube-source because LavaPlayer's old built-in
+    // YouTube source is deprecated.
+    // LavaPlayer/youtube-source require Apache HttpClient classes at runtime.
+    // NeoForge pins the HttpClient version to 4.5.13, so force that version and bundle it.
+    // Do not bundle libraries that are already exported by Minecraft/NeoForge/ModLauncher
+    // and caused JPMS split-package crashes earlier, such as slf4j, commons-io and commons-codec.
+    shade('dev.arbjerg:lavaplayer:2.2.6') {
+        exclude group: 'org.slf4j', module: 'slf4j-api'
+        exclude group: 'commons-io', module: 'commons-io'
+        exclude group: 'commons-codec', module: 'commons-codec'
+        exclude group: 'net.java.dev.jna', module: 'jna'
+        exclude group: 'org.jetbrains', module: 'annotations'
+        exclude group: 'org.jetbrains.kotlin'
+        exclude group: 'org.jetbrains.kotlinx'
+    }
+    shade('dev.lavalink.youtube:v2:1.18.1') {
+        exclude group: 'org.slf4j', module: 'slf4j-api'
+        exclude group: 'commons-io', module: 'commons-io'
+        exclude group: 'commons-codec', module: 'commons-codec'
+        exclude group: 'net.java.dev.jna', module: 'jna'
+        exclude group: 'org.jetbrains', module: 'annotations'
+        exclude group: 'org.jetbrains.kotlin'
+        exclude group: 'org.jetbrains.kotlinx'
+    }
+
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    from {
+        configurations.shade.collect { it.isDirectory() ? it : zipTree(it) }
+    } {
+        exclude 'META-INF/*.SF'
+        exclude 'META-INF/*.DSA'
+        exclude 'META-INF/*.RSA'
+        exclude 'META-INF/MANIFEST.MF'
+        exclude 'module-info.class'
+        // Safety net: avoid JPMS split-package crashes with Minecraft/NeoForge libraries.
+        exclude 'org/slf4j/**'
+        exclude 'org/apache/commons/io/**'
+        exclude 'org/apache/commons/codec/**'
+        exclude 'com/google/gson/**'
+        exclude 'com/google/common/**'
+        exclude 'it/unimi/dsi/fastutil/**'
+        exclude 'com/sun/jna/**'
+        exclude 'javax/annotation/**'
+        exclude 'org/jetbrains/annotations/**'
+        exclude 'org/checkerframework/**'
+        exclude 'kotlin/**'
+        exclude 'kotlinx/**'
+    }
+
+    manifest {
+        attributes([
+                'Specification-Title'   : 'lazodiscs',
+                'Specification-Vendor'  : 'EyeCrasher',
+                'Specification-Version' : '1',
+                'Implementation-Title'  : project.name,
+                'Implementation-Version': project.version,
+                'Implementation-Vendor' : 'EyeCrasher'
+        ])
+    }
+}
