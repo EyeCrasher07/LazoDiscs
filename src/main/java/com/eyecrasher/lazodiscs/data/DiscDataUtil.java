@@ -6,7 +6,6 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.StringUtil;
-import net.minecraft.util.Unit;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 
@@ -39,17 +38,22 @@ public final class DiscDataUtil {
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
         if (data == null) return Optional.empty();
         CompoundTag root = data.copyTag();
-        if (!root.contains(ROOT_KEY, 10)) return Optional.empty();
+        if (!root.contains(ROOT_KEY)) return Optional.empty();
 
-        CompoundTag tag = root.getCompound(ROOT_KEY);
-        if (!tag.contains(URL_KEY, 8) || !tag.contains(ID_KEY, 8)) return Optional.empty();
+        Optional<CompoundTag> tagOptional = root.getCompound(ROOT_KEY);
+        if (tagOptional.isEmpty()) return Optional.empty();
+        CompoundTag tag = tagOptional.get();
+
+        Optional<String> urlOptional = tag.getString(URL_KEY);
+        Optional<String> idOptional = tag.getString(ID_KEY);
+        if (urlOptional.isEmpty() || idOptional.isEmpty()) return Optional.empty();
 
         try {
-            String url = tag.getString(URL_KEY);
-            String title = tag.contains(TITLE_KEY, 8) ? tag.getString(TITLE_KEY) : url;
-            int range = tag.contains(RANGE_KEY, 3) ? tag.getInt(RANGE_KEY) : LazoDiscsConfig.DEFAULT_RANGE.get();
-            float volume = tag.contains(VOLUME_KEY, 5) ? tag.getFloat(VOLUME_KEY) : LazoDiscsConfig.DEFAULT_VOLUME.get().floatValue();
-            UUID id = UUID.fromString(tag.getString(ID_KEY));
+            String url = urlOptional.get();
+            String title = tag.getString(TITLE_KEY).orElse(url);
+            int range = tag.getInt(RANGE_KEY).orElse(LazoDiscsConfig.DEFAULT_RANGE.get());
+            float volume = tag.getFloat(VOLUME_KEY).orElse(LazoDiscsConfig.DEFAULT_VOLUME.get().floatValue());
+            UUID id = UUID.fromString(idOptional.get());
             return Optional.of(new CustomDiscData(url, title, range, volume, id));
         } catch (Exception ignored) {
             return Optional.empty();
@@ -67,11 +71,8 @@ public final class DiscDataUtil {
         root.put(ROOT_KEY, tag);
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(root));
         stack.set(DataComponents.CUSTOM_NAME, Component.literal(disc.title()).withStyle(ChatFormatting.AQUA));
-        // Remove/disable original vanilla music disc tooltip/lore, e.g. "C418 - Cat".
-        // In 1.21.1 the original song line is usually produced by the JUKEBOX_PLAYABLE component,
-        // not by the LORE component, so we hide additional tooltip too.
+        // Remove custom lore. The old extra-tooltip hide component was removed in newer Minecraft.
         stack.remove(DataComponents.LORE);
-        stack.set(DataComponents.HIDE_ADDITIONAL_TOOLTIP, Unit.INSTANCE);
     }
 
     public static void clear(ItemStack stack) {
@@ -86,7 +87,6 @@ public final class DiscDataUtil {
         }
         stack.remove(DataComponents.CUSTOM_NAME);
         stack.remove(DataComponents.LORE);
-        stack.remove(DataComponents.HIDE_ADDITIONAL_TOOLTIP);
     }
 
     public static String validateUrl(String raw) throws IllegalArgumentException {

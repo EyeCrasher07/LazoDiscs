@@ -160,8 +160,8 @@ public final class LazoDiscsCommands {
                     .withStyle(ChatFormatting.DARK_GRAY)
                     .append(Component.literal(title).withStyle(style -> style
                             .withColor(ChatFormatting.AQUA)
-                            .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, burnCommand))
-                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to paste: " + burnCommand)))))
+                            .withClickEvent(new ClickEvent.SuggestCommand(burnCommand))
+                            .withHoverEvent(new HoverEvent.ShowText(Component.literal("Click to paste: " + burnCommand)))))
                     .append(Component.literal(" — " + author + " " + formatDuration(result.lengthMs())).withStyle(ChatFormatting.GRAY));
             player.sendSystemMessage(line);
         }
@@ -173,8 +173,8 @@ public final class LazoDiscsCommands {
             nav = nav.append(Component.literal("◀").withStyle(style -> style
                     .withColor(ChatFormatting.YELLOW)
                     .withBold(true)
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, prev))
-                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Previous page")))));
+                    .withClickEvent(new ClickEvent.RunCommand(prev))
+                    .withHoverEvent(new HoverEvent.ShowText(Component.literal("Previous page")))));
         } else {
             nav = nav.append(Component.literal("◀").withStyle(ChatFormatting.DARK_GRAY));
         }
@@ -186,8 +186,8 @@ public final class LazoDiscsCommands {
             nav = nav.append(Component.literal("▶").withStyle(style -> style
                     .withColor(ChatFormatting.YELLOW)
                     .withBold(true)
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, next))
-                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Next page")))));
+                    .withClickEvent(new ClickEvent.RunCommand(next))
+                    .withHoverEvent(new HoverEvent.ShowText(Component.literal("Next page")))));
         } else {
             nav = nav.append(Component.literal("▶").withStyle(ChatFormatting.DARK_GRAY));
         }
