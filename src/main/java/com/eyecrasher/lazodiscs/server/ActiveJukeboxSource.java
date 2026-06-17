@@ -5,7 +5,7 @@ import com.eyecrasher.lazodiscs.voice.PlayingVoiceSource;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 
-public record ActiveJukeboxSource(CustomDiscData disc, PlayingVoiceSource source) {
+public record ActiveJukeboxSource(CustomDiscData disc, PlayingVoiceSource source, boolean dynamicPosition) {
     public void stop() {
         source.stop();
     }

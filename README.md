@@ -19,7 +19,7 @@ LazoDiscs is a server-side NeoForge mod for Minecraft 1.21.5 that lets players b
 
 ## Version
 
-1.0.0
+1.0.1+mc1.21.5
 
 
 ## Singleplayer support
@@ -48,14 +48,14 @@ No decoded audio is written to disk.
 
 This source package targets Minecraft 1.21.5 / NeoForge 21.3.x.
 
-Use Plasmo Voice for NeoForge 1.21.3 on both client and server.
+Use Plasmo Voice for NeoForge 1.21.5 on both client and server.
 
 
 ## Minecraft 1.21.5 port
 
 This source package targets Minecraft 1.21.5 / NeoForge 21.4.x.
 
-Use Plasmo Voice for NeoForge 1.21.4 on both client and server.
+Use Plasmo Voice for NeoForge 1.21.5 on both client and server.
 
 
 ## Minecraft 1.21.5 port
