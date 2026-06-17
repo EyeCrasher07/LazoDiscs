@@ -12,7 +12,7 @@ logoFile="lazodiscs_icon.png"
 authors="EyeCrasher"
 description='''
 Custom URL music discs for NeoForge using Plasmo Voice positional audio.
-Designed to avoid vanilla jukebox ghost sounds on Create Aeronautics / Simulated physics assemblies.
+Server-side mod for dedicated servers, with integrated singleplayer server support.
 '''
 
 [[mixins]]

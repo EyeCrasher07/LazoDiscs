@@ -3,6 +3,7 @@ package com.eyecrasher.lazodiscs;
 import com.eyecrasher.lazodiscs.command.LazoDiscsCommands;
 import com.eyecrasher.lazodiscs.config.LazoDiscsConfig;
 import com.eyecrasher.lazodiscs.event.JukeboxEvents;
+import com.eyecrasher.lazodiscs.event.LazoDiscsLifecycleEvents;
 import com.eyecrasher.lazodiscs.server.JukeboxPlaybackManager;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModLoadingContext;
@@ -24,9 +25,10 @@ public final class LazoDiscs {
 
         NeoForge.EVENT_BUS.register(LazoDiscsCommands.class);
         NeoForge.EVENT_BUS.register(JukeboxEvents.class);
+        NeoForge.EVENT_BUS.register(LazoDiscsLifecycleEvents.class);
 
-        // LazoDiscs is designed to work server-side only.
-        // Client tooltip/resource fixes are intentionally not required.
+        // LazoDiscs remains server-side for multiplayer.
+        // Dedicated servers load here; integrated singleplayer servers load from the lifecycle event.
 
         if (FMLEnvironment.dist == Dist.DEDICATED_SERVER) {
             LazoDiscsServerBootstrap.loadPlasmoAddon();

@@ -1,6 +1,8 @@
 plugins {
     id 'java-library'
     id 'net.neoforged.moddev' version '2.0.113'
+    // Shadow 8.3.6 supports Java 21 class files used by Minecraft 1.21.1.
+    id 'com.gradleup.shadow' version '8.3.6'
 }
 
 version = '1.0.0'
@@ -72,10 +74,9 @@ dependencies {
     // Twitch, direct HTTP audio, mp3/flac/wav/ogg/m4a/etc work without yt-dlp/ffmpeg.
     // YouTube support is provided by youtube-source because LavaPlayer's old built-in
     // YouTube source is deprecated.
-    // LavaPlayer/youtube-source require Apache HttpClient classes at runtime.
-    // NeoForge pins the HttpClient version to 4.5.13, so force that version and bundle it.
-    // Do not bundle libraries that are already exported by Minecraft/NeoForge/ModLauncher
-    // and caused JPMS split-package crashes earlier, such as slf4j, commons-io and commons-codec.
+    // Most duplicated libraries stay excluded to avoid JPMS split-package crashes.
+    // Apache HttpClient/HttpCore are bundled but relocated by ShadowJar below,
+    // because LavaPlayer/youtube-source need them at runtime.
     shade('dev.arbjerg:lavaplayer:2.2.6') {
         exclude group: 'org.slf4j', module: 'slf4j-api'
         exclude group: 'commons-io', module: 'commons-io'
@@ -102,30 +103,49 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 jar {
+    archiveClassifier.set('thin')
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes([
+                'Specification-Title'   : 'lazodiscs',
+                'Specification-Vendor'  : 'EyeCrasher',
+                'Specification-Version' : '1',
+                'Implementation-Title'  : project.name,
+                'Implementation-Version': project.version,
+                'Implementation-Vendor' : 'EyeCrasher'
+        ])
+    }
+}
+
+shadowJar {
+    archiveClassifier.set('')
+    configurations = [project.configurations.shade]
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
-    from {
-        configurations.shade.collect { it.isDirectory() ? it : zipTree(it) }
-    } {
-        exclude 'META-INF/*.SF'
-        exclude 'META-INF/*.DSA'
-        exclude 'META-INF/*.RSA'
-        exclude 'META-INF/MANIFEST.MF'
-        exclude 'module-info.class'
-        // Safety net: avoid JPMS split-package crashes with Minecraft/NeoForge libraries.
-        exclude 'org/slf4j/**'
-        exclude 'org/apache/commons/io/**'
-        exclude 'org/apache/commons/codec/**'
-        exclude 'com/google/gson/**'
-        exclude 'com/google/common/**'
-        exclude 'it/unimi/dsi/fastutil/**'
-        exclude 'com/sun/jna/**'
-        exclude 'javax/annotation/**'
-        exclude 'org/jetbrains/annotations/**'
-        exclude 'org/checkerframework/**'
-        exclude 'kotlin/**'
-        exclude 'kotlinx/**'
-    }
+    // LavaPlayer/youtube-source need Apache HttpClient/HttpCore at runtime.
+    // They are relocated to avoid Java module split-package crashes with NeoForge/Minecraft.
+    relocate 'org.apache.http', 'com.eyecrasher.lazodiscs.shadow.org.apache.http'
+    relocate 'org.apache.commons.logging', 'com.eyecrasher.lazodiscs.shadow.org.apache.commons.logging'
+
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+    exclude 'META-INF/MANIFEST.MF'
+    exclude 'module-info.class'
+
+    // Do not bundle libraries that are already exported by Minecraft/NeoForge/ModLauncher.
+    exclude 'org/slf4j/**'
+    exclude 'org/apache/commons/io/**'
+    exclude 'org/apache/commons/codec/**'
+    exclude 'com/google/gson/**'
+    exclude 'com/google/common/**'
+    exclude 'it/unimi/dsi/fastutil/**'
+    exclude 'com/sun/jna/**'
+    exclude 'javax/annotation/**'
+    exclude 'org/jetbrains/annotations/**'
+    exclude 'org/checkerframework/**'
+    exclude 'kotlin/**'
+    exclude 'kotlinx/**'
 
     manifest {
         attributes([
@@ -138,3 +158,7 @@ jar {
         ])
     }
 }
+
+assemble.dependsOn shadowJar
+build.dependsOn shadowJar
+
