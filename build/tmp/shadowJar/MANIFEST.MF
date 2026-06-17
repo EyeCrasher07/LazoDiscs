@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Specification-Title: lazodiscs
+Specification-Vendor: EyeCrasher
+Specification-Version: 1
+Implementation-Title: LazoDiscs
+Implementation-Version: 1.0.0+mc1.21.11
+Implementation-Vendor: EyeCrasher
+

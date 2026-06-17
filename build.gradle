@@ -1,11 +1,11 @@
 plugins {
     id 'java-library'
     id 'net.neoforged.moddev' version '2.0.141'
-    // Shadow 8.3.6 supports Java 21 class files used by Minecraft 1.21.10.
+    // Shadow 8.3.6 supports Java 21 class files used by Minecraft 1.21.11.
     id 'com.gradleup.shadow' version '8.3.6'
 }
 
-version = '1.0.0+mc1.21.10'
+version = '1.0.0+mc1.21.11'
 group = 'com.eyecrasher'
 
 base {
@@ -35,7 +35,7 @@ configurations.configureEach {
 
 
 neoForge {
-    version = '21.10.63'
+    version = '21.11.42'
     mods {
         lazodiscs {
             sourceSet(sourceSets.main)
@@ -44,12 +44,12 @@ neoForge {
 }
 
 dependencies {
-    implementation 'net.neoforged:neoforge:21.10.63'
+    implementation 'net.neoforged:neoforge:21.11.42'
 
     // Plasmo Voice API is compile-only because the real Plasmo Voice mod provides it at runtime.
-    // Its transitive Guava/FastUtil versions conflict with Minecraft 1.21.10 strict dependency pins,
+    // Its transitive Guava/FastUtil versions conflict with Minecraft 1.21.11 strict dependency pins,
     // so we keep Plasmo API transitives but exclude only the libraries Minecraft already provides.
-    compileOnly('su.plo.voice.api:server:2.1.8') {
+    compileOnly('su.plo.voice.api:server:2.1.10') {
         exclude group: 'com.google.guava', module: 'guava'
         exclude group: 'com.google.guava', module: 'failureaccess'
         exclude group: 'com.google.guava', module: 'listenablefuture'
@@ -64,23 +64,24 @@ dependencies {
     // Bundled MP3 decoder used as a stable fallback for direct .mp3 URLs.
     shade 'javazoom:jlayer:1.0.1'
 
+    // Relocated private Jackson copy for lavalink-youtube.
+    shade 'com.fasterxml.jackson.core:jackson-core:2.15.2'
+    shade 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+    shade 'com.fasterxml.jackson.core:jackson-annotations:2.15.2'
+
     // Built-in audio resolver/player. This makes YouTube, SoundCloud, Bandcamp, Vimeo,
     // Twitch, direct HTTP audio, mp3/flac/wav/ogg/m4a/etc work without yt-dlp/ffmpeg.
     // YouTube support is provided by youtube-source because LavaPlayer's old built-in
     // YouTube source is deprecated.
     // Most duplicated libraries stay excluded to avoid JPMS split-package crashes.
-    // Jackson is also excluded because Minecraft 1.21.10 strictly pins Jackson 2.13.x,
-    // while LavaPlayer requests 2.15.2; using Minecraft's Jackson avoids Gradle resolution conflict.
-    // Apache HttpClient/HttpCore are bundled but relocated by ShadowJar below,
+    // Jackson is bundled and relocated because youtube-source needs JsonNode at runtime,
+    // but Minecraft/NeoForge does not expose Jackson to the mod classloader reliably.
+    // Apache HttpClient/HttpCore are bundled and relocated by ShadowJar below,
     // because LavaPlayer/youtube-source need them at runtime.
     shade('dev.arbjerg:lavaplayer:2.2.6') {
         exclude group: 'org.slf4j', module: 'slf4j-api'
         exclude group: 'commons-io', module: 'commons-io'
         exclude group: 'commons-codec', module: 'commons-codec'
-        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-core'
-        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
-        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-annotations'
-        exclude group: 'com.fasterxml.jackson', module: 'jackson-bom'
         exclude group: 'net.java.dev.jna', module: 'jna'
         exclude group: 'org.jetbrains', module: 'annotations'
         exclude group: 'org.jetbrains.kotlin'
@@ -90,10 +91,6 @@ dependencies {
         exclude group: 'org.slf4j', module: 'slf4j-api'
         exclude group: 'commons-io', module: 'commons-io'
         exclude group: 'commons-codec', module: 'commons-codec'
-        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-core'
-        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
-        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-annotations'
-        exclude group: 'com.fasterxml.jackson', module: 'jackson-bom'
         exclude group: 'net.java.dev.jna', module: 'jna'
         exclude group: 'org.jetbrains', module: 'annotations'
         exclude group: 'org.jetbrains.kotlin'
@@ -130,6 +127,7 @@ shadowJar {
     // They are relocated to avoid Java module split-package crashes with NeoForge/Minecraft.
     relocate 'org.apache.http', 'com.eyecrasher.lazodiscs.shadow.org.apache.http'
     relocate 'org.apache.commons.logging', 'com.eyecrasher.lazodiscs.shadow.org.apache.commons.logging'
+    relocate 'com.fasterxml.jackson', 'com.eyecrasher.lazodiscs.shadow.com.fasterxml.jackson'
 
     exclude 'META-INF/*.SF'
     exclude 'META-INF/*.DSA'
@@ -137,12 +135,19 @@ shadowJar {
     exclude 'META-INF/MANIFEST.MF'
     exclude 'module-info.class'
 
+    // Jackson is relocated into the mod's private shadow package. Its original
+    // ServiceLoader descriptor stays named META-INF/services/com.fasterxml...
+    // after shading, and NeoForge's JPMS descriptor scan rejects that because
+    // com.fasterxml.jackson.core.JsonFactory no longer exists in the jar.
+    // Jackson works fine here without this descriptor; ObjectMapper/JsonNode are
+    // loaded directly by lavalink-youtube/lavaplayer code.
+    exclude 'META-INF/services/com.fasterxml.jackson.*'
+
     // Do not bundle libraries that are already exported by Minecraft/NeoForge/ModLauncher.
     exclude 'org/slf4j/**'
     exclude 'org/apache/commons/io/**'
     exclude 'org/apache/commons/codec/**'
     exclude 'com/google/gson/**'
-    exclude 'com/fasterxml/jackson/**'
     exclude 'com/google/common/**'
     exclude 'it/unimi/dsi/fastutil/**'
     exclude 'com/sun/jna/**'

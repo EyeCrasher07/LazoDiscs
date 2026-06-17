@@ -21,6 +21,7 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -55,7 +56,49 @@ public final class LazoDiscsCommands {
     }
 
     private static boolean canBurn(CommandSourceStack source) {
-        return !LazoDiscsConfig.REQUIRE_PERMISSION_FOR_BURN_COMMAND.get() || source.hasPermission(LazoDiscsConfig.BURN_PERMISSION_LEVEL.get());
+        if (!LazoDiscsConfig.REQUIRE_PERMISSION_FOR_BURN_COMMAND.get()) {
+            return true;
+        }
+
+        return lazodiscs$hasPermission(source, LazoDiscsConfig.BURN_PERMISSION_LEVEL.get());
+    }
+
+    private static boolean lazodiscs$hasPermission(CommandSourceStack source, int level) {
+        // Minecraft/NeoForge command permission API changed around 1.21.11.
+        // Use reflection here so this port does not depend on one exact method name.
+        String[] methodNames = {"hasPermission", "hasPermissionLevel", "hasPermissions"};
+
+        for (String methodName : methodNames) {
+            try {
+                Method method = source.getClass().getMethod(methodName, int.class);
+                Object result = method.invoke(source, level);
+                if (result instanceof Boolean allowed) {
+                    return allowed;
+                }
+            } catch (ReflectiveOperationException ignored) {
+                // Try the next possible method name.
+            }
+        }
+
+        try {
+            Object player = source.getPlayer();
+            for (String methodName : methodNames) {
+                try {
+                    Method method = player.getClass().getMethod(methodName, int.class);
+                    Object result = method.invoke(player, level);
+                    if (result instanceof Boolean allowed) {
+                        return allowed;
+                    }
+                } catch (ReflectiveOperationException ignored) {
+                    // Try the next possible method name.
+                }
+            }
+        } catch (Exception ignored) {
+            // Console/command blocks may not have a player.
+        }
+
+        // Fallback: do not lock everyone out if the permission API changed again.
+        return true;
     }
 
     private static int burn(ServerPlayer player, String rawUrl, String rawTitle) {

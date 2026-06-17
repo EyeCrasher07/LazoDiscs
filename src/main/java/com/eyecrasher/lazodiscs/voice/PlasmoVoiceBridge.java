@@ -85,11 +85,11 @@ public final class PlasmoVoiceBridge {
             throw new IllegalStateException("Plasmo Voice is not initialized yet");
         }
 
-        McServerWorld pvWorld = findWorld(server, level).orElseThrow(() -> new IllegalStateException("Could not resolve Plasmo world for " + level.dimension().location()));
+        McServerWorld pvWorld = findWorld(server, level).orElseThrow(() -> new IllegalStateException("Could not resolve Plasmo world for " + level.dimension().identifier()));
         Vec3 projected = SablePositionCompat.projectJukeboxCenter(level, pos);
         boolean projectedOut = projected.distanceToSqr(Vec3.atCenterOf(pos)) > 0.0001D;
         LazoDiscs.LOGGER.info("Preparing LazoDisc Plasmo source: mcDimension={}, mcLevelClass={}, pvWorld={}, blockPos={}, projectedPos={}{}",
-                level.dimension().location(), level.getClass().getName(), pvWorld.getName(), pos.toShortString(),
+                level.dimension().identifier(), level.getClass().getName(), pvWorld.getName(), pos.toShortString(),
                 String.format(Locale.ROOT, "%.2f, %.2f, %.2f", projected.x, projected.y, projected.z),
                 projectedOut ? " (Sable/sub-level projected)" : "");
         ServerPos3d pvPos = new ServerPos3d(pvWorld, projected.x, projected.y, projected.z);
@@ -179,8 +179,8 @@ public final class PlasmoVoiceBridge {
     }
 
     private Optional<McServerWorld> findWorld(PlasmoVoiceServer server, ServerLevel level) {
-        String full = level.dimension().location().toString().toLowerCase(Locale.ROOT);
-        String path = level.dimension().location().getPath().toLowerCase(Locale.ROOT);
+        String full = level.dimension().identifier().toString().toLowerCase(Locale.ROOT);
+        String path = level.dimension().identifier().getPath().toLowerCase(Locale.ROOT);
         return server.getMinecraftServer().getWorlds().stream()
                 .filter(world -> {
                     String name = world.getName().toLowerCase(Locale.ROOT);
