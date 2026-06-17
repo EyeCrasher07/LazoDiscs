@@ -5,14 +5,14 @@ issueTrackerURL="https://github.com/EyeCrasher07/LazoDiscs/issues"
 
 [[mods]]
 modId="lazodiscs"
-version="1.0.0+mc1.21.9"
+version="1.0.0+mc1.21.10"
 displayName="LazoDiscs"
 displayTest="IGNORE_ALL_VERSION"
 logoFile="lazodiscs_icon.png"
 authors="EyeCrasher"
 description='''
 Custom URL music discs for NeoForge using Plasmo Voice positional audio.
-Server-side mod for dedicated servers, with integrated singleplayer server support. Port for Minecraft 1.21.9.
+Server-side mod for dedicated servers, with integrated singleplayer server support. Port for Minecraft 1.21.10.
 '''
 
 [[mixins]]
@@ -21,14 +21,14 @@ config="lazodiscs.mixins.json"
 [[dependencies.lazodiscs]]
 modId="neoforge"
 type="required"
-versionRange="[21.9.0-beta,)"
+versionRange="[21.10.0,)"
 ordering="NONE"
 side="BOTH"
 
 [[dependencies.lazodiscs]]
 modId="minecraft"
 type="required"
-versionRange="[1.21.9,1.21.10)"
+versionRange="[1.21.10,1.21.11)"
 ordering="NONE"
 side="BOTH"
 
