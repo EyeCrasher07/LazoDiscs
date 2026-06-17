@@ -33,3 +33,12 @@ This does not make LazoDiscs required on multiplayer clients because `displayTes
 ## Build note
 
 Apache HttpClient is relocated in the shaded jar to avoid Java module split-package crashes while keeping LavaPlayer/youtube-source working.
+
+
+## RAM-only preload/cache
+
+LazoDiscs preloads decoded audio into RAM after `/lazodiscs burn`.
+When a jukebox starts a disc that is already cached, playback starts almost instantly.
+
+The cache is memory-only and is cleared when the server or client exits.
+No decoded audio is written to disk.

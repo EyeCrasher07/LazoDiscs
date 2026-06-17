@@ -54,8 +54,8 @@ public final class LazoDiscsConfig {
                 .define("spotifySearchViaYoutube", true);
         PRELOAD_ON_BURN = builder.comment("Start resolving/decoding audio right after /lazodiscs burn, so inserting the disc later starts faster.")
                 .define("preloadOnBurn", true);
-        MAX_CACHED_TRACKS = builder.comment("Maximum number of decoded tracks kept in RAM for fast jukebox start. 0 disables the cache.")
-                .defineInRange("maxCachedTracks", 4, 0, 64);
+        MAX_CACHED_TRACKS = builder.comment("Maximum number of decoded tracks kept in RAM for fast jukebox start. 0 disables the cache. This is RAM-only; decoded audio is not saved to disk.")
+                .defineInRange("maxCachedTracks", 64, 0, 256);
         builder.pop();
 
         builder.push("security");

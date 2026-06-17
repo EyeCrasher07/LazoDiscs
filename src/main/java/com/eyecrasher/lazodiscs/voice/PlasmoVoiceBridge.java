@@ -112,13 +112,11 @@ public final class PlasmoVoiceBridge {
         };
 
         AtomicReference<AutoCloseable> loaderRef = new AtomicReference<>();
-        Runnable onSamplesReady = () -> { };
 
         java.util.function.Consumer<short[]> onReady = samples -> {
             if (stopped.get()) return;
             try {
                 provider.addSamples(samples);
-                AudioCache.put(disc, samples);
                 if (stopped.get()) return;
                 senderStarted.set(true);
                 sender.start();
@@ -132,29 +130,17 @@ public final class PlasmoVoiceBridge {
             if (stopped.compareAndSet(false, true)) cleanup.run();
         };
 
-        Runnable startLoader;
-        if (LavaPcmFeeder.shouldUse(disc.url())) {
-            LavaPcmFeeder loader = new LavaPcmFeeder(disc.url(), disc.title(), disc.volume(), onReady, onFailure);
-            loaderRef.set(loader);
-            startLoader = loader::start;
-        } else {
-            HttpPcmFeeder loader = new HttpPcmFeeder(disc.url(), disc.volume(), onReady, onFailure);
-            loaderRef.set(loader);
-            startLoader = loader::start;
-        }
-
         sender.onStop(() -> {
             if (!stopped.compareAndSet(false, true)) return;
             closeLoader(loaderRef.get());
             cleanup.run();
         });
 
-        Optional<short[]> cachedSamples = AudioCache.get(disc);
-        if (cachedSamples.isPresent()) {
-            LazoDiscs.LOGGER.info("Starting LazoDisc '{}' from audio cache at {}", disc.title(), pos.toShortString());
-            onReady.accept(cachedSamples.get());
-        } else {
-            startLoader.run();
+        boolean immediate = AudioCache.getOrLoad(disc, onReady, onFailure);
+        if (immediate) {
+            LazoDiscs.LOGGER.info("Starting LazoDisc '{}' instantly from RAM cache at {}", disc.title(), pos.toShortString());
+        } else if (AudioCache.isLoading(disc)) {
+            LazoDiscs.LOGGER.info("Waiting for LazoDisc '{}' RAM preload/load at {}", disc.title(), pos.toShortString());
         }
 
         return new PlayingVoiceSource() {
