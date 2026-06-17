@@ -1,11 +1,11 @@
 plugins {
     id 'java-library'
-    id 'net.neoforged.moddev' version '2.0.113'
-    // Shadow 8.3.6 supports Java 21 class files used by Minecraft 1.21.3.
+    id 'net.neoforged.moddev' version '2.0.141'
+    // Shadow 8.3.6 supports Java 21 class files used by Minecraft 1.21.4.
     id 'com.gradleup.shadow' version '8.3.6'
 }
 
-version = '1.0.0+mc1.21.3'
+version = '1.0.0+mc1.21.4'
 group = 'com.eyecrasher'
 
 base {
@@ -35,11 +35,11 @@ configurations.configureEach {
 
 
 neoForge {
-    version = '21.3.63'
+    version = '21.4.137'
 
     parchment {
-        minecraftVersion = '1.21.3'
-        mappingsVersion = '2024.12.07'
+        minecraftVersion = '1.21.4'
+        mappingsVersion = '2025.03.23'
     }
 
     mods {
@@ -50,12 +50,12 @@ neoForge {
 }
 
 dependencies {
-    implementation 'net.neoforged:neoforge:21.3.63'
+    implementation 'net.neoforged:neoforge:21.4.137'
 
     // Plasmo Voice API is compile-only because the real Plasmo Voice mod provides it at runtime.
-    // Its transitive Guava/FastUtil versions conflict with Minecraft 1.21.3 strict dependency pins,
+    // Its transitive Guava/FastUtil versions conflict with Minecraft 1.21.4 strict dependency pins,
     // so we keep Plasmo API transitives but exclude only the libraries Minecraft already provides.
-    compileOnly('su.plo.voice.api:server:2.1.8') {
+    compileOnly('su.plo.voice.api:server:2.1.10') {
         exclude group: 'com.google.guava', module: 'guava'
         exclude group: 'com.google.guava', module: 'failureaccess'
         exclude group: 'com.google.guava', module: 'listenablefuture'
@@ -75,7 +75,7 @@ dependencies {
     // YouTube support is provided by youtube-source because LavaPlayer's old built-in
     // YouTube source is deprecated.
     // Most duplicated libraries stay excluded to avoid JPMS split-package crashes.
-    // Jackson is also excluded because Minecraft 1.21.3 strictly pins Jackson 2.13.x,
+    // Jackson is also excluded because Minecraft 1.21.4 strictly pins Jackson 2.13.x,
     // while LavaPlayer requests 2.15.2; using Minecraft's Jackson avoids Gradle resolution conflict.
     // Apache HttpClient/HttpCore are bundled but relocated by ShadowJar below,
     // because LavaPlayer/youtube-source need them at runtime.
