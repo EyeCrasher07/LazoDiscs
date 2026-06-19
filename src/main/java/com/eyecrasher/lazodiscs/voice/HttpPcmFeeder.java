@@ -111,7 +111,7 @@ public final class HttpPcmFeeder implements AutoCloseable {
         URLConnection connection = new URL(audio.url()).openConnection();
         connection.setConnectTimeout(10000);
         connection.setReadTimeout(30000);
-        connection.setRequestProperty("User-Agent", "LazoDiscs/1.0.3");
+        connection.setRequestProperty("User-Agent", "LazoDiscs/1.0.0");
         return new BufferedInputStream(connection.getInputStream());
     }
 
