@@ -1,4 +1,4 @@
-# LazoDiscs 1.0.0 for Minecraft 1.21.11
+# LazoDiscs 1.0.3 for Minecraft 1.21.11
 
 Target:
 
@@ -6,7 +6,7 @@ Target:
 - NeoForge: 21.11.42
 - Parchment: disabled for this port
 - Plasmo Voice API: 2.1.10
-- Output jar: `lazodiscs-1.0.0+mc1.21.11.jar`
+- Output jar: `lazodiscs-1.0.3+mc1.21.11.jar`
 
 Use Plasmo Voice `neoforge-1.21.11-2.1.10`.
 
@@ -31,3 +31,11 @@ Additional runtime fix:
 
 - Jackson is now bundled and relocated into the mod jar.
 - This fixes youtube-source failing on client/server with missing `com.fasterxml.jackson.databind.JsonNode`.
+
+1.0.3 changes:
+
+- Version metadata updated to `1.0.3+mc1.21.11`.
+- Broken Russian config defaults and broken search chat glyphs fixed.
+- Audio loading now uses a configurable bounded executor instead of one unmanaged thread per load/search.
+- `maxActiveSources=0` keeps active jukebox playback unlimited by default.
+- Added `/lazodiscs stopall`, `/lazodiscs cache stats`, and `/lazodiscs cache clear`.

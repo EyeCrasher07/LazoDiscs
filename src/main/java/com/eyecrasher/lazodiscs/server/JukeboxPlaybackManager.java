@@ -1,6 +1,7 @@
 package com.eyecrasher.lazodiscs.server;
 
 import com.eyecrasher.lazodiscs.LazoDiscs;
+import com.eyecrasher.lazodiscs.config.LazoDiscsConfig;
 import com.eyecrasher.lazodiscs.data.CustomDiscData;
 import com.eyecrasher.lazodiscs.data.DiscDataUtil;
 import com.eyecrasher.lazodiscs.compat.SablePositionCompat;
@@ -55,6 +56,12 @@ public final class JukeboxPlaybackManager {
         stopAt(level, pos, reason + ":replace-old");
 
         try {
+            int maxActive = LazoDiscsConfig.MAX_ACTIVE_SOURCES.get();
+            if (maxActive > 0 && active.size() >= maxActive) {
+                LazoDiscs.LOGGER.warn("Refusing to start LazoDisc '{}' at {} because maxActiveSources={} is reached", disc.title(), pos.toShortString(), maxActive);
+                return;
+            }
+
             var source = PlasmoVoiceBridge.INSTANCE.startStaticSource(level, pos, disc);
             active.put(new SourceKey(level.dimension(), pos.immutable()), new ActiveJukeboxSource(disc, source));
             // Stop vanilla record sound that may have started from the original music disc.
@@ -131,6 +138,10 @@ public final class JukeboxPlaybackManager {
         }
         active.clear();
         LazoDiscs.LOGGER.info("Stopped all LazoDisc sources ({})", reason);
+    }
+
+    public int activeCount() {
+        return active.size();
     }
 
     public void pruneInvalid(ServerLevel level) {

@@ -1,6 +1,7 @@
 package com.eyecrasher.lazodiscs.event;
 
 import com.eyecrasher.lazodiscs.LazoDiscsServerBootstrap;
+import com.eyecrasher.lazodiscs.voice.AudioLoadExecutor;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
@@ -17,6 +18,7 @@ public final class LazoDiscsLifecycleEvents {
 
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
+        AudioLoadExecutor.shutdownNow();
         // Allows starting another singleplayer world in the same client session.
         LazoDiscsServerBootstrap.resetForIntegratedServer();
     }

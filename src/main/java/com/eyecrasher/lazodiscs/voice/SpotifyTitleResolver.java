@@ -32,7 +32,7 @@ public final class SpotifyTitleResolver {
             HttpURLConnection connection = (HttpURLConnection) URI.create(spotifyUrl).toURL().openConnection();
             connection.setConnectTimeout(7000);
             connection.setReadTimeout(12000);
-            connection.setRequestProperty("User-Agent", "Mozilla/5.0 LazoDiscs/1.0.0");
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 LazoDiscs/1.0.3");
             connection.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
             if (connection.getResponseCode() < 200 || connection.getResponseCode() >= 300) return Optional.empty();
 
@@ -105,7 +105,7 @@ public final class SpotifyTitleResolver {
             HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
             connection.setConnectTimeout(7000);
             connection.setReadTimeout(10000);
-            connection.setRequestProperty("User-Agent", "LazoDiscs/1.0.0");
+            connection.setRequestProperty("User-Agent", "LazoDiscs/1.0.3");
             if (connection.getResponseCode() < 200 || connection.getResponseCode() >= 300) return Optional.empty();
             StringBuilder json = new StringBuilder();
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {

@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Direct URL resolver used by the old JavaSound/JLayer fallback path.
- * YouTube/SoundCloud/Spotify are handled by LavaPcmFeeder in 1.0.0 and do not require external tools.
+ * YouTube/SoundCloud/Spotify are handled by LavaPcmFeeder and do not require external tools.
  */
 public final class AudioResolver {
     private AudioResolver() {

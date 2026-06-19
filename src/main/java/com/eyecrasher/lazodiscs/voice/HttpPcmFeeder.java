@@ -12,6 +12,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -30,7 +31,7 @@ public final class HttpPcmFeeder implements AutoCloseable {
     private final Consumer<short[]> onReady;
     private final Runnable onFailure;
     private final AtomicBoolean closed = new AtomicBoolean(false);
-    private Thread thread;
+    private Future<?> task;
 
     public HttpPcmFeeder(String url, float volume, Consumer<short[]> onReady, Runnable onFailure) {
         this.url = url;
@@ -40,9 +41,7 @@ public final class HttpPcmFeeder implements AutoCloseable {
     }
 
     public void start() {
-        thread = new Thread(this::run, "LazoDiscs-Audio-Loader");
-        thread.setDaemon(true);
-        thread.start();
+        task = AudioLoadExecutor.submit(this::run);
     }
 
     private void run() {
@@ -93,7 +92,7 @@ public final class HttpPcmFeeder implements AutoCloseable {
         URLConnection connection = new URL(audio.url()).openConnection();
         connection.setConnectTimeout(10000);
         connection.setReadTimeout(30000);
-        connection.setRequestProperty("User-Agent", "LazoDiscs/1.0.0");
+        connection.setRequestProperty("User-Agent", "LazoDiscs/1.0.3");
         return new BufferedInputStream(connection.getInputStream());
     }
 
@@ -178,7 +177,7 @@ public final class HttpPcmFeeder implements AutoCloseable {
     @Override
     public void close() {
         closed.set(true);
-        if (thread != null) thread.interrupt();
+        if (task != null) task.cancel(true);
     }
 
     private static final class ShortBuilder {

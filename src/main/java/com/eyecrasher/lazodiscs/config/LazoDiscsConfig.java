@@ -20,9 +20,11 @@ public final class LazoDiscsConfig {
     public static final ModConfigSpec.IntValue BURN_PERMISSION_LEVEL;
     public static final ModConfigSpec.IntValue LAVAPLAYER_LOAD_TIMEOUT_SECONDS;
     public static final ModConfigSpec.IntValue MAX_TRACK_LENGTH_SECONDS;
+    public static final ModConfigSpec.IntValue MAX_ACTIVE_SOURCES;
     public static final ModConfigSpec.BooleanValue SPOTIFY_SEARCH_VIA_YOUTUBE;
     public static final ModConfigSpec.BooleanValue PRELOAD_ON_BURN;
     public static final ModConfigSpec.IntValue MAX_CACHED_TRACKS;
+    public static final ModConfigSpec.IntValue MAX_CONCURRENT_AUDIO_LOADS;
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -38,6 +40,8 @@ public final class LazoDiscsConfig {
                 .defineInRange("sourceLineDefaultVolume", 1.0D, 0.0D, 1.0D);
         MAX_TRACK_LENGTH_SECONDS = builder.comment("Safety limit for preloaded tracks. 0 disables the limit. Long tracks use more RAM because Plasmo ArrayAudioFrameProvider needs samples before start.")
                 .defineInRange("maxTrackLengthSeconds", 900, 0, 24 * 60 * 60);
+        MAX_ACTIVE_SOURCES = builder.comment("Maximum number of LazoDisc jukeboxes playing at the same time. 0 disables this limit. Unlimited playback can use a lot of RAM/CPU.")
+                .defineInRange("maxActiveSources", 0, 0, 10000);
         builder.pop();
 
         builder.push("display");
@@ -56,6 +60,8 @@ public final class LazoDiscsConfig {
                 .define("preloadOnBurn", true);
         MAX_CACHED_TRACKS = builder.comment("Maximum number of decoded tracks kept in RAM for fast jukebox start. 0 disables the cache. This is RAM-only; decoded audio is not saved to disk.")
                 .defineInRange("maxCachedTracks", 64, 0, 256);
+        MAX_CONCURRENT_AUDIO_LOADS = builder.comment("Maximum number of audio tracks decoded/resolved at the same time. Higher values start many discs faster but can spike CPU/RAM/network usage.")
+                .defineInRange("maxConcurrentAudioLoads", 3, 1, 32);
         builder.pop();
 
         builder.push("security");
