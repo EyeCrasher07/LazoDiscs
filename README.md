@@ -19,7 +19,7 @@ LazoDiscs is a server-side NeoForge mod for Minecraft 1.21.3 that lets players b
 
 ## Version
 
-1.0.3
+1.0.0
 
 
 ## Singleplayer support
