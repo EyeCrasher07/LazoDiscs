@@ -55,6 +55,22 @@ public final class AudioCache {
         }
     }
 
+    public static CacheStats stats() {
+        synchronized (LOCK) {
+            long samples = 0L;
+            for (short[] cached : CACHE.values()) {
+                if (cached != null) samples += cached.length;
+            }
+            return new CacheStats(CACHE.size(), LOADING.size(), samples, samples * Short.BYTES);
+        }
+    }
+
+    public static void clear() {
+        synchronized (LOCK) {
+            CACHE.clear();
+        }
+    }
+
     /**
      * Returns true when samples were already cached and onReady was called immediately.
      * Returns false when audio is loading in the background.
@@ -202,5 +218,8 @@ public final class AudioCache {
     }
 
     private record CacheCallback(Consumer<short[]> onReady, Runnable onFailure) {
+    }
+
+    public record CacheStats(int cachedTracks, int loadingTracks, long samples, long approximateBytes) {
     }
 }
