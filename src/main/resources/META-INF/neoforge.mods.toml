@@ -5,7 +5,7 @@ issueTrackerURL="https://github.com/EyeCrasher07/LazoDiscs/issues"
 
 [[mods]]
 modId="lazodiscs"
-version="1.0.3+mc1.21.10"
+version="1.0.0+mc1.21.10"
 displayName="LazoDiscs"
 displayTest="IGNORE_ALL_VERSION"
 logoFile="lazodiscs_icon.png"
