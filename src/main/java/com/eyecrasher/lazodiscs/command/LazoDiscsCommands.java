@@ -5,6 +5,7 @@ import com.eyecrasher.lazodiscs.config.LazoDiscsConfig;
 import com.eyecrasher.lazodiscs.data.CustomDiscData;
 import com.eyecrasher.lazodiscs.data.DiscDataUtil;
 import com.eyecrasher.lazodiscs.voice.AudioCache;
+import com.eyecrasher.lazodiscs.voice.AudioLoadExecutor;
 import com.eyecrasher.lazodiscs.voice.LavaPcmFeeder;
 import com.eyecrasher.lazodiscs.voice.SpotifyTitleResolver;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -24,7 +25,6 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 public final class LazoDiscsCommands {
     private static final int SEARCH_PAGE_SIZE = 5;
@@ -109,6 +109,32 @@ public final class LazoDiscsCommands {
         return 1;
     }
 
+    private static int stopAll(CommandSourceStack source) {
+        LazoDiscs.playback().stopAll("command");
+        source.sendSuccess(() -> Component.literal("Stopped all active LazoDisc sources."), true);
+        return 1;
+    }
+
+    private static int cacheStats(CommandSourceStack source) {
+        AudioCache.CacheStats stats = AudioCache.stats();
+        double mib = stats.approximateBytes() / 1024.0D / 1024.0D;
+        source.sendSuccess(() -> Component.literal(String.format(
+                Locale.ROOT,
+                "LazoDiscs cache: %d cached, %d loading, %.2f MiB, %d active sources.",
+                stats.cachedTracks(),
+                stats.loadingTracks(),
+                mib,
+                LazoDiscs.playback().activeCount()
+        )), false);
+        return 1;
+    }
+
+    private static int clearCache(CommandSourceStack source) {
+        AudioCache.clear();
+        source.sendSuccess(() -> Component.literal("LazoDiscs RAM cache cleared."), true);
+        return 1;
+    }
+
     private static int search(CommandSourceStack source, String query, int page) {
         ServerPlayer player;
         try {
@@ -127,7 +153,7 @@ public final class LazoDiscsCommands {
         int safePage = Math.max(1, page);
         player.sendSystemMessage(Component.literal("Searching: " + cleanQuery).withStyle(ChatFormatting.GRAY));
 
-        CompletableFuture.runAsync(() -> {
+        AudioLoadExecutor.submit(() -> {
             try {
                 List<LavaPcmFeeder.SearchResult> results = LavaPcmFeeder.searchYoutubeMusic(cleanQuery, SEARCH_MAX_RESULTS);
                 player.getServer().execute(() -> sendSearchPage(player, cleanQuery, safePage, results));
@@ -162,7 +188,7 @@ public final class LazoDiscsCommands {
                             .withColor(ChatFormatting.AQUA)
                             .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, burnCommand))
                             .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to paste: " + burnCommand)))))
-                    .append(Component.literal(" — " + author + " " + formatDuration(result.lengthMs())).withStyle(ChatFormatting.GRAY));
+                    .append(Component.literal(" - " + author + " " + formatDuration(result.lengthMs())).withStyle(ChatFormatting.GRAY));
             player.sendSystemMessage(line);
         }
 
@@ -170,26 +196,26 @@ public final class LazoDiscsCommands {
 
         if (safePage > 1) {
             String prev = "/lazodiscs search " + quote(query) + " " + (safePage - 1);
-            nav = nav.append(Component.literal("◀").withStyle(style -> style
+            nav = nav.append(Component.literal("<").withStyle(style -> style
                     .withColor(ChatFormatting.YELLOW)
                     .withBold(true)
                     .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, prev))
                     .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Previous page")))));
         } else {
-            nav = nav.append(Component.literal("◀").withStyle(ChatFormatting.DARK_GRAY));
+            nav = nav.append(Component.literal("<").withStyle(ChatFormatting.DARK_GRAY));
         }
 
         nav = nav.append(Component.literal("  Page " + safePage + "/" + totalPages + "  ").withStyle(ChatFormatting.GRAY));
 
         if (safePage < totalPages) {
             String next = "/lazodiscs search " + quote(query) + " " + (safePage + 1);
-            nav = nav.append(Component.literal("▶").withStyle(style -> style
+            nav = nav.append(Component.literal(">").withStyle(style -> style
                     .withColor(ChatFormatting.YELLOW)
                     .withBold(true)
                     .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, next))
                     .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Next page")))));
         } else {
-            nav = nav.append(Component.literal("▶").withStyle(ChatFormatting.DARK_GRAY));
+            nav = nav.append(Component.literal(">").withStyle(ChatFormatting.DARK_GRAY));
         }
 
         player.sendSystemMessage(nav);
