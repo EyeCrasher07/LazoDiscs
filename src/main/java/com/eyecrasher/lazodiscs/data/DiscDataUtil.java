@@ -1,6 +1,8 @@
 package com.eyecrasher.lazodiscs.data;
 
 import com.eyecrasher.lazodiscs.config.LazoDiscsConfig;
+import com.eyecrasher.lazodiscs.text.LazoDiscsText;
+import com.eyecrasher.lazodiscs.voice.SpotifyTitleResolver;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -90,22 +92,30 @@ public final class DiscDataUtil {
     }
 
     public static String validateUrl(String raw) throws IllegalArgumentException {
-        if (StringUtil.isNullOrEmpty(raw)) throw new IllegalArgumentException("URL is empty");
+        if (StringUtil.isNullOrEmpty(raw)) throw new IllegalArgumentException(LazoDiscsText.urlEmpty());
+        String trimmed = raw.trim();
         URI uri;
         try {
-            uri = URI.create(raw);
+            uri = URI.create(trimmed);
         } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid URL");
+            throw new IllegalArgumentException(LazoDiscsText.urlInvalid());
         }
 
         String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase(Locale.ROOT);
         if (scheme.equals("spotify")) {
-            return raw;
+            Optional<String> spotifyError = SpotifyTitleResolver.validateSingleTrack(trimmed);
+            if (spotifyError.isPresent()) throw new IllegalArgumentException(spotifyError.get());
+            return SpotifyTitleResolver.canonicalize(trimmed);
         }
-        if (scheme.equals("http") && !LazoDiscsConfig.ALLOW_HTTP.get()) throw new IllegalArgumentException("HTTP URLs are disabled");
-        if (scheme.equals("https") && !LazoDiscsConfig.ALLOW_HTTPS.get()) throw new IllegalArgumentException("HTTPS URLs are disabled");
+        if (scheme.equals("http") && !LazoDiscsConfig.ALLOW_HTTP.get()) throw new IllegalArgumentException(LazoDiscsText.httpDisabled());
+        if (scheme.equals("https") && !LazoDiscsConfig.ALLOW_HTTPS.get()) throw new IllegalArgumentException(LazoDiscsText.httpsDisabled());
         if (!scheme.equals("http") && !scheme.equals("https")) {
-            throw new IllegalArgumentException("Only HTTP/HTTPS URLs or spotify: URIs are supported");
+            throw new IllegalArgumentException(LazoDiscsText.unsupportedScheme());
+        }
+
+        if (SpotifyTitleResolver.looksLikeSpotify(trimmed)) {
+            Optional<String> spotifyError = SpotifyTitleResolver.validateSingleTrack(trimmed);
+            if (spotifyError.isPresent()) throw new IllegalArgumentException(spotifyError.get());
         }
 
         var domains = LazoDiscsConfig.ALLOWED_DOMAINS.get();
@@ -114,9 +124,9 @@ public final class DiscDataUtil {
             boolean ok = domains.stream()
                     .map(s -> s.toLowerCase(Locale.ROOT).trim())
                     .anyMatch(allowed -> host.equals(allowed) || host.endsWith("." + allowed));
-            if (!ok) throw new IllegalArgumentException("Domain is not allowed by config");
+            if (!ok) throw new IllegalArgumentException(LazoDiscsText.domainNotAllowed());
         }
-        return raw;
+        return SpotifyTitleResolver.looksLikeSpotify(trimmed) ? SpotifyTitleResolver.canonicalize(trimmed) : trimmed;
     }
 
     public static int clampRange(int range) {
