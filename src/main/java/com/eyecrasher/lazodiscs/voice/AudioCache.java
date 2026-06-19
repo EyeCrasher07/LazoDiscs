@@ -3,6 +3,7 @@ package com.eyecrasher.lazodiscs.voice;
 import com.eyecrasher.lazodiscs.LazoDiscs;
 import com.eyecrasher.lazodiscs.config.LazoDiscsConfig;
 import com.eyecrasher.lazodiscs.data.CustomDiscData;
+import com.eyecrasher.lazodiscs.text.LazoDiscsText;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -78,9 +79,9 @@ public final class AudioCache {
      * If the same disc URL is already being preloaded, this method attaches the caller
      * to the existing loader instead of starting a second YouTube/LavaPlayer request.
      */
-    public static boolean getOrLoad(CustomDiscData disc, Consumer<short[]> onReady, Runnable onFailure) {
+    public static boolean getOrLoad(CustomDiscData disc, Consumer<short[]> onReady, Consumer<String> onFailure) {
         if (disc == null) {
-            safeFailure(onFailure);
+            safeFailure(onFailure, LazoDiscsText.urlInvalid());
             return false;
         }
 
@@ -116,14 +117,23 @@ public final class AudioCache {
     }
 
     public static void preload(CustomDiscData disc) {
+        preload(disc, null);
+    }
+
+    public static void preload(CustomDiscData disc, Consumer<String> onFailure) {
         if (disc == null || !LazoDiscsConfig.PRELOAD_ON_BURN.get()) return;
+
+        if (LazoDiscsConfig.STREAM_LAVAPLAYER_SOURCES.get() && LavaPcmFeeder.shouldUse(disc.url())) {
+            LavaPcmFeeder.checkPlayable(disc.url(), disc.title(), onFailure);
+            return;
+        }
 
         if (isCached(disc)) {
             LazoDiscs.LOGGER.debug("LazoDisc '{}' is already in RAM cache", disc.title());
             return;
         }
 
-        if (isLoading(disc)) {
+        if (isLoading(disc) && onFailure == null) {
             LazoDiscs.LOGGER.debug("LazoDisc '{}' is already preloading into RAM cache", disc.title());
             return;
         }
@@ -132,14 +142,17 @@ public final class AudioCache {
         getOrLoad(
                 disc,
                 samples -> LazoDiscs.LOGGER.info("Preloaded LazoDisc '{}' into RAM cache ({} samples)", disc.title(), samples.length),
-                () -> LazoDiscs.LOGGER.debug("LazoDisc preload failed for '{}'", disc.title())
+                reason -> {
+                    LazoDiscs.LOGGER.debug("LazoDisc preload failed for '{}': {}", disc.title(), reason);
+                    safeFailure(onFailure, reason);
+                }
         );
     }
 
     private static void startLoader(CustomDiscData disc, String key) {
         try {
             Consumer<short[]> onReady = samples -> finishSuccess(disc, key, samples);
-            Runnable onFailure = () -> finishFailure(key);
+            Consumer<String> onFailure = reason -> finishFailure(key, reason);
 
             if (LavaPcmFeeder.shouldUse(disc.url())) {
                 new LavaPcmFeeder(disc.url(), disc.title(), disc.volume(), onReady, onFailure).start();
@@ -148,7 +161,7 @@ public final class AudioCache {
             }
         } catch (Throwable t) {
             LazoDiscs.LOGGER.debug("Could not start LazoDisc RAM preload/load for '{}': {}", disc.title(), t.toString());
-            finishFailure(key);
+            finishFailure(key, messageOf(t));
         }
     }
 
@@ -163,7 +176,7 @@ public final class AudioCache {
 
         if (callbacks == null || callbacks.isEmpty()) return;
         if (samples == null || samples.length == 0) {
-            for (CacheCallback callback : callbacks) safeFailure(callback.onFailure());
+            for (CacheCallback callback : callbacks) safeFailure(callback.onFailure(), LazoDiscsText.audioDecodedZeroSamples());
             return;
         }
 
@@ -172,7 +185,7 @@ public final class AudioCache {
         }
     }
 
-    private static void finishFailure(String key) {
+    private static void finishFailure(String key, String reason) {
         List<CacheCallback> callbacks;
         synchronized (LOCK) {
             callbacks = LOADING.remove(key);
@@ -180,7 +193,7 @@ public final class AudioCache {
 
         if (callbacks == null) return;
         for (CacheCallback callback : callbacks) {
-            safeFailure(callback.onFailure());
+            safeFailure(callback.onFailure(), reason);
         }
     }
 
@@ -204,10 +217,10 @@ public final class AudioCache {
         }
     }
 
-    private static void safeFailure(Runnable callback) {
+    private static void safeFailure(Consumer<String> callback, String reason) {
         if (callback == null) return;
         try {
-            callback.run();
+            callback.accept(reason == null || reason.isBlank() ? LazoDiscsText.unknown() : reason);
         } catch (Throwable t) {
             LazoDiscs.LOGGER.debug("LazoDisc RAM cache failure callback failed: {}", t.toString());
         }
@@ -217,7 +230,16 @@ public final class AudioCache {
         return disc.url() + "\u0000" + Float.toString(disc.volume());
     }
 
-    private record CacheCallback(Consumer<short[]> onReady, Runnable onFailure) {
+    private static String messageOf(Throwable t) {
+        if (t == null) return LazoDiscsText.unknown();
+        String message = t.getMessage();
+        Throwable cause = t.getCause();
+        if ((message == null || message.isBlank()) && cause != null) return messageOf(cause);
+        if (cause != null && message != null && message.equals(cause.toString())) return messageOf(cause);
+        return message == null || message.isBlank() ? t.getClass().getSimpleName() : message;
+    }
+
+    private record CacheCallback(Consumer<short[]> onReady, Consumer<String> onFailure) {
     }
 
     public record CacheStats(int cachedTracks, int loadingTracks, long samples, long approximateBytes) {
