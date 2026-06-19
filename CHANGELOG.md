@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.3+mc1.21.1
+## 1.0.0+mc1.21.1
 
 ### Fixed
 - Fixed broken Russian default text in the common config.
