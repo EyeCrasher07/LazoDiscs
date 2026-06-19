@@ -164,6 +164,10 @@ public final class JukeboxPlaybackManager {
         LazoDiscs.LOGGER.info("Stopped all LazoDisc sources ({})", reason);
     }
 
+    public int activeCount() {
+        return active.size();
+    }
+
     public void pruneInvalid(ServerLevel level) {
         // This is NOT a world scan. It only validates already-active sources.
         Iterator<Map.Entry<SourceKey, ActiveJukeboxSource>> it = active.entrySet().iterator();

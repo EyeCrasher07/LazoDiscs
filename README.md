@@ -8,7 +8,7 @@ LazoDiscs is a server-side NeoForge mod for Minecraft 1.21.4 that lets players b
 - `/lazodiscs clear`
 - `/lazodiscs search "<song name>" [page]`
 - Clickable search results in chat
-- Clickable chat arrows ◀ ▶ for search pages
+- Clickable chat arrows for search pages
 - Separate Plasmo Voice source line for disc volume
 - YouTube / YouTube Music search through LavaPlayer
 - SoundCloud support through LavaPlayer
@@ -19,7 +19,7 @@ LazoDiscs is a server-side NeoForge mod for Minecraft 1.21.4 that lets players b
 
 ## Version
 
-1.0.1+mc1.21.4
+1.0.3
 
 
 ## Singleplayer support
