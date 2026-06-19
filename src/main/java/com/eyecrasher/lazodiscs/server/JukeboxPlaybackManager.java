@@ -7,11 +7,9 @@ import com.eyecrasher.lazodiscs.data.DiscDataUtil;
 import com.eyecrasher.lazodiscs.compat.SablePositionCompat;
 import com.eyecrasher.lazodiscs.voice.PlasmoVoiceBridge;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.JukeboxBlockEntity;
 import net.minecraft.world.phys.Vec3;
@@ -24,6 +22,7 @@ public final class JukeboxPlaybackManager {
     public static final JukeboxPlaybackManager INSTANCE = new JukeboxPlaybackManager();
 
     private final Map<SourceKey, ActiveJukeboxSource> active = new ConcurrentHashMap<>();
+    private final Map<SourceKey, Long> restartBlockedUntilTick = new ConcurrentHashMap<>();
 
     private JukeboxPlaybackManager() {
     }
@@ -55,6 +54,21 @@ public final class JukeboxPlaybackManager {
 
     public void start(ServerLevel level, BlockPos pos, CustomDiscData disc, String reason) {
         SourceKey sourceKey = new SourceKey(level.dimension(), pos.immutable());
+        ActiveJukeboxSource existing = active.get(sourceKey);
+        if (existing != null && existing.disc().equals(disc)) {
+            LazoDiscs.LOGGER.debug("Ignoring duplicate LazoDisc start for '{}' at {} ({})", disc.title(), pos.toShortString(), reason);
+            VanillaRecordStopper.stopVanillaRecordsNear(level, pos, 4.0D);
+            return;
+        }
+
+        long now = level.getGameTime();
+        long blockedUntil = restartBlockedUntilTick.getOrDefault(sourceKey, 0L);
+        if (blockedUntil > now) {
+            LazoDiscs.LOGGER.warn("Rejected LazoDisc '{}' at {}: jukebox restart cooldown for {} more ticks",
+                    disc.title(), pos.toShortString(), blockedUntil - now);
+            VanillaRecordStopper.stopVanillaRecordsNear(level, pos, 4.0D);
+            return;
+        }
 
         ActiveJukeboxSource old = active.remove(sourceKey);
         if (old != null) {
@@ -65,12 +79,7 @@ public final class JukeboxPlaybackManager {
             }
         }
 
-        if (!canStartSource(level, pos, disc)) {
-            // Custom disc is inserted, but the safety limit says no. Also suppress the vanilla record
-            // sound so rejected/limited LazoDiscs don't play the original Minecraft music disc.
-            VanillaRecordStopper.stopVanillaRecordsNear(level, pos, 4.0D);
-            return;
-        }
+        rememberRestart(level, sourceKey);
 
         try {
             Vec3 center = Vec3.atCenterOf(pos);
@@ -106,6 +115,15 @@ public final class JukeboxPlaybackManager {
         }
     }
 
+    private void rememberRestart(ServerLevel level, SourceKey sourceKey) {
+        int cooldownTicks = LazoDiscsConfig.JUKEBOX_RESTART_COOLDOWN_TICKS.get();
+        if (cooldownTicks <= 0) {
+            restartBlockedUntilTick.remove(sourceKey);
+            return;
+        }
+        restartBlockedUntilTick.put(sourceKey, level.getGameTime() + cooldownTicks);
+    }
+
     public void stopChunk(ServerLevel level, ChunkPos chunkPos, String reason) {
         Iterator<Map.Entry<SourceKey, ActiveJukeboxSource>> it = active.entrySet().iterator();
         while (it.hasNext()) {
@@ -113,6 +131,7 @@ public final class JukeboxPlaybackManager {
             SourceKey key = e.getKey();
             if (key.dimension().equals(level.dimension()) && new ChunkPos(key.pos()).equals(chunkPos)) {
                 it.remove();
+                restartBlockedUntilTick.remove(key);
                 try {
                     e.getValue().stop();
                 } catch (Exception ex) {
@@ -128,6 +147,9 @@ public final class JukeboxPlaybackManager {
         long gameTime = level.getGameTime();
         int validationInterval = Math.max(1, LazoDiscsConfig.VALIDATION_INTERVAL_TICKS.get());
         boolean validate = gameTime % validationInterval == 0;
+        if (validate) {
+            restartBlockedUntilTick.entrySet().removeIf(e -> e.getKey().dimension().equals(level.dimension()) && e.getValue() <= gameTime);
+        }
 
         Iterator<Map.Entry<SourceKey, ActiveJukeboxSource>> it = active.entrySet().iterator();
         while (it.hasNext()) {
@@ -144,8 +166,7 @@ public final class JukeboxPlaybackManager {
             ActiveJukeboxSource activeSource = e.getValue();
             if (activeSource.dynamicPosition()) {
                 // Moving Sable / Create Aeronautics assemblies must update every tick, otherwise
-                // the Plasmo source audibly lags behind the flying platform. The global/per-chunk
-                // source limits above are the real TPS protection here.
+                // the Plasmo source audibly lags behind the flying platform.
                 Vec3 projected = SablePositionCompat.projectJukeboxCenter(level, key.pos());
                 activeSource.updatePosition(level, projected);
             }
@@ -161,11 +182,8 @@ public final class JukeboxPlaybackManager {
             }
         }
         active.clear();
+        restartBlockedUntilTick.clear();
         LazoDiscs.LOGGER.info("Stopped all LazoDisc sources ({})", reason);
-    }
-
-    public int activeCount() {
-        return active.size();
     }
 
     public void pruneInvalid(ServerLevel level) {
@@ -177,40 +195,10 @@ public final class JukeboxPlaybackManager {
             if (!key.dimension().equals(level.dimension())) continue;
             if (!isStillValidCustomJukebox(level, key.pos())) {
                 it.remove();
+                restartBlockedUntilTick.remove(key);
                 e.getValue().stop();
             }
         }
-    }
-
-    private boolean canStartSource(ServerLevel level, BlockPos pos, CustomDiscData disc) {
-        int maxGlobal = LazoDiscsConfig.MAX_ACTIVE_SOURCES.get();
-        if (maxGlobal > 0 && active.size() >= maxGlobal) {
-            LazoDiscs.LOGGER.warn("Rejected LazoDisc '{}' at {}: active source limit reached ({}/{})",
-                    disc.title(), pos.toShortString(), active.size(), maxGlobal);
-            return false;
-        }
-
-        int maxPerChunk = LazoDiscsConfig.MAX_ACTIVE_SOURCES_PER_CHUNK.get();
-        if (maxPerChunk > 0) {
-            int inChunk = activeSourcesInChunk(level.dimension(), new ChunkPos(pos));
-            if (inChunk >= maxPerChunk) {
-                LazoDiscs.LOGGER.warn("Rejected LazoDisc '{}' at {}: chunk active source limit reached ({}/{})",
-                        disc.title(), pos.toShortString(), inChunk, maxPerChunk);
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private int activeSourcesInChunk(ResourceKey<Level> dimension, ChunkPos chunkPos) {
-        int count = 0;
-        for (SourceKey key : active.keySet()) {
-            if (key.dimension().equals(dimension) && new ChunkPos(key.pos()).equals(chunkPos)) {
-                count++;
-            }
-        }
-        return count;
     }
 
     private boolean isStillValidCustomJukebox(ServerLevel level, BlockPos pos) {
