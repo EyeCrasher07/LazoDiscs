@@ -9,7 +9,7 @@ import su.plo.voice.api.server.PlasmoVoiceServer;
 @Addon(
         id = "lazodiscs",
         name = "LazoDiscs",
-        version = "1.0.0+mc1.21.8",
+        version = "1.0.3+mc1.21.8",
         authors = {"EyeCrasher"}
 )
 public final class LazoDiscsVoiceAddon implements AddonInitializer {
