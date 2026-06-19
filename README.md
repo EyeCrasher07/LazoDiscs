@@ -17,14 +17,12 @@ LazoDiscs is a server-side NeoForge mod for Minecraft 1.21.11 that lets players 
 - Configurable active jukebox source limit. `0` means unlimited.
 - Configurable audio load queue to avoid CPU/RAM spikes when many discs start.
 - `/lazodiscs stopall`
-- `/lazodiscs cache stats`
-- `/lazodiscs cache clear`
 - Sable / Create Aeronautics moving platform position support
 - Server-side only: clients need Plasmo Voice, not LazoDiscs
 
 ## Version
 
-1.0.3
+1.0.0
 
 
 ## Singleplayer support
@@ -52,10 +50,9 @@ No decoded audio is written to disk.
 
 Jackson is bundled and relocated inside LazoDiscs for Minecraft 1.21.11 because lavalink-youtube needs `JsonNode` at runtime.
 
-## 1.0.3 notes
+## 1.0.0 notes
 
 - Fixed broken Russian default text in the common config.
 - Fixed broken chat separator/navigation glyphs in search output.
 - Added `maxActiveSources`, default `0` for unlimited active jukeboxes.
 - Added `maxConcurrentAudioLoads`, default `3`, so many discs do not start unbounded decoder threads.
-- Added admin commands for stopping all sources and inspecting/clearing the RAM cache.

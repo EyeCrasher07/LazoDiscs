@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.3+mc1.21.11
+## 1.0.0+mc1.21.11
 
 ### Fixed
 - Kept the 1.0.1 jukebox TPS fixes while updating the 1.21.11 release.
