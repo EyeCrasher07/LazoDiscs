@@ -1,6 +1,7 @@
 package com.eyecrasher.lazodiscs.voice;
 
 import com.eyecrasher.lazodiscs.LazoDiscs;
+import com.eyecrasher.lazodiscs.text.LazoDiscsText;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -29,11 +30,11 @@ public final class HttpPcmFeeder implements AutoCloseable {
     private AudioResolver.ResolvedAudio resolvedAudio;
     private final float volume;
     private final Consumer<short[]> onReady;
-    private final Runnable onFailure;
+    private final Consumer<String> onFailure;
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private Future<?> task;
 
-    public HttpPcmFeeder(String url, float volume, Consumer<short[]> onReady, Runnable onFailure) {
+    public HttpPcmFeeder(String url, float volume, Consumer<short[]> onReady, Consumer<String> onFailure) {
         this.url = url;
         this.volume = Math.max(0.0F, volume);
         this.onReady = onReady;
@@ -63,7 +64,7 @@ public final class HttpPcmFeeder implements AutoCloseable {
             if (closed.get()) return;
             if (samples.length == 0) {
                 LazoDiscs.LOGGER.warn("LazoDiscs decoded zero samples from '{}'", resolvedAudio.displayName());
-                onFailure.run();
+                fail(LazoDiscsText.audioDecodedZeroSamples());
                 return;
             }
 
@@ -72,9 +73,27 @@ public final class HttpPcmFeeder implements AutoCloseable {
         } catch (Exception e) {
             if (!closed.get()) {
                 LazoDiscs.LOGGER.warn("LazoDiscs could not load audio '{}': {}", url, e.toString());
-                onFailure.run();
+                fail(messageOf(e));
             }
         }
+    }
+
+    private void fail(String reason) {
+        if (onFailure == null) return;
+        try {
+            onFailure.accept(reason == null || reason.isBlank() ? LazoDiscsText.unknown() : reason);
+        } catch (Throwable t) {
+            LazoDiscs.LOGGER.debug("LazoDiscs HTTP failure callback failed: {}", t.toString());
+        }
+    }
+
+    private static String messageOf(Throwable t) {
+        if (t == null) return LazoDiscsText.unknown();
+        String message = t.getMessage();
+        Throwable cause = t.getCause();
+        if ((message == null || message.isBlank()) && cause != null) return messageOf(cause);
+        if (cause != null && message != null && message.equals(cause.toString())) return messageOf(cause);
+        return message == null || message.isBlank() ? t.getClass().getSimpleName() : message;
     }
 
     private boolean looksLikeMp3(String rawUrl) {

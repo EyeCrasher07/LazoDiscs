@@ -11,6 +11,7 @@ public final class LazoDiscsConfig {
     public static final ModConfigSpec.IntValue MAX_RANGE;
     public static final ModConfigSpec.DoubleValue DEFAULT_VOLUME;
     public static final ModConfigSpec.DoubleValue SOURCE_LINE_DEFAULT_VOLUME;
+    public static final ModConfigSpec.ConfigValue<String> LANGUAGE;
     public static final ModConfigSpec.ConfigValue<String> SOURCE_LINE_NAME;
     public static final ModConfigSpec.ConfigValue<String> NOW_PLAYING_MESSAGE;
     public static final ModConfigSpec.BooleanValue ALLOW_HTTP;
@@ -20,11 +21,12 @@ public final class LazoDiscsConfig {
     public static final ModConfigSpec.IntValue BURN_PERMISSION_LEVEL;
     public static final ModConfigSpec.IntValue LAVAPLAYER_LOAD_TIMEOUT_SECONDS;
     public static final ModConfigSpec.IntValue MAX_TRACK_LENGTH_SECONDS;
-    public static final ModConfigSpec.IntValue MAX_ACTIVE_SOURCES;
-    public static final ModConfigSpec.IntValue MAX_ACTIVE_SOURCES_PER_CHUNK;
     public static final ModConfigSpec.IntValue POSITION_UPDATE_INTERVAL_TICKS;
     public static final ModConfigSpec.IntValue VALIDATION_INTERVAL_TICKS;
+    public static final ModConfigSpec.IntValue JUKEBOX_RESTART_COOLDOWN_TICKS;
     public static final ModConfigSpec.BooleanValue SPOTIFY_SEARCH_VIA_YOUTUBE;
+    public static final ModConfigSpec.BooleanValue STREAM_LAVAPLAYER_SOURCES;
+    public static final ModConfigSpec.IntValue MAX_STREAMING_TRACK_LENGTH_SECONDS;
     public static final ModConfigSpec.BooleanValue PRELOAD_ON_BURN;
     public static final ModConfigSpec.IntValue MAX_CACHED_TRACKS;
     public static final ModConfigSpec.IntValue MAX_CONCURRENT_AUDIO_LOADS;
@@ -43,21 +45,21 @@ public final class LazoDiscsConfig {
                 .defineInRange("sourceLineDefaultVolume", 1.0D, 0.0D, 1.0D);
         MAX_TRACK_LENGTH_SECONDS = builder.comment("Safety limit for preloaded tracks. 0 disables the limit. Long tracks use more RAM because Plasmo ArrayAudioFrameProvider needs samples before start.")
                 .defineInRange("maxTrackLengthSeconds", 900, 0, 24 * 60 * 60);
-        MAX_ACTIVE_SOURCES = builder.comment("Maximum number of LazoDisc jukeboxes playing at the same time. 0 disables this limit. Unlimited playback can use a lot of RAM/CPU.")
-                .defineInRange("maxActiveSources", 0, 0, 10000);
-        MAX_ACTIVE_SOURCES_PER_CHUNK = builder.comment("Maximum LazoDiscs jukeboxes that may play in one chunk at the same time. 0 disables this safety limit. This prevents one base from becoming a Plasmo Voice lag machine.")
-                .defineInRange("maxActiveSourcesPerChunk", 0, 0, 64);
         POSITION_UPDATE_INTERVAL_TICKS = builder.comment("Legacy setting. Moving Sable/Create Aeronautics assemblies are updated every tick to prevent audio lag; normal world jukeboxes are static and do not need repeated position updates.")
                 .defineInRange("positionUpdateIntervalTicks", 5, 1, 200);
         VALIDATION_INTERVAL_TICKS = builder.comment("How often active jukeboxes are rechecked for block/entity/item validity. 20 = once per second. Stops/removals are still handled instantly by events.")
                 .defineInRange("validationIntervalTicks", 20, 1, 200);
+        JUKEBOX_RESTART_COOLDOWN_TICKS = builder.comment("Minimum ticks before the same jukebox can start another LazoDisc. Prevents right-click/eject spam from creating heavy repeated audio starts. 20 ticks = 1 second.")
+                .defineInRange("jukeboxRestartCooldownTicks", 40, 0, 20 * 60);
         builder.pop();
 
         builder.push("display");
-        SOURCE_LINE_NAME = builder.comment("Name shown in the Plasmo Voice source list. LazoDiscs is server-side only, so put your own language text here.")
-                .define("sourceLineName", "Пластинки");
-        NOW_PLAYING_MESSAGE = builder.comment("Action-bar message shown when a burned LazoDisc starts. Use %title%. Empty value uses vanilla Minecraft record.nowPlaying translation.")
-                .define("nowPlayingMessage", "Сейчас играет: %title%");
+        LANGUAGE = builder.comment("Server-side language for LazoDiscs messages. Supported values: ru_ru, en_us.")
+                .define("language", "ru_ru");
+        SOURCE_LINE_NAME = builder.comment("Name shown in the Plasmo Voice source list. Use auto to follow display.language, or write a custom name.")
+                .define("sourceLineName", "auto");
+        NOW_PLAYING_MESSAGE = builder.comment("Action-bar message shown when a burned LazoDisc starts. Use %title%. auto follows display.language. Empty value uses vanilla Minecraft record.nowPlaying translation.")
+                .define("nowPlayingMessage", "auto");
         builder.pop();
 
         builder.push("lavaplayer");
@@ -65,6 +67,10 @@ public final class LazoDiscsConfig {
                 .defineInRange("loadTimeoutSeconds", 60, 5, 300);
         SPOTIFY_SEARCH_VIA_YOUTUBE = builder.comment("Spotify links are not direct audio streams. When enabled, LazoDiscs uses Spotify metadata/title as a YouTube Music search query.")
                 .define("spotifySearchViaYoutube", true);
+        STREAM_LAVAPLAYER_SOURCES = builder.comment("Stream LavaPlayer-supported sources directly to Plasmo Voice instead of decoding the whole track into RAM first. Strongly recommended for long YouTube/Spotify/SoundCloud tracks.")
+                .define("streamLavaPlayerSources", true);
+        MAX_STREAMING_TRACK_LENGTH_SECONDS = builder.comment("Maximum duration for streamed LavaPlayer sources such as YouTube/Spotify/SoundCloud. 0 disables the streaming duration limit.")
+                .defineInRange("maxStreamingTrackLengthSeconds", 0, 0, 24 * 60 * 60);
         PRELOAD_ON_BURN = builder.comment("Start resolving/decoding audio right after /lazodiscs burn, so inserting the disc later starts faster.")
                 .define("preloadOnBurn", true);
         MAX_CACHED_TRACKS = builder.comment("Maximum number of decoded tracks kept in RAM for fast jukebox start. 0 disables the cache. This is RAM-only; decoded audio is not saved to disk.")
