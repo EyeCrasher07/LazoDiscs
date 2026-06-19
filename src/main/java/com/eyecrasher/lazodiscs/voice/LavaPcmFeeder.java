@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -45,7 +46,7 @@ public final class LavaPcmFeeder implements AutoCloseable {
     private final Consumer<short[]> onReady;
     private final Runnable onFailure;
     private final AtomicBoolean closed = new AtomicBoolean(false);
-    private Thread thread;
+    private Future<?> task;
     private volatile AudioPlayer activePlayer;
 
     public LavaPcmFeeder(String rawUrl, String title, float volume, Consumer<short[]> onReady, Runnable onFailure) {
@@ -70,9 +71,7 @@ public final class LavaPcmFeeder implements AutoCloseable {
     }
 
     public void start() {
-        thread = new Thread(this::run, "LazoDiscs-LavaPlayer-PCM-Loader");
-        thread.setDaemon(true);
-        thread.start();
+        task = AudioLoadExecutor.submit(this::run);
     }
 
     private static AudioPlayerManager createPlayerManager() {
@@ -449,7 +448,7 @@ public final class LavaPcmFeeder implements AutoCloseable {
             } catch (Exception ignored) {
             }
         }
-        if (thread != null) thread.interrupt();
+        if (task != null) task.cancel(true);
     }
 
     public record SearchResult(String title, String author, String url, long lengthMs) {
