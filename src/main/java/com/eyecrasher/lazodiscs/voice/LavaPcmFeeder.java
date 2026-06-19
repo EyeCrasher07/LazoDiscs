@@ -2,6 +2,8 @@ package com.eyecrasher.lazodiscs.voice;
 
 import com.eyecrasher.lazodiscs.LazoDiscs;
 import com.eyecrasher.lazodiscs.config.LazoDiscsConfig;
+import com.eyecrasher.lazodiscs.text.LazoDiscsText;
+import com.sedmelluq.discord.lavaplayer.format.AudioDataFormat;
 import com.sedmelluq.discord.lavaplayer.format.StandardAudioDataFormats;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
@@ -38,18 +40,19 @@ import java.util.function.Consumer;
  * ArrayAudioFrameProvider expects samples to be added before AudioSender starts.
  */
 public final class LavaPcmFeeder implements AutoCloseable {
-    private static final AudioPlayerManager PLAYER_MANAGER = createPlayerManager();
+    private static final AudioPlayerManager PLAYER_MANAGER = createPlayerManager(StandardAudioDataFormats.DISCORD_PCM_S16_BE, "PCM");
+    private static final AudioPlayerManager STREAM_PLAYER_MANAGER = createPlayerManager(StandardAudioDataFormats.DISCORD_OPUS, "streaming");
 
     private final String rawUrl;
     private final String title;
     private final float volume;
     private final Consumer<short[]> onReady;
-    private final Runnable onFailure;
+    private final Consumer<String> onFailure;
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private Future<?> task;
     private volatile AudioPlayer activePlayer;
 
-    public LavaPcmFeeder(String rawUrl, String title, float volume, Consumer<short[]> onReady, Runnable onFailure) {
+    public LavaPcmFeeder(String rawUrl, String title, float volume, Consumer<short[]> onReady, Consumer<String> onFailure) {
         this.rawUrl = rawUrl;
         this.title = title == null ? rawUrl : title;
         this.volume = Math.max(0.0F, volume);
@@ -58,6 +61,7 @@ public final class LavaPcmFeeder implements AutoCloseable {
     }
 
     public static boolean shouldUse(String rawUrl) {
+        if (rawUrl == null) return false;
         String lower = rawUrl.toLowerCase(Locale.ROOT);
         return lower.contains("youtube.com/")
                 || lower.contains("youtu.be/")
@@ -66,38 +70,71 @@ public final class LavaPcmFeeder implements AutoCloseable {
                 || lower.contains("bandcamp.com/")
                 || lower.contains("vimeo.com/")
                 || lower.contains("twitch.tv/")
-                || lower.startsWith("spotify:")
-                || lower.contains("open.spotify.com/");
+                || SpotifyTitleResolver.looksLikeSpotify(rawUrl);
     }
 
     public void start() {
         task = AudioLoadExecutor.submit(this::run);
     }
 
-    private static AudioPlayerManager createPlayerManager() {
+    private static AudioPlayerManager createPlayerManager(AudioDataFormat outputFormat, String label) {
         DefaultAudioPlayerManager manager = new DefaultAudioPlayerManager();
-        manager.getConfiguration().setOutputFormat(StandardAudioDataFormats.DISCORD_PCM_S16_BE);
+        manager.getConfiguration().setOutputFormat(outputFormat);
         manager.setFrameBufferDuration(500);
         manager.setPlayerCleanupThreshold(30_000L);
 
         try {
             manager.registerSourceManager(new YoutubeAudioSourceManager());
-            LazoDiscs.LOGGER.info("LazoDiscs registered youtube-source for LavaPlayer");
+            LazoDiscs.LOGGER.info("LazoDiscs registered youtube-source for LavaPlayer ({})", label);
         } catch (Throwable t) {
-            LazoDiscs.LOGGER.warn("LazoDiscs could not register youtube-source: {}", t.toString());
+            LazoDiscs.LOGGER.warn("LazoDiscs could not register youtube-source ({}): {}", label, t.toString());
         }
 
         try {
             AudioSourceManagers.registerRemoteSources(manager);
             AudioSourceManagers.registerLocalSource(manager);
         } catch (Throwable t) {
-            LazoDiscs.LOGGER.warn("LazoDiscs could not register default LavaPlayer source managers: {}", t.toString());
+            LazoDiscs.LOGGER.warn("LazoDiscs could not register default LavaPlayer source managers ({}): {}", label, t.toString());
         }
         return manager;
     }
 
+    public static StreamingPlayback openStream(String rawUrl, String title, float volume) throws InterruptedException {
+        ResolveRequest request = resolveIdentifier(rawUrl, title);
+        LazoDiscs.LOGGER.info("LazoDiscs resolving streaming audio with LavaPlayer: '{}' -> '{}'", rawUrl, request.identifier());
+        AudioTrack track = loadTrack(STREAM_PLAYER_MANAGER, request.identifier(), request.spotifyMetadata());
+        validateStreamingTrackLength(track);
+
+        AudioPlayer player = STREAM_PLAYER_MANAGER.createPlayer();
+        player.setVolume(Math.max(0, Math.round(Math.max(0.0F, volume) * 100.0F)));
+        player.playTrack(track);
+        return new StreamingPlayback(player, track);
+    }
+
+    public static void checkPlayable(String rawUrl, String title, Consumer<String> onFailure) {
+        AudioLoadExecutor.submit(() -> {
+            try {
+                ResolveRequest request = resolveIdentifier(rawUrl, title);
+                AudioTrack track = loadTrack(STREAM_PLAYER_MANAGER, request.identifier(), request.spotifyMetadata());
+                validateStreamingTrackLength(track);
+            } catch (Throwable t) {
+                if (onFailure != null) {
+                    try {
+                        onFailure.accept(messageOf(t));
+                    } catch (Throwable callbackError) {
+                        LazoDiscs.LOGGER.debug("LazoDiscs streaming check failure callback failed: {}", callbackError.toString());
+                    }
+                }
+            }
+        });
+    }
+
 
     public static List<SearchResult> searchYoutubeMusic(String query, int maxResults) throws InterruptedException {
+        return searchYoutubeMusic(query, maxResults, null);
+    }
+
+    public static List<SearchResult> searchYoutubeMusic(String query, int maxResults, SpotifyTitleResolver.SpotifyMetadata spotifyMetadata) throws InterruptedException {
         String cleanQuery = query == null ? "" : query.trim();
         if (cleanQuery.isBlank()) return List.of();
 
@@ -136,10 +173,13 @@ public final class LavaPcmFeeder implements AutoCloseable {
 
         int timeout = LazoDiscsConfig.LAVAPLAYER_LOAD_TIMEOUT_SECONDS.get();
         if (!latch.await(timeout, TimeUnit.SECONDS)) {
-            throw new RuntimeException("Search timed out after " + timeout + " seconds");
+            throw new RuntimeException(LazoDiscsText.searchTimedOut(timeout));
         }
         if (failure.get() != null) {
-            throw new RuntimeException(failure.get());
+            throw new RuntimeException(messageOf(failure.get()));
+        }
+        if (spotifyMetadata != null) {
+            results.sort((a, b) -> Integer.compare(scoreSearchResult(b, spotifyMetadata), scoreSearchResult(a, spotifyMetadata)));
         }
         return List.copyOf(results);
     }
@@ -174,17 +214,13 @@ public final class LavaPcmFeeder implements AutoCloseable {
                         request.spotifyMetadata().title(), request.spotifyMetadata().primaryArtist(), request.spotifyMetadata().durationMs());
             }
 
-            AudioTrack track = loadTrack(request.identifier(), request.spotifyMetadata());
+            AudioTrack track = loadTrack(PLAYER_MANAGER, request.identifier(), request.spotifyMetadata());
             if (closed.get()) return;
             if (track == null) {
-                onFailure.run();
+                fail(LazoDiscsText.audioNoMatches());
                 return;
             }
-
-            int maxSeconds = LazoDiscsConfig.MAX_TRACK_LENGTH_SECONDS.get();
-            if (maxSeconds > 0 && track.getDuration() > 0 && track.getDuration() > maxSeconds * 1000L) {
-                throw new IllegalArgumentException("Track is longer than maxTrackLengthSeconds: " + (track.getDuration() / 1000L) + "s");
-            }
+            validatePreloadedTrackLength(track);
 
             player = PLAYER_MANAGER.createPlayer();
             activePlayer = player;
@@ -204,7 +240,7 @@ public final class LavaPcmFeeder implements AutoCloseable {
 
                 @Override
                 public void onTrackStuck(AudioPlayer player, AudioTrack track, long thresholdMs) {
-                    playbackFailure.compareAndSet(null, new RuntimeException("Track stuck for " + thresholdMs + "ms"));
+                    playbackFailure.compareAndSet(null, new RuntimeException(LazoDiscsText.trackStuck(thresholdMs)));
                     ended.set(true);
                 }
             });
@@ -230,20 +266,20 @@ public final class LavaPcmFeeder implements AutoCloseable {
                 if (failure != null) throw failure;
                 if (ended.get() || player.getPlayingTrack() == null) break;
                 if (System.currentTimeMillis() - lastFrameAt > 15_000L) {
-                    throw new RuntimeException("No audio frames received from LavaPlayer for 15 seconds");
+                    throw new RuntimeException(LazoDiscsText.audioNoFrames());
                 }
                 Thread.sleep(10L);
             }
 
             if (closed.get()) return;
             short[] samples = out.toArray();
-            if (samples.length == 0) throw new RuntimeException("LavaPlayer decoded zero PCM samples");
+            if (samples.length == 0) throw new RuntimeException(LazoDiscsText.audioDecodedZeroSamples());
             LazoDiscs.LOGGER.info("LazoDiscs LavaPlayer decoded {} PCM samples from '{}'", samples.length, rawUrl);
             onReady.accept(samples);
         } catch (Throwable t) {
             if (!closed.get()) {
                 LazoDiscs.LOGGER.warn("LazoDiscs LavaPlayer could not load audio '{}': {}", rawUrl, t.toString());
-                onFailure.run();
+                fail(messageOf(t));
             }
         } finally {
             if (player != null) {
@@ -256,12 +292,12 @@ public final class LavaPcmFeeder implements AutoCloseable {
         }
     }
 
-    private AudioTrack loadTrack(String identifier, SpotifyTitleResolver.SpotifyMetadata spotifyMetadata) throws InterruptedException {
+    private static AudioTrack loadTrack(AudioPlayerManager manager, String identifier, SpotifyTitleResolver.SpotifyMetadata spotifyMetadata) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<AudioTrack> result = new AtomicReference<>();
         AtomicReference<Throwable> failure = new AtomicReference<>();
 
-        PLAYER_MANAGER.loadItemOrdered(this, identifier, new AudioLoadResultHandler() {
+        manager.loadItemOrdered("lazodiscs-load:" + identifier, identifier, new AudioLoadResultHandler() {
             @Override
             public void trackLoaded(AudioTrack track) {
                 result.set(track);
@@ -280,7 +316,7 @@ public final class LavaPcmFeeder implements AutoCloseable {
 
             @Override
             public void noMatches() {
-                failure.set(new RuntimeException("No matches"));
+                failure.set(new RuntimeException(LazoDiscsText.audioNoMatches()));
                 latch.countDown();
             }
 
@@ -293,12 +329,26 @@ public final class LavaPcmFeeder implements AutoCloseable {
 
         int timeout = LazoDiscsConfig.LAVAPLAYER_LOAD_TIMEOUT_SECONDS.get();
         if (!latch.await(timeout, TimeUnit.SECONDS)) {
-            throw new RuntimeException("Audio resolve timed out after " + timeout + " seconds");
+            throw new RuntimeException(LazoDiscsText.audioResolveTimedOut(timeout));
         }
         if (failure.get() != null) {
-            throw new RuntimeException(failure.get());
+            throw new RuntimeException(messageOf(failure.get()));
         }
         return result.get();
+    }
+
+    private static void validatePreloadedTrackLength(AudioTrack track) {
+        validateTrackLength(track, LazoDiscsConfig.MAX_TRACK_LENGTH_SECONDS.get());
+    }
+
+    private static void validateStreamingTrackLength(AudioTrack track) {
+        validateTrackLength(track, LazoDiscsConfig.MAX_STREAMING_TRACK_LENGTH_SECONDS.get());
+    }
+
+    private static void validateTrackLength(AudioTrack track, int maxSeconds) {
+        if (maxSeconds > 0 && track != null && track.getDuration() > 0 && track.getDuration() > maxSeconds * 1000L) {
+            throw new IllegalArgumentException(LazoDiscsText.trackTooLong(maxSeconds));
+        }
     }
 
     private static AudioTrack selectBestTrack(List<AudioTrack> tracks, SpotifyTitleResolver.SpotifyMetadata metadata) {
@@ -324,7 +374,15 @@ public final class LavaPcmFeeder implements AutoCloseable {
 
     private static int scoreTrack(AudioTrack track, SpotifyTitleResolver.SpotifyMetadata metadata) {
         AudioTrackInfo info = track.getInfo();
-        String hay = normalize(info.title + " " + info.author);
+        return scoreInfo(info.title, info.author, info.length, metadata);
+    }
+
+    private static int scoreSearchResult(SearchResult result, SpotifyTitleResolver.SpotifyMetadata metadata) {
+        return scoreInfo(result.title(), result.author(), result.lengthMs(), metadata);
+    }
+
+    private static int scoreInfo(String rawTitle, String rawAuthor, long lengthMs, SpotifyTitleResolver.SpotifyMetadata metadata) {
+        String hay = normalize(rawTitle + " " + rawAuthor);
         String titleNorm = normalize(metadata.title());
         int score = 0;
 
@@ -348,8 +406,8 @@ public final class LavaPcmFeeder implements AutoCloseable {
         }
 
         Long expectedDuration = metadata.durationMs();
-        if (expectedDuration != null && expectedDuration > 0 && info.length > 0) {
-            long diff = Math.abs(info.length - expectedDuration);
+        if (expectedDuration != null && expectedDuration > 0 && lengthMs > 0) {
+            long diff = Math.abs(lengthMs - expectedDuration);
             if (diff <= 3000) score += 110;
             else if (diff <= 10_000) score += 80;
             else if (diff <= 25_000) score += 35;
@@ -379,11 +437,28 @@ public final class LavaPcmFeeder implements AutoCloseable {
         return out;
     }
 
+    private void fail(String reason) {
+        if (onFailure == null) return;
+        try {
+            onFailure.accept(reason == null || reason.isBlank() ? LazoDiscsText.unknown() : reason);
+        } catch (Throwable t) {
+            LazoDiscs.LOGGER.debug("LazoDiscs LavaPlayer failure callback failed: {}", t.toString());
+        }
+    }
+
+    private static String messageOf(Throwable t) {
+        if (t == null) return LazoDiscsText.unknown();
+        String message = t.getMessage();
+        Throwable cause = t.getCause();
+        if ((message == null || message.isBlank()) && cause != null) return messageOf(cause);
+        if (cause != null && message != null && message.equals(cause.toString())) return messageOf(cause);
+        return message == null || message.isBlank() ? t.getClass().getSimpleName() : message;
+    }
+
     private static ResolveRequest resolveIdentifier(String raw, String fallbackTitle) {
-        String lower = raw.toLowerCase(Locale.ROOT);
-        if (lower.startsWith("spotify:") || lower.contains("open.spotify.com/")) {
+        if (SpotifyTitleResolver.looksLikeSpotify(raw)) {
             if (!LazoDiscsConfig.SPOTIFY_SEARCH_VIA_YOUTUBE.get()) {
-                throw new IllegalArgumentException("Spotify search is disabled in config");
+                throw new IllegalArgumentException(LazoDiscsText.spotifyDisabled());
             }
             SpotifyTitleResolver.SpotifyMetadata metadata = SpotifyTitleResolver.resolveMetadata(raw).orElse(null);
             String query;
@@ -452,6 +527,20 @@ public final class LavaPcmFeeder implements AutoCloseable {
     }
 
     public record SearchResult(String title, String author, String url, long lengthMs) {
+    }
+
+    public record StreamingPlayback(AudioPlayer player, AudioTrack track) implements AutoCloseable {
+        @Override
+        public void close() {
+            try {
+                player.stopTrack();
+            } catch (Exception ignored) {
+            }
+            try {
+                player.destroy();
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     private record ResolveRequest(String identifier, SpotifyTitleResolver.SpotifyMetadata spotifyMetadata) {
