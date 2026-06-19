@@ -27,6 +27,7 @@ public final class LazoDiscsConfig {
     public static final ModConfigSpec.BooleanValue SPOTIFY_SEARCH_VIA_YOUTUBE;
     public static final ModConfigSpec.BooleanValue PRELOAD_ON_BURN;
     public static final ModConfigSpec.IntValue MAX_CACHED_TRACKS;
+    public static final ModConfigSpec.IntValue MAX_CONCURRENT_AUDIO_LOADS;
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -42,10 +43,10 @@ public final class LazoDiscsConfig {
                 .defineInRange("sourceLineDefaultVolume", 1.0D, 0.0D, 1.0D);
         MAX_TRACK_LENGTH_SECONDS = builder.comment("Safety limit for preloaded tracks. 0 disables the limit. Long tracks use more RAM because Plasmo ArrayAudioFrameProvider needs samples before start.")
                 .defineInRange("maxTrackLengthSeconds", 900, 0, 24 * 60 * 60);
-        MAX_ACTIVE_SOURCES = builder.comment("Maximum LazoDiscs jukeboxes that may play at the same time on the whole server. 0 disables this safety limit. Lower this if players can spam many jukeboxes and drop TPS.")
-                .defineInRange("maxActiveSources", 16, 0, 512);
+        MAX_ACTIVE_SOURCES = builder.comment("Maximum number of LazoDisc jukeboxes playing at the same time. 0 disables this limit. Unlimited playback can use a lot of RAM/CPU.")
+                .defineInRange("maxActiveSources", 0, 0, 10000);
         MAX_ACTIVE_SOURCES_PER_CHUNK = builder.comment("Maximum LazoDiscs jukeboxes that may play in one chunk at the same time. 0 disables this safety limit. This prevents one base from becoming a Plasmo Voice lag machine.")
-                .defineInRange("maxActiveSourcesPerChunk", 4, 0, 64);
+                .defineInRange("maxActiveSourcesPerChunk", 0, 0, 64);
         POSITION_UPDATE_INTERVAL_TICKS = builder.comment("Legacy setting. Moving Sable/Create Aeronautics assemblies are updated every tick to prevent audio lag; normal world jukeboxes are static and do not need repeated position updates.")
                 .defineInRange("positionUpdateIntervalTicks", 5, 1, 200);
         VALIDATION_INTERVAL_TICKS = builder.comment("How often active jukeboxes are rechecked for block/entity/item validity. 20 = once per second. Stops/removals are still handled instantly by events.")
@@ -68,6 +69,8 @@ public final class LazoDiscsConfig {
                 .define("preloadOnBurn", true);
         MAX_CACHED_TRACKS = builder.comment("Maximum number of decoded tracks kept in RAM for fast jukebox start. 0 disables the cache. This is RAM-only; decoded audio is not saved to disk.")
                 .defineInRange("maxCachedTracks", 64, 0, 256);
+        MAX_CONCURRENT_AUDIO_LOADS = builder.comment("Maximum number of audio tracks decoded/resolved at the same time. Higher values start many discs faster but can spike CPU/RAM/network usage.")
+                .defineInRange("maxConcurrentAudioLoads", 3, 1, 32);
         builder.pop();
 
         builder.push("security");
