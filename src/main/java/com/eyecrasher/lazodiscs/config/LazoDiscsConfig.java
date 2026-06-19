@@ -21,6 +21,9 @@ public final class LazoDiscsConfig {
     public static final ModConfigSpec.IntValue LAVAPLAYER_LOAD_TIMEOUT_SECONDS;
     public static final ModConfigSpec.IntValue MAX_TRACK_LENGTH_SECONDS;
     public static final ModConfigSpec.IntValue MAX_ACTIVE_SOURCES;
+    public static final ModConfigSpec.IntValue MAX_ACTIVE_SOURCES_PER_CHUNK;
+    public static final ModConfigSpec.IntValue POSITION_UPDATE_INTERVAL_TICKS;
+    public static final ModConfigSpec.IntValue VALIDATION_INTERVAL_TICKS;
     public static final ModConfigSpec.BooleanValue SPOTIFY_SEARCH_VIA_YOUTUBE;
     public static final ModConfigSpec.BooleanValue PRELOAD_ON_BURN;
     public static final ModConfigSpec.IntValue MAX_CACHED_TRACKS;
@@ -42,6 +45,12 @@ public final class LazoDiscsConfig {
                 .defineInRange("maxTrackLengthSeconds", 900, 0, 24 * 60 * 60);
         MAX_ACTIVE_SOURCES = builder.comment("Maximum number of LazoDisc jukeboxes playing at the same time. 0 disables this limit. Unlimited playback can use a lot of RAM/CPU.")
                 .defineInRange("maxActiveSources", 0, 0, 10000);
+        MAX_ACTIVE_SOURCES_PER_CHUNK = builder.comment("Maximum LazoDiscs jukeboxes that may play in one chunk at the same time. 0 disables this safety limit. This prevents one base from becoming a Plasmo Voice lag machine.")
+                .defineInRange("maxActiveSourcesPerChunk", 0, 0, 64);
+        POSITION_UPDATE_INTERVAL_TICKS = builder.comment("Legacy setting. Moving Sable/Create Aeronautics assemblies are updated every tick to prevent audio lag; normal world jukeboxes are static and do not need repeated position updates.")
+                .defineInRange("positionUpdateIntervalTicks", 5, 1, 200);
+        VALIDATION_INTERVAL_TICKS = builder.comment("How often active jukeboxes are rechecked for block/entity/item validity. 20 = once per second. Stops/removals are still handled instantly by events.")
+                .defineInRange("validationIntervalTicks", 20, 1, 200);
         builder.pop();
 
         builder.push("display");
