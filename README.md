@@ -1,58 +1,78 @@
 # LazoDiscs
 
-LazoDiscs is a server-side NeoForge mod for Minecraft 1.21.11 that lets players burn custom audio links onto vanilla music discs and play them through Plasmo Voice positional audio.
+LazoDiscs is a server-side NeoForge addon for Plasmo Voice that lets players burn custom music links onto vanilla music discs and play them through positional voice audio.
+
+## Supported versions
+
+Current release: `1.0.0`
+
+Published builds:
+
+- Minecraft `1.21.1`
+- Minecraft `1.21.3` - `1.21.11`
+
+Minecraft `1.21.2` is not published yet. It needs a separate verified NeoForge 21.2 port.
 
 ## Features
 
 - `/lazodiscs burn <url> [title]`
 - `/lazodiscs clear`
 - `/lazodiscs search "<song name>" [page]`
-- Clickable search results in chat
-- Clickable chat arrows for search pages
-- Separate Plasmo Voice source line for disc volume
-- YouTube / YouTube Music search through LavaPlayer
-- SoundCloud support through LavaPlayer
-- Spotify links resolved through metadata and matched through YouTube Music search
-- Direct MP3 support
-- Configurable active jukebox source limit. `0` means unlimited.
-- Configurable audio load queue to avoid CPU/RAM spikes when many discs start.
 - `/lazodiscs stopall`
+- Clickable search results and page navigation in chat
+- YouTube and YouTube Music search through LavaPlayer
+- SoundCloud and other LavaPlayer-supported sources
+- Spotify track links resolved through metadata and matched through YouTube Music
+- Direct MP3 support
+- Russian and English server messages via `display.language`
+- Separate Plasmo Voice source line for disc volume
+- Direct streaming for LavaPlayer sources instead of decoding full tracks into RAM
+- Jukebox restart cooldown to protect TPS from right-click/eject spam
 - Sable / Create Aeronautics moving platform position support
-- Server-side only: clients need Plasmo Voice, not LazoDiscs
+- Server-side on dedicated servers: players need Plasmo Voice, not LazoDiscs
 
-## Version
+## Commands
 
-1.0.0
+```text
+/lazodiscs burn <url> [title]
+/lazodiscs clear
+/lazodiscs search "<song name>" [page]
+/lazodiscs stopall
+```
 
+`/lazodiscs search` is for song names only, not links. To burn a Spotify, YouTube, SoundCloud, or direct audio link, use `/lazodiscs burn`.
 
-## Singleplayer support
+## Server config
 
-LazoDiscs remains server-side for multiplayer servers: players do not need LazoDiscs installed to join a dedicated server that has it.
+The common config contains the main server-side options.
 
-Singleplayer is different because the integrated server runs inside the client. To use LazoDiscs in singleplayer, install LazoDiscs in the local client's `mods` folder together with Plasmo Voice.
+```toml
+[display]
+language = "ru_ru"
+sourceLineName = "auto"
+nowPlayingMessage = "auto"
 
-This does not make LazoDiscs required on multiplayer clients because `displayTest="IGNORE_ALL_VERSION"` is still used.
+[audio]
+maxConcurrentAudioLoads = 3
+maxTrackLengthSeconds = 900
+maxStreamingTrackLengthSeconds = 0
+jukeboxRestartCooldownTicks = 40
+```
 
-## Build note
+Use `language = "ru_ru"` for Russian messages or `language = "en_us"` for English messages.
 
-Apache HttpClient is relocated in the shaded jar to avoid Java module split-package crashes while keeping LavaPlayer/youtube-source working.
+`maxStreamingTrackLengthSeconds = 0` means streamed LavaPlayer tracks are unlimited by length. `maxTrackLengthSeconds` still applies to decoded/preloaded fallback audio.
 
+## Singleplayer
 
-## RAM-only preload/cache
+On a dedicated server, LazoDiscs is server-side: players do not need the mod installed locally, only Plasmo Voice.
 
-LazoDiscs preloads decoded audio into RAM after `/lazodiscs burn`.
-When a jukebox starts a disc that is already cached, playback starts almost instantly.
+Singleplayer uses an integrated server inside the client. For singleplayer, install LazoDiscs in the local client's `mods` folder together with Plasmo Voice.
 
-The cache is memory-only and is cleared when the server or client exits.
-No decoded audio is written to disk.
+## Notes
 
-## Runtime note
-
-Jackson is bundled and relocated inside LazoDiscs for Minecraft 1.21.11 because lavalink-youtube needs `JsonNode` at runtime.
-
-## 1.0.0 notes
-
-- Fixed broken Russian default text in the common config.
-- Fixed broken chat separator/navigation glyphs in search output.
-- Added `maxActiveSources`, default `0` for unlimited active jukeboxes.
-- Added `maxConcurrentAudioLoads`, default `3`, so many discs do not start unbounded decoder threads.
+- The public `/lazodiscs cache` command was removed.
+- Global and per-chunk jukebox limits were removed.
+- LavaPlayer sources stream directly into Plasmo Voice.
+- Apache HttpClient is relocated in the shaded jar to avoid Java module split-package crashes.
+- Jackson is bundled and relocated for Minecraft 1.21.11 because lavalink-youtube needs `JsonNode` at runtime.
