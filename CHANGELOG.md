@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.0.3+mc1.21.9
+
+### Fixed
+- Fixed broken Russian default text in the common config.
+- Fixed broken search result separator and navigation glyphs in chat.
+
+### Added
+- Added bounded audio load executor controlled by `maxConcurrentAudioLoads`.
+- Added `/lazodiscs stopall`.
+- Added `/lazodiscs cache stats`.
+- Added `/lazodiscs cache clear`.
+
+### Changed
+- `maxActiveSources` defaults to `0`, meaning unlimited active jukeboxes.
+- `maxActiveSourcesPerChunk` defaults to `0`, meaning unlimited active jukeboxes per chunk.
+
 ## 1.0.1+mc1.21.9
 
 ### Fixed
