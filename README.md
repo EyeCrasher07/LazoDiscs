@@ -11,8 +11,6 @@ Published builds:
 - Minecraft `1.21.1`
 - Minecraft `1.21.3` - `1.21.11`
 
-Minecraft `1.21.2` is not published yet. It needs a separate verified NeoForge 21.2 port.
-
 ## Features
 
 - `/lazodiscs burn <url> [title]`
