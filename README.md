@@ -21,7 +21,7 @@ Published builds:
 - YouTube and YouTube Music search through LavaPlayer
 - SoundCloud and other LavaPlayer-supported sources
 - Spotify track links resolved through metadata and matched through YouTube Music
-- Direct MP3 support
+- Direct audio URL support through LavaPlayer
 - English server messages for the first rewrite builds
 - Separate Plasmo Voice source line for disc volume
 - Direct streaming for LavaPlayer sources instead of decoding full tracks into RAM
@@ -54,7 +54,7 @@ maxConcurrentAudioLoads = 3
 maxStreamingTrackLengthSeconds = 0
 ```
 
-`maxStreamingTrackLengthSeconds = 0` means streamed LavaPlayer tracks are unlimited by length. `maxTrackLengthSeconds` still applies to decoded/preloaded fallback audio.
+`maxStreamingTrackLengthSeconds = 0` means streamed LavaPlayer tracks are unlimited by length.
 
 ## Singleplayer
 
@@ -65,6 +65,7 @@ Singleplayer uses an integrated server inside the client. For singleplayer, inst
 ## Notes
 
 - The public cache command was removed.
+- The legacy RAM cache/preload playback path was removed.
 - Global and per-chunk jukebox limits were removed.
 - LavaPlayer sources stream directly into Plasmo Voice.
 - Apache HttpClient is relocated in the shaded jar to avoid Java module split-package crashes.

@@ -5,7 +5,6 @@ import com.eyecrasher.lazodiscs.config.LazoDiscsConfig;
 import com.eyecrasher.lazodiscs.data.CustomDiscData;
 import com.eyecrasher.lazodiscs.data.DiscDataUtil;
 import com.eyecrasher.lazodiscs.text.LazoDiscsText;
-import com.eyecrasher.lazodiscs.voice.AudioCache;
 import com.eyecrasher.lazodiscs.voice.AudioLoadExecutor;
 import com.eyecrasher.lazodiscs.voice.LavaPcmFeeder;
 import com.eyecrasher.lazodiscs.voice.SpotifyTitleResolver;
@@ -138,13 +137,6 @@ public final class LazoDiscsCommands {
                 UUID.randomUUID()
         );
         DiscDataUtil.write(stack, data);
-        var server = player.level().getServer();
-        String messageTitle = title;
-        AudioCache.preload(data, reason -> {
-            Runnable notify = () -> player.sendSystemMessage(LazoDiscsText.audioLoadFailed(messageTitle, reason).withStyle(ChatFormatting.RED));
-            if (server == null) notify.run();
-            else server.execute(notify);
-        });
         player.sendSystemMessage(LazoDiscsText.burned(title));
         return 1;
     }

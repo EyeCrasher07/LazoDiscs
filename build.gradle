@@ -61,9 +61,6 @@ dependencies {
         exclude group: 'com.google.code.gson', module: 'gson'
     }
 
-    // Bundled MP3 decoder used as a stable fallback for direct .mp3 URLs.
-    shade 'javazoom:jlayer:1.0.1'
-
     // Relocated private Jackson copy for lavalink-youtube.
     shade 'com.fasterxml.jackson.core:jackson-core:2.15.2'
     shade 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
