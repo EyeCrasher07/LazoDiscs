@@ -1,40 +1,29 @@
 # Platform Matrix
 
-This matrix is a planning note for the rewrite branch. It tracks what should be built first and what depends on Plasmo Voice publishing compatible mod builds.
+This matrix tracks LazoDiscs loader targets and publishing order.
 
-## Original Addon Baseline
-
-The official Discs addon currently publishes a Paper/Folia/Purpur plugin. It uses a shared core, a Paper plugin module, and version-specific server modules.
-
-For LazoDiscs, keep the same stable addon style while implementing mod-loader support:
-
-- one shared playback/service core
-- thin platform adapters for commands, config, disc data, jukebox lifecycle, and Plasmo Voice bootstrap
-- version-specific code only where Minecraft internals differ
+LazoDiscs is based on the original Plasmo Voice Discs addon and is being developed as a mod-loader project.
 
 ## Loader Scope
 
 - NeoForge: first-class target.
 - Fabric: first-class target.
-- Forge: first-class target for versions where Plasmo Voice publishes Forge builds.
-- Quilt: target through Fabric-compatible packaging first, then a separate Quilt adapter only if runtime testing shows it is needed.
-
-Quilt is listed in the product target because players ask for it, but the current Plasmo Voice Modrinth listings checked for the rewrite did not show separate Quilt loader artifacts. Treat this as a validation item before public upload.
+- Forge: first-class target where Plasmo Voice provides Forge builds.
+- Quilt: target through Fabric-compatible packaging first, then a separate adapter only if testing shows it is needed.
 
 ## First Build Order
 
-1. Pick one Minecraft version with the broadest current Plasmo Voice mod-loader coverage.
-2. Build all supported loaders for that version.
-3. Run jukebox spam/eject/chunk-unload tests on that version.
-4. Port the same structure to the next Minecraft version.
+1. Start with one Minecraft version that has broad Plasmo Voice loader support.
+2. Build all supported loaders for that Minecraft version.
+3. Run playback, search, Spotify, eject-spam, break, and chunk-unload tests.
+4. Move to the next Minecraft version after the first version is stable.
 
-For the first pass, prefer `1.21.1` because it has existing LazoDiscs history and Plasmo Voice publishes NeoForge, Forge, and Fabric builds for the `1.21` / `1.21.1` line.
+For the first pass, prefer `1.21.1` because it has existing LazoDiscs release history and broad Plasmo Voice loader coverage.
 
-## Known Version Notes
+## Version Notes
 
-- The official Discs addon supports many server versions through Paper/Folia/Purpur, including old lines and the latest 1.21.x line.
-- Plasmo Voice mod builds are more specific by loader and Minecraft version, so LazoDiscs mod-loader publishing must follow Plasmo Voice mod artifacts, not only the Paper plugin version list.
-- `1.21.2` can likely be covered by the Plasmo Voice `1.21.3` compatibility line, but it still needs runtime testing before upload.
+- LazoDiscs releases should follow Plasmo Voice mod-loader availability.
+- `1.21.2` may be covered by the Plasmo Voice `1.21.3` compatibility line, but it still needs runtime testing before upload.
 
 ## Current Non-Goals
 

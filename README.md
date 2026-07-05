@@ -2,6 +2,8 @@
 
 LazoDiscs is a server-side NeoForge addon for Plasmo Voice that lets players burn custom music links onto vanilla music discs and play them through positional voice audio.
 
+LazoDiscs is based on the original Plasmo Voice Discs addon and continues as its own mod-loader project.
+
 ## Supported versions
 
 Current release: `1.0.0`
