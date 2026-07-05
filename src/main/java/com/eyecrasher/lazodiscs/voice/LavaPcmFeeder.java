@@ -2,6 +2,8 @@ package com.eyecrasher.lazodiscs.voice;
 
 import com.eyecrasher.lazodiscs.LazoDiscs;
 import com.eyecrasher.lazodiscs.config.LazoDiscsConfig;
+import com.eyecrasher.lazodiscs.service.TrackMatchScorer;
+import com.eyecrasher.lazodiscs.service.TrackMetadata;
 import com.eyecrasher.lazodiscs.text.LazoDiscsText;
 import com.sedmelluq.discord.lavaplayer.format.AudioDataFormat;
 import com.sedmelluq.discord.lavaplayer.format.StandardAudioDataFormats;
@@ -102,7 +104,7 @@ public final class LavaPcmFeeder implements AutoCloseable {
     public static StreamingPlayback openStream(String rawUrl, String title, float volume) throws InterruptedException {
         ResolveRequest request = resolveIdentifier(rawUrl, title);
         LazoDiscs.LOGGER.info("LazoDiscs resolving streaming audio with LavaPlayer: '{}' -> '{}'", rawUrl, request.identifier());
-        AudioTrack track = loadTrack(STREAM_PLAYER_MANAGER, request.identifier(), request.spotifyMetadata());
+        AudioTrack track = loadTrack(STREAM_PLAYER_MANAGER, request.identifier(), request.metadata());
         validateStreamingTrackLength(track);
 
         AudioPlayer player = STREAM_PLAYER_MANAGER.createPlayer();
@@ -115,7 +117,7 @@ public final class LavaPcmFeeder implements AutoCloseable {
         AudioLoadExecutor.submit(() -> {
             try {
                 ResolveRequest request = resolveIdentifier(rawUrl, title);
-                AudioTrack track = loadTrack(STREAM_PLAYER_MANAGER, request.identifier(), request.spotifyMetadata());
+                AudioTrack track = loadTrack(STREAM_PLAYER_MANAGER, request.identifier(), request.metadata());
                 validateStreamingTrackLength(track);
             } catch (Throwable t) {
                 if (onFailure != null) {
@@ -134,7 +136,7 @@ public final class LavaPcmFeeder implements AutoCloseable {
         return searchYoutubeMusic(query, maxResults, null);
     }
 
-    public static List<SearchResult> searchYoutubeMusic(String query, int maxResults, SpotifyTitleResolver.SpotifyMetadata spotifyMetadata) throws InterruptedException {
+    public static List<SearchResult> searchYoutubeMusic(String query, int maxResults, TrackMetadata metadata) throws InterruptedException {
         String cleanQuery = query == null ? "" : query.trim();
         if (cleanQuery.isBlank()) return List.of();
 
@@ -178,8 +180,8 @@ public final class LavaPcmFeeder implements AutoCloseable {
         if (failure.get() != null) {
             throw new RuntimeException(messageOf(failure.get()));
         }
-        if (spotifyMetadata != null) {
-            results.sort((a, b) -> Integer.compare(scoreSearchResult(b, spotifyMetadata), scoreSearchResult(a, spotifyMetadata)));
+        if (metadata != null) {
+            results.sort((a, b) -> Integer.compare(scoreSearchResult(b, metadata), scoreSearchResult(a, metadata)));
         }
         return List.copyOf(results);
     }
@@ -209,12 +211,12 @@ public final class LavaPcmFeeder implements AutoCloseable {
         try {
             ResolveRequest request = resolveIdentifier(rawUrl, title);
             LazoDiscs.LOGGER.info("LazoDiscs resolving audio with LavaPlayer: '{}' -> '{}'", rawUrl, request.identifier());
-            if (request.spotifyMetadata() != null) {
-                LazoDiscs.LOGGER.info("LazoDiscs Spotify match hints: title='{}', artist='{}', duration={}ms",
-                        request.spotifyMetadata().title(), request.spotifyMetadata().primaryArtist(), request.spotifyMetadata().durationMs());
+            if (request.metadata() != null) {
+                LazoDiscs.LOGGER.info("LazoDiscs match hints: title='{}', artist='{}', duration={}ms",
+                        request.metadata().title(), request.metadata().primaryArtist(), request.metadata().durationMs());
             }
 
-            AudioTrack track = loadTrack(PLAYER_MANAGER, request.identifier(), request.spotifyMetadata());
+            AudioTrack track = loadTrack(PLAYER_MANAGER, request.identifier(), request.metadata());
             if (closed.get()) return;
             if (track == null) {
                 fail(LazoDiscsText.audioNoMatches());
@@ -292,7 +294,7 @@ public final class LavaPcmFeeder implements AutoCloseable {
         }
     }
 
-    private static AudioTrack loadTrack(AudioPlayerManager manager, String identifier, SpotifyTitleResolver.SpotifyMetadata spotifyMetadata) throws InterruptedException {
+    private static AudioTrack loadTrack(AudioPlayerManager manager, String identifier, TrackMetadata metadata) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<AudioTrack> result = new AtomicReference<>();
         AtomicReference<Throwable> failure = new AtomicReference<>();
@@ -309,7 +311,7 @@ public final class LavaPcmFeeder implements AutoCloseable {
                 if (playlist.getSelectedTrack() != null) {
                     result.set(playlist.getSelectedTrack());
                 } else if (!playlist.getTracks().isEmpty()) {
-                    result.set(selectBestTrack(playlist.getTracks(), spotifyMetadata));
+                    result.set(selectBestTrack(playlist.getTracks(), metadata));
                 }
                 latch.countDown();
             }
@@ -351,7 +353,7 @@ public final class LavaPcmFeeder implements AutoCloseable {
         }
     }
 
-    private static AudioTrack selectBestTrack(List<AudioTrack> tracks, SpotifyTitleResolver.SpotifyMetadata metadata) {
+    private static AudioTrack selectBestTrack(List<AudioTrack> tracks, TrackMetadata metadata) {
         if (tracks.isEmpty()) return null;
         if (metadata == null) return tracks.get(0);
 
@@ -372,69 +374,13 @@ public final class LavaPcmFeeder implements AutoCloseable {
         return best;
     }
 
-    private static int scoreTrack(AudioTrack track, SpotifyTitleResolver.SpotifyMetadata metadata) {
+    private static int scoreTrack(AudioTrack track, TrackMetadata metadata) {
         AudioTrackInfo info = track.getInfo();
-        return scoreInfo(info.title, info.author, info.length, metadata);
+        return TrackMatchScorer.score(info.title, info.author, info.length, metadata);
     }
 
-    private static int scoreSearchResult(SearchResult result, SpotifyTitleResolver.SpotifyMetadata metadata) {
-        return scoreInfo(result.title(), result.author(), result.lengthMs(), metadata);
-    }
-
-    private static int scoreInfo(String rawTitle, String rawAuthor, long lengthMs, SpotifyTitleResolver.SpotifyMetadata metadata) {
-        String hay = normalize(rawTitle + " " + rawAuthor);
-        String titleNorm = normalize(metadata.title());
-        int score = 0;
-
-        if (!titleNorm.isBlank()) {
-            if (hay.contains(titleNorm)) score += 120;
-            List<String> words = meaningfulWords(titleNorm);
-            for (String word : words) {
-                if (hay.contains(word)) score += 16;
-                else score -= 18;
-            }
-        }
-
-        for (String artist : metadata.artists()) {
-            String artistNorm = normalize(artist);
-            if (artistNorm.isBlank()) continue;
-            if (hay.contains(artistNorm)) score += 95;
-            for (String word : meaningfulWords(artistNorm)) {
-                if (hay.contains(word)) score += 12;
-                else score -= 10;
-            }
-        }
-
-        Long expectedDuration = metadata.durationMs();
-        if (expectedDuration != null && expectedDuration > 0 && lengthMs > 0) {
-            long diff = Math.abs(lengthMs - expectedDuration);
-            if (diff <= 3000) score += 110;
-            else if (diff <= 10_000) score += 80;
-            else if (diff <= 25_000) score += 35;
-            else score -= (int) Math.min(120, diff / 1000L);
-        }
-
-        String bad = hay;
-        List<String> penalties = List.of("cover", "remix", "sped up", "slowed", "nightcore", "karaoke", "instrumental", "8d", "loop", "extended", "live", "reaction");
-        String expectedTitle = titleNorm;
-        for (String penalty : penalties) {
-            if (bad.contains(penalty) && !expectedTitle.contains(penalty)) score -= 45;
-        }
-
-        if (bad.contains("official audio") || bad.contains("topic") || bad.contains("provided to youtube")) score += 15;
-        if (bad.contains("lyrics") && !expectedTitle.contains("lyrics")) score -= 10;
-        return score;
-    }
-
-    private static List<String> meaningfulWords(String normalized) {
-        if (normalized == null || normalized.isBlank()) return List.of();
-        List<String> out = new ArrayList<>();
-        for (String word : normalized.split(" ")) {
-            if (word.length() < 3) continue;
-            if (word.equals("the") || word.equals("and") || word.equals("feat") || word.equals("ft") || word.equals("official") || word.equals("audio")) continue;
-            out.add(word);
-        }
-        return out;
+    private static int scoreSearchResult(SearchResult result, TrackMetadata metadata) {
+        return TrackMatchScorer.score(result.title(), result.author(), result.lengthMs(), metadata);
     }
 
     private void fail(String reason) {
@@ -460,7 +406,9 @@ public final class LavaPcmFeeder implements AutoCloseable {
             if (!LazoDiscsConfig.SPOTIFY_SEARCH_VIA_YOUTUBE.get()) {
                 throw new IllegalArgumentException(LazoDiscsText.spotifyDisabled());
             }
-            SpotifyTitleResolver.SpotifyMetadata metadata = SpotifyTitleResolver.resolveMetadata(raw).orElse(null);
+            TrackMetadata metadata = SpotifyTitleResolver.resolveMetadata(raw)
+                    .map(spotify -> new TrackMetadata(spotify.title(), spotify.artists(), spotify.durationMs()))
+                    .orElse(null);
             String query;
             if (metadata != null && !metadata.searchQuery().isBlank()) {
                 query = metadata.searchQuery();
@@ -478,16 +426,6 @@ public final class LavaPcmFeeder implements AutoCloseable {
             return new ResolveRequest("ytmsearch:" + raw, null);
         }
         return new ResolveRequest(raw, null);
-    }
-
-    private static String normalize(String value) {
-        if (value == null) return "";
-        return value.toLowerCase(Locale.ROOT)
-                .replaceAll("\\([^)]*\\)", " ")
-                .replaceAll("\\[[^]]*]", " ")
-                .replaceAll("[^\\p{L}\\p{Nd}]+", " ")
-                .replaceAll("\\s+", " ")
-                .trim();
     }
 
     private void consumePcmFrame(ByteBuffer buffer, ShortBuilder out) {
@@ -543,7 +481,7 @@ public final class LavaPcmFeeder implements AutoCloseable {
         }
     }
 
-    private record ResolveRequest(String identifier, SpotifyTitleResolver.SpotifyMetadata spotifyMetadata) {
+    private record ResolveRequest(String identifier, TrackMetadata metadata) {
     }
 
     private static final class ShortBuilder {
