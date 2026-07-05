@@ -40,10 +40,7 @@ public final class PlasmoVoiceBridge {
     public void initialize(PlasmoVoiceServer voiceServer, Object addon) {
         this.voiceServer = voiceServer;
 
-        String sourceLineName = LazoDiscsConfig.SOURCE_LINE_NAME.get();
-        if (sourceLineName == null || sourceLineName.isBlank() || sourceLineName.equalsIgnoreCase("auto")) {
-            sourceLineName = LazoDiscsText.sourceLineName();
-        }
+        String sourceLineName = LazoDiscsText.sourceLineName();
 
         try (InputStream icon = getIconResource()) {
             if (icon != null) {

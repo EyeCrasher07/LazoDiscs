@@ -10,7 +10,9 @@ LazoDiscs is based on the original Plasmo Voice Discs addon and continues as its
 - Keep only music disc playback.
 - Use `/lazodisc` as the public command root.
 - Use a new custom disc data format.
-- Start with English messages.
+- Store server settings in `config/lazodiscs/config.toml`.
+- Store editable messages in `config/lazodiscs/lang/<language>.toml`.
+- Start with `en_us.toml`; add more language files later.
 - Keep the server-side dedicated-server experience where possible.
 
 ## Current Changes

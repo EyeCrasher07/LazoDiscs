@@ -47,14 +47,18 @@ Published builds:
 The common config contains the main server-side options.
 
 ```toml
-[display]
-sourceLineName = "auto"
-nowPlayingMessage = "auto"
+language = "en_us"
 
 [lavaplayer]
 maxConcurrentAudioLoads = 3
 maxStreamingTrackLengthSeconds = 0
 ```
+
+Config path: `config/lazodiscs/config.toml`
+
+Language files path: `config/lazodiscs/lang/<language>.toml`
+
+The built-in English file is created as `config/lazodiscs/lang/en_us.toml` on first start. Server owners can edit it or add another file such as `ru_ru.toml`, then set `language = "ru_ru"`.
 
 `maxStreamingTrackLengthSeconds = 0` means streamed LavaPlayer tracks are unlimited by length.
 

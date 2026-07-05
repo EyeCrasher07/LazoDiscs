@@ -2,7 +2,6 @@ package com.eyecrasher.lazodiscs.mixin;
 
 import com.eyecrasher.lazodiscs.LazoDiscs;
 import com.eyecrasher.lazodiscs.access.LazoDiscJukeboxAccess;
-import com.eyecrasher.lazodiscs.config.LazoDiscsConfig;
 import com.eyecrasher.lazodiscs.data.CustomDiscData;
 import com.eyecrasher.lazodiscs.data.DiscDataUtil;
 import com.eyecrasher.lazodiscs.text.LazoDiscsText;
@@ -66,14 +65,7 @@ public abstract class JukeboxPlayableMixin {
 
             player.awardStat(Stats.PLAY_RECORD);
             String title = data.get().title();
-            String nowPlayingMessage = LazoDiscsConfig.NOW_PLAYING_MESSAGE.get();
-            if (nowPlayingMessage == null || nowPlayingMessage.isBlank()) {
-                player.displayClientMessage(Component.translatable("record.nowPlaying", Component.literal(title)), true);
-            } else if (nowPlayingMessage.equalsIgnoreCase("auto")) {
-                player.displayClientMessage(Component.literal(LazoDiscsText.nowPlaying(title)), true);
-            } else {
-                player.displayClientMessage(Component.literal(nowPlayingMessage.replace("%title%", title)), true);
-            }
+            player.displayClientMessage(Component.literal(LazoDiscsText.nowPlaying(title)), true);
         }
 
         cir.setReturnValue(InteractionResult.SUCCESS);

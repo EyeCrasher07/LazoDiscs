@@ -5,6 +5,7 @@ import com.eyecrasher.lazodiscs.config.LazoDiscsConfig;
 import com.eyecrasher.lazodiscs.event.JukeboxEvents;
 import com.eyecrasher.lazodiscs.event.LazoDiscsLifecycleEvents;
 import com.eyecrasher.lazodiscs.server.JukeboxPlaybackManager;
+import com.eyecrasher.lazodiscs.text.LazoDiscsText;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.common.Mod;
@@ -19,7 +20,8 @@ public final class LazoDiscs {
     public static final Logger LOGGER = LoggerFactory.getLogger("LazoDiscs");
 
     public LazoDiscs(IEventBus modBus) {
-        ModLoadingContext.get().getActiveContainer().registerConfig(ModConfig.Type.COMMON, LazoDiscsConfig.SPEC, "lazodiscs-common.toml");
+        ModLoadingContext.get().getActiveContainer().registerConfig(ModConfig.Type.COMMON, LazoDiscsConfig.SPEC, "lazodiscs/config.toml");
+        LazoDiscsText.reload();
 
         NeoForge.EVENT_BUS.register(LazoDiscsCommands.class);
         NeoForge.EVENT_BUS.register(JukeboxEvents.class);

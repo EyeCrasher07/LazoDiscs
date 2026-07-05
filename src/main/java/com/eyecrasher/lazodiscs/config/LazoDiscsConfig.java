@@ -11,8 +11,7 @@ public final class LazoDiscsConfig {
     public static final ModConfigSpec.IntValue MAX_RANGE;
     public static final ModConfigSpec.DoubleValue DEFAULT_VOLUME;
     public static final ModConfigSpec.DoubleValue SOURCE_LINE_DEFAULT_VOLUME;
-    public static final ModConfigSpec.ConfigValue<String> SOURCE_LINE_NAME;
-    public static final ModConfigSpec.ConfigValue<String> NOW_PLAYING_MESSAGE;
+    public static final ModConfigSpec.ConfigValue<String> LANGUAGE;
     public static final ModConfigSpec.BooleanValue ALLOW_HTTP;
     public static final ModConfigSpec.BooleanValue ALLOW_HTTPS;
     public static final ModConfigSpec.ConfigValue<List<? extends String>> ALLOWED_DOMAINS;
@@ -28,6 +27,9 @@ public final class LazoDiscsConfig {
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
 
+        LANGUAGE = builder.comment("Server-side message language. Files are loaded from config/lazodiscs/lang/<language>.toml.")
+                .define("language", "en_us");
+
         builder.push("playback");
         DEFAULT_RANGE = builder.comment("Default Plasmo Voice audible range for burned discs.")
                 .defineInRange("defaultRange", 64, 1, 512);
@@ -41,13 +43,6 @@ public final class LazoDiscsConfig {
                 .defineInRange("positionUpdateIntervalTicks", 5, 1, 200);
         VALIDATION_INTERVAL_TICKS = builder.comment("How often active jukeboxes are rechecked for block/entity/item validity. 20 = once per second. Stops/removals are still handled instantly by events.")
                 .defineInRange("validationIntervalTicks", 20, 1, 200);
-        builder.pop();
-
-        builder.push("display");
-        SOURCE_LINE_NAME = builder.comment("Name shown in the Plasmo Voice source list. Use auto for the built-in English name, or write a custom name.")
-                .define("sourceLineName", "auto");
-        NOW_PLAYING_MESSAGE = builder.comment("Action-bar message shown when a burned LazoDisc starts. Use %title%. auto uses the built-in English message. Empty value uses vanilla Minecraft record.nowPlaying translation.")
-                .define("nowPlayingMessage", "auto");
         builder.pop();
 
         builder.push("lavaplayer");
