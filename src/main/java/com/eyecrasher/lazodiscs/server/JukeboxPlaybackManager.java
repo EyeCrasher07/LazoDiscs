@@ -22,7 +22,6 @@ public final class JukeboxPlaybackManager {
     public static final JukeboxPlaybackManager INSTANCE = new JukeboxPlaybackManager();
 
     private final Map<SourceKey, ActiveJukeboxSource> active = new ConcurrentHashMap<>();
-    private final Map<SourceKey, Long> restartBlockedUntilTick = new ConcurrentHashMap<>();
 
     private JukeboxPlaybackManager() {
     }
@@ -61,15 +60,6 @@ public final class JukeboxPlaybackManager {
             return;
         }
 
-        long now = level.getGameTime();
-        long blockedUntil = restartBlockedUntilTick.getOrDefault(sourceKey, 0L);
-        if (blockedUntil > now) {
-            LazoDiscs.LOGGER.warn("Rejected LazoDisc '{}' at {}: jukebox restart cooldown for {} more ticks",
-                    disc.title(), pos.toShortString(), blockedUntil - now);
-            VanillaRecordStopper.stopVanillaRecordsNear(level, pos, 4.0D);
-            return;
-        }
-
         ActiveJukeboxSource old = active.remove(sourceKey);
         if (old != null) {
             try {
@@ -78,8 +68,6 @@ public final class JukeboxPlaybackManager {
                 LazoDiscs.LOGGER.warn("Failed to stop old LazoDisc at {}: {}", pos.toShortString(), e.toString());
             }
         }
-
-        rememberRestart(level, sourceKey);
 
         try {
             Vec3 center = Vec3.atCenterOf(pos);
@@ -115,15 +103,6 @@ public final class JukeboxPlaybackManager {
         }
     }
 
-    private void rememberRestart(ServerLevel level, SourceKey sourceKey) {
-        int cooldownTicks = LazoDiscsConfig.JUKEBOX_RESTART_COOLDOWN_TICKS.get();
-        if (cooldownTicks <= 0) {
-            restartBlockedUntilTick.remove(sourceKey);
-            return;
-        }
-        restartBlockedUntilTick.put(sourceKey, level.getGameTime() + cooldownTicks);
-    }
-
     public void stopChunk(ServerLevel level, ChunkPos chunkPos, String reason) {
         Iterator<Map.Entry<SourceKey, ActiveJukeboxSource>> it = active.entrySet().iterator();
         while (it.hasNext()) {
@@ -131,7 +110,6 @@ public final class JukeboxPlaybackManager {
             SourceKey key = e.getKey();
             if (key.dimension().equals(level.dimension()) && new ChunkPos(key.pos()).equals(chunkPos)) {
                 it.remove();
-                restartBlockedUntilTick.remove(key);
                 try {
                     e.getValue().stop();
                 } catch (Exception ex) {
@@ -147,9 +125,6 @@ public final class JukeboxPlaybackManager {
         long gameTime = level.getGameTime();
         int validationInterval = Math.max(1, LazoDiscsConfig.VALIDATION_INTERVAL_TICKS.get());
         boolean validate = gameTime % validationInterval == 0;
-        if (validate) {
-            restartBlockedUntilTick.entrySet().removeIf(e -> e.getKey().dimension().equals(level.dimension()) && e.getValue() <= gameTime);
-        }
 
         Iterator<Map.Entry<SourceKey, ActiveJukeboxSource>> it = active.entrySet().iterator();
         while (it.hasNext()) {
@@ -182,7 +157,6 @@ public final class JukeboxPlaybackManager {
             }
         }
         active.clear();
-        restartBlockedUntilTick.clear();
         LazoDiscs.LOGGER.info("Stopped all LazoDisc sources ({})", reason);
     }
 
@@ -195,7 +169,6 @@ public final class JukeboxPlaybackManager {
             if (!key.dimension().equals(level.dimension())) continue;
             if (!isStillValidCustomJukebox(level, key.pos())) {
                 it.remove();
-                restartBlockedUntilTick.remove(key);
                 e.getValue().stop();
             }
         }

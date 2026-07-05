@@ -23,7 +23,6 @@ public final class LazoDiscsConfig {
     public static final ModConfigSpec.IntValue MAX_TRACK_LENGTH_SECONDS;
     public static final ModConfigSpec.IntValue POSITION_UPDATE_INTERVAL_TICKS;
     public static final ModConfigSpec.IntValue VALIDATION_INTERVAL_TICKS;
-    public static final ModConfigSpec.IntValue JUKEBOX_RESTART_COOLDOWN_TICKS;
     public static final ModConfigSpec.BooleanValue SPOTIFY_SEARCH_VIA_YOUTUBE;
     public static final ModConfigSpec.BooleanValue STREAM_LAVAPLAYER_SOURCES;
     public static final ModConfigSpec.IntValue MAX_STREAMING_TRACK_LENGTH_SECONDS;
@@ -49,8 +48,6 @@ public final class LazoDiscsConfig {
                 .defineInRange("positionUpdateIntervalTicks", 5, 1, 200);
         VALIDATION_INTERVAL_TICKS = builder.comment("How often active jukeboxes are rechecked for block/entity/item validity. 20 = once per second. Stops/removals are still handled instantly by events.")
                 .defineInRange("validationIntervalTicks", 20, 1, 200);
-        JUKEBOX_RESTART_COOLDOWN_TICKS = builder.comment("Minimum ticks before the same jukebox can start another LazoDisc. Prevents right-click/eject spam from creating heavy repeated audio starts. 20 ticks = 1 second.")
-                .defineInRange("jukeboxRestartCooldownTicks", 40, 0, 20 * 60);
         builder.pop();
 
         builder.push("display");
