@@ -25,7 +25,6 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
 public final class LazoDiscsCommands {
@@ -181,18 +180,13 @@ public final class LazoDiscsCommands {
             player.sendSystemMessage(LazoDiscsText.searchUsage());
             return 0;
         }
-        if (looksLikeUrl(cleanQuery)) {
-            player.sendSystemMessage(LazoDiscsText.searchNamesOnly().withStyle(ChatFormatting.RED));
-            return 0;
-        }
-
         int safePage = Math.max(1, page);
         player.sendSystemMessage(LazoDiscsText.searching(cleanQuery).withStyle(ChatFormatting.GRAY));
 
         var server = source.getServer();
         AudioLoadExecutor.submit(() -> {
             try {
-                List<LavaPcmFeeder.SearchResult> results = LavaPcmFeeder.searchYoutubeMusic(cleanQuery, SEARCH_MAX_RESULTS);
+                List<LavaPcmFeeder.SearchResult> results = LavaPcmFeeder.search(cleanQuery, SEARCH_MAX_RESULTS);
                 server.execute(() -> sendSearchPage(player, cleanQuery, safePage, results));
             } catch (Throwable t) {
                 LazoDiscs.LOGGER.warn("LazoDiscs search failed for '{}': {}", cleanQuery, t.toString());
@@ -256,14 +250,6 @@ public final class LazoDiscsCommands {
         }
 
         player.sendSystemMessage(nav);
-    }
-
-    private static boolean looksLikeUrl(String value) {
-        String lower = value.toLowerCase(Locale.ROOT);
-        return SpotifyTitleResolver.looksLikeSpotify(value)
-                || lower.startsWith("http://")
-                || lower.startsWith("https://")
-                || lower.contains("://");
     }
 
     private static String quote(String value) {

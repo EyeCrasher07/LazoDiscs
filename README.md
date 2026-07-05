@@ -15,17 +15,17 @@ Published builds:
 
 - `/lazodisc burn <url> [title]`
 - `/lazodisc erase`
-- `/lazodisc search "<song name>" [page]`
+- `/lazodisc search "<song name or link>" [page]`
 - `/lazodisc stopall`
 - Clickable search results and page navigation in chat
 - YouTube and YouTube Music search through LavaPlayer
 - SoundCloud and other LavaPlayer-supported sources
 - Spotify track links resolved through metadata and matched through YouTube Music
 - Direct MP3 support
-- Russian and English server messages via `display.language`
+- English server messages for the first rewrite builds
 - Separate Plasmo Voice source line for disc volume
 - Direct streaming for LavaPlayer sources instead of decoding full tracks into RAM
-- Jukebox restart cooldown to protect TPS from right-click/eject spam
+- Upstream-style one-playback-per-jukebox lifecycle to protect TPS from right-click/eject spam
 - Sable / Create Aeronautics moving platform position support
 - Server-side on dedicated servers: players need Plasmo Voice, not LazoDiscs
 
@@ -34,11 +34,11 @@ Published builds:
 ```text
 /lazodisc burn <url> [title]
 /lazodisc erase
-/lazodisc search "<song name>" [page]
+/lazodisc search "<song name or link>" [page]
 /lazodisc stopall
 ```
 
-`/lazodisc search` is for song names only, not links. To burn a Spotify, YouTube, SoundCloud, or direct audio link, use `/lazodisc burn`.
+`/lazodisc search` accepts song names, Spotify track links, and direct playable links. Spotify is resolved as metadata and matched through YouTube Music.
 
 ## Server config
 
@@ -46,18 +46,13 @@ The common config contains the main server-side options.
 
 ```toml
 [display]
-language = "ru_ru"
 sourceLineName = "auto"
 nowPlayingMessage = "auto"
 
-[audio]
+[lavaplayer]
 maxConcurrentAudioLoads = 3
-maxTrackLengthSeconds = 900
 maxStreamingTrackLengthSeconds = 0
-jukeboxRestartCooldownTicks = 40
 ```
-
-Use `language = "ru_ru"` for Russian messages or `language = "en_us"` for English messages.
 
 `maxStreamingTrackLengthSeconds = 0` means streamed LavaPlayer tracks are unlimited by length. `maxTrackLengthSeconds` still applies to decoded/preloaded fallback audio.
 

@@ -132,6 +132,27 @@ public final class LavaPcmFeeder implements AutoCloseable {
     }
 
 
+    public static List<SearchResult> search(String input, int maxResults) throws InterruptedException {
+        String cleanInput = input == null ? "" : input.trim();
+        if (cleanInput.isBlank()) return List.of();
+
+        if (SpotifyTitleResolver.looksLikeSpotify(cleanInput)) {
+            if (!LazoDiscsConfig.SPOTIFY_SEARCH_VIA_YOUTUBE.get()) {
+                throw new IllegalArgumentException(LazoDiscsText.spotifyDisabled());
+            }
+            TrackMetadata metadata = SpotifyTitleResolver.resolveMetadata(cleanInput)
+                    .map(spotify -> new TrackMetadata(spotify.title(), spotify.artists(), spotify.durationMs()))
+                    .orElseThrow(() -> new IllegalArgumentException(LazoDiscsText.spotifyMetadataFailed()));
+            return searchYoutubeMusic(metadata.searchQuery(), maxResults, metadata);
+        }
+
+        if (looksLikeUrl(cleanInput)) {
+            return loadSearchResults(cleanInput, maxResults);
+        }
+
+        return searchYoutubeMusic(cleanInput, maxResults, null);
+    }
+
     public static List<SearchResult> searchYoutubeMusic(String query, int maxResults) throws InterruptedException {
         return searchYoutubeMusic(query, maxResults, null);
     }
@@ -186,6 +207,53 @@ public final class LavaPcmFeeder implements AutoCloseable {
         return List.copyOf(results);
     }
 
+    private static List<SearchResult> loadSearchResults(String identifier, int maxResults) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+        List<SearchResult> results = new ArrayList<>();
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+
+        PLAYER_MANAGER.loadItemOrdered("lazodiscs-direct-search:" + identifier, identifier, new AudioLoadResultHandler() {
+            @Override
+            public void trackLoaded(AudioTrack track) {
+                addSearchResult(results, track);
+                latch.countDown();
+            }
+
+            @Override
+            public void playlistLoaded(AudioPlaylist playlist) {
+                if (playlist.getSelectedTrack() != null) {
+                    addSearchResult(results, playlist.getSelectedTrack());
+                } else {
+                    for (AudioTrack track : playlist.getTracks()) {
+                        addSearchResult(results, track);
+                        if (results.size() >= maxResults) break;
+                    }
+                }
+                latch.countDown();
+            }
+
+            @Override
+            public void noMatches() {
+                latch.countDown();
+            }
+
+            @Override
+            public void loadFailed(FriendlyException exception) {
+                failure.set(exception);
+                latch.countDown();
+            }
+        });
+
+        int timeout = LazoDiscsConfig.LAVAPLAYER_LOAD_TIMEOUT_SECONDS.get();
+        if (!latch.await(timeout, TimeUnit.SECONDS)) {
+            throw new RuntimeException(LazoDiscsText.searchTimedOut(timeout));
+        }
+        if (failure.get() != null) {
+            throw new RuntimeException(messageOf(failure.get()));
+        }
+        return List.copyOf(results);
+    }
+
     private static void addSearchResult(List<SearchResult> results, AudioTrack track) {
         if (track == null || track.getInfo() == null) return;
         AudioTrackInfo info = track.getInfo();
@@ -204,6 +272,18 @@ public final class LavaPcmFeeder implements AutoCloseable {
 
     private static String nullToUnknown(String value) {
         return value == null || value.isBlank() ? "Unknown" : value;
+    }
+
+    private static boolean looksLikeUrl(String value) {
+        if (value == null || value.isBlank()) return false;
+        try {
+            URI uri = URI.create(value.trim());
+            String scheme = uri.getScheme();
+            return scheme != null && !scheme.isBlank();
+        } catch (Exception ignored) {
+            String lower = value.toLowerCase(Locale.ROOT);
+            return lower.startsWith("http://") || lower.startsWith("https://") || lower.contains("://");
+        }
     }
 
     private void run() {
@@ -413,7 +493,9 @@ public final class LavaPcmFeeder implements AutoCloseable {
             if (metadata != null && !metadata.searchQuery().isBlank()) {
                 query = metadata.searchQuery();
             } else {
-                query = Optional.ofNullable(fallbackTitle).filter(s -> !s.isBlank() && !s.equals(raw)).orElse(raw);
+                query = Optional.ofNullable(fallbackTitle)
+                        .filter(s -> !s.isBlank() && !s.equals(raw))
+                        .orElseThrow(() -> new IllegalArgumentException(LazoDiscsText.spotifyMetadataFailed()));
             }
             return new ResolveRequest("ytmsearch:" + query, metadata);
         }

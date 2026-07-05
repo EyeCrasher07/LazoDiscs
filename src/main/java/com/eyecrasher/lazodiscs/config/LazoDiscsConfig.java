@@ -11,7 +11,6 @@ public final class LazoDiscsConfig {
     public static final ModConfigSpec.IntValue MAX_RANGE;
     public static final ModConfigSpec.DoubleValue DEFAULT_VOLUME;
     public static final ModConfigSpec.DoubleValue SOURCE_LINE_DEFAULT_VOLUME;
-    public static final ModConfigSpec.ConfigValue<String> LANGUAGE;
     public static final ModConfigSpec.ConfigValue<String> SOURCE_LINE_NAME;
     public static final ModConfigSpec.ConfigValue<String> NOW_PLAYING_MESSAGE;
     public static final ModConfigSpec.BooleanValue ALLOW_HTTP;
@@ -51,11 +50,9 @@ public final class LazoDiscsConfig {
         builder.pop();
 
         builder.push("display");
-        LANGUAGE = builder.comment("Server-side language for LazoDiscs messages. Supported values: ru_ru, en_us.")
-                .define("language", "ru_ru");
-        SOURCE_LINE_NAME = builder.comment("Name shown in the Plasmo Voice source list. Use auto to follow display.language, or write a custom name.")
+        SOURCE_LINE_NAME = builder.comment("Name shown in the Plasmo Voice source list. Use auto for the built-in English name, or write a custom name.")
                 .define("sourceLineName", "auto");
-        NOW_PLAYING_MESSAGE = builder.comment("Action-bar message shown when a burned LazoDisc starts. Use %title%. auto follows display.language. Empty value uses vanilla Minecraft record.nowPlaying translation.")
+        NOW_PLAYING_MESSAGE = builder.comment("Action-bar message shown when a burned LazoDisc starts. Use %title%. auto uses the built-in English message. Empty value uses vanilla Minecraft record.nowPlaying translation.")
                 .define("nowPlayingMessage", "auto");
         builder.pop();
 
