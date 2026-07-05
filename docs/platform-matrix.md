@@ -2,11 +2,11 @@
 
 This matrix is a planning note for the rewrite branch. It tracks what should be built first and what depends on Plasmo Voice publishing compatible mod builds.
 
-## Upstream Baseline
+## Original Addon Baseline
 
-`plasmoapp/pv-addon-discs` currently publishes a Paper/Folia/Purpur plugin. Its source uses a shared core, a Paper plugin module, and version-specific NMS modules.
+The official Discs addon currently publishes a Paper/Folia/Purpur plugin. It uses a shared core, a Paper plugin module, and version-specific server modules.
 
-For LazoDiscs, copy the idea, not the Paper-only implementation:
+For LazoDiscs, keep the same stable addon style while implementing mod-loader support:
 
 - one shared playback/service core
 - thin platform adapters for commands, config, disc data, jukebox lifecycle, and Plasmo Voice bootstrap
@@ -32,7 +32,7 @@ For the first pass, prefer `1.21.1` because it has existing LazoDiscs history an
 
 ## Known Version Notes
 
-- Official pv-addon-discs supports many server versions through Paper/Folia/Purpur, including old lines and the latest 1.21.x line.
+- The official Discs addon supports many server versions through Paper/Folia/Purpur, including old lines and the latest 1.21.x line.
 - Plasmo Voice mod builds are more specific by loader and Minecraft version, so LazoDiscs mod-loader publishing must follow Plasmo Voice mod artifacts, not only the Paper plugin version list.
 - `1.21.2` can likely be covered by the Plasmo Voice `1.21.3` compatibility line, but it still needs runtime testing before upload.
 

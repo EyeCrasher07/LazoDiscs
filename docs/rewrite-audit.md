@@ -1,14 +1,14 @@
 # LazoDiscs Rewrite Audit
 
-This document tracks the rewrite from the current single-loader NeoForge mod into a cleaner Plasmo Voice discs addon for NeoForge, Fabric, Forge, and Quilt.
+This document tracks the rewrite from the current single-loader NeoForge mod into a cleaner Plasmo Voice Discs addon for NeoForge, Fabric, Forge, and Quilt.
 
 ## Product Direction
 
 - Keep the public project continuity from the published `1.0.0` release.
 - Rewrite the internals instead of patching the existing code in place.
-- Use `plasmoapp/pv-addon-discs` as the main reference for playback lifecycle and LavaPlayer streaming.
+- Base the rewrite direction on the official Discs addon behavior: stable jukebox lifecycle, direct LavaPlayer streaming, and clean Plasmo Voice source cleanup.
 - Keep only music discs. Do not port goat horn support.
-- Use `/lazodisc` commands, matching the upstream command shape but not the `/disc` literal.
+- Use `/lazodisc` commands with the same simple burn/search/erase style as the original Discs addon.
 - Use a new custom disc data format. Old burned discs do not need compatibility.
 - English only for the first rewritten builds. Add other languages later.
 
@@ -18,7 +18,7 @@ This document tracks the rewrite from the current single-loader NeoForge mod int
 
 - `EyeCrasher07/LazoDiscs` currently has no GitHub issues.
 
-### pv-addon-discs
+### Original Discs Addon
 
 - `#33 Add support for Fabric` is open. This confirms demand for a mod-loader implementation.
 - `#94 Multiple discs can be played at the same time from the same jukebox` is closed. The fix direction is job ownership per jukebox plus cancellation on replacement/eject/hopper/break/chunk unload.
@@ -27,11 +27,11 @@ This document tracks the rewrite from the current single-loader NeoForge mod int
 - `#118 No sound after 10 to 20 seconds` and `#126 Music stops playing with a warn` point at Bukkit/hybrid-server record-state problems. Do not copy Bukkit record reset logic into mod loaders blindly.
 - `#130 The problem with playing music from YouTube` is open. YouTube remains the main unstable source, so config needs oauth2/poToken/remoteCipher/client controls and user-facing error messages.
 - `#132 [music support] 163music` is open. The resolver design should allow adding more metadata/search providers later.
-- `#133 Error on /disc burn` is closed in upstream `1.1.11`; keep the latest upstream command fixes in mind.
+- `#133 Error on /disc burn` is closed in the original addon; keep the latest command fixes in mind.
 
-## Upstream Playback Lessons
+## Playback Stability Notes
 
-The upstream addon does not primarily solve jukebox spam with global limits. It solves it with lifecycle ownership:
+The original Discs addon does not primarily solve jukebox spam with global limits. It solves it with lifecycle ownership:
 
 - One active playback job per jukebox block.
 - Replacing a disc cancels the old job before starting a new one.

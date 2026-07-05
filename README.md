@@ -25,7 +25,7 @@ Published builds:
 - English server messages for the first rewrite builds
 - Separate Plasmo Voice source line for disc volume
 - Direct streaming for LavaPlayer sources instead of decoding full tracks into RAM
-- Upstream-style one-playback-per-jukebox lifecycle to protect TPS from right-click/eject spam
+- Stable one-playback-per-jukebox lifecycle to protect TPS from right-click/eject spam
 - Sable / Create Aeronautics moving platform position support
 - Server-side on dedicated servers: players need Plasmo Voice, not LazoDiscs
 
