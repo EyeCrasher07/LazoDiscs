@@ -47,17 +47,17 @@ public final class LazoDiscsText {
     }
 
     public static MutableComponent searchPlayersOnly() {
-        return component("Only players can use /lazodiscs search.", "Только игроки могут использовать /lazodiscs search.");
+        return component("Only players can use /lazodisc search.", "Только игроки могут использовать /lazodisc search.");
     }
 
     public static MutableComponent searchUsage() {
-        return component("Usage: /lazodiscs search \"song name\"", "Использование: /lazodiscs search \"название песни\"");
+        return component("Usage: /lazodisc search \"song name\"", "Использование: /lazodisc search \"название песни\"");
     }
 
     public static MutableComponent searchNamesOnly() {
         return component(
-                "Use /lazodiscs search only with song names. Use /lazodiscs burn for links.",
-                "В /lazodiscs search вводи только названия песен. Для ссылок используй /lazodiscs burn."
+                "Use /lazodisc search only with song names. Use /lazodisc burn for links.",
+                "В /lazodisc search вводи только названия песен. Для ссылок используй /lazodisc burn."
         );
     }
 

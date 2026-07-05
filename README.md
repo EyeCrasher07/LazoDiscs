@@ -13,10 +13,10 @@ Published builds:
 
 ## Features
 
-- `/lazodiscs burn <url> [title]`
-- `/lazodiscs clear`
-- `/lazodiscs search "<song name>" [page]`
-- `/lazodiscs stopall`
+- `/lazodisc burn <url> [title]`
+- `/lazodisc erase`
+- `/lazodisc search "<song name>" [page]`
+- `/lazodisc stopall`
 - Clickable search results and page navigation in chat
 - YouTube and YouTube Music search through LavaPlayer
 - SoundCloud and other LavaPlayer-supported sources
@@ -32,13 +32,13 @@ Published builds:
 ## Commands
 
 ```text
-/lazodiscs burn <url> [title]
-/lazodiscs clear
-/lazodiscs search "<song name>" [page]
-/lazodiscs stopall
+/lazodisc burn <url> [title]
+/lazodisc erase
+/lazodisc search "<song name>" [page]
+/lazodisc stopall
 ```
 
-`/lazodiscs search` is for song names only, not links. To burn a Spotify, YouTube, SoundCloud, or direct audio link, use `/lazodiscs burn`.
+`/lazodisc search` is for song names only, not links. To burn a Spotify, YouTube, SoundCloud, or direct audio link, use `/lazodisc burn`.
 
 ## Server config
 
@@ -69,7 +69,7 @@ Singleplayer uses an integrated server inside the client. For singleplayer, inst
 
 ## Notes
 
-- The public `/lazodiscs cache` command was removed.
+- The public cache command was removed.
 - Global and per-chunk jukebox limits were removed.
 - LavaPlayer sources stream directly into Plasmo Voice.
 - Apache HttpClient is relocated in the shaded jar to avoid Java module split-package crashes.

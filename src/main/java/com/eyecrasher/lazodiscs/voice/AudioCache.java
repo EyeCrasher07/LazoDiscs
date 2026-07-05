@@ -15,7 +15,7 @@ import java.util.function.Consumer;
  * In-memory decoded PCM cache.
  *
  * LazoDiscs needs full PCM samples before Plasmo Voice's ArrayAudioFrameProvider starts.
- * Preloading/caching after /lazodiscs burn makes the later jukebox insert start much faster.
+ * Preloading/caching after /lazodisc burn makes the later jukebox insert start much faster.
  *
  * This cache is RAM-only. It never writes decoded audio to disk.
  */

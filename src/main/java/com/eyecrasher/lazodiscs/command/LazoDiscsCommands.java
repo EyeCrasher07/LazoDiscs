@@ -37,16 +37,16 @@ public final class LazoDiscsCommands {
 
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {
-        event.getDispatcher().register(Commands.literal("lazodiscs")
+        event.getDispatcher().register(Commands.literal("lazodisc")
                 .then(Commands.literal("burn")
                         .requires(LazoDiscsCommands::canBurn)
                         .then(Commands.argument("url", StringArgumentType.string())
                                 .executes(ctx -> burn(ctx.getSource().getPlayerOrException(), StringArgumentType.getString(ctx, "url"), null))
                                 .then(Commands.argument("title", StringArgumentType.greedyString())
                                         .executes(ctx -> burn(ctx.getSource().getPlayerOrException(), StringArgumentType.getString(ctx, "url"), StringArgumentType.getString(ctx, "title"))))))
-                .then(Commands.literal("clear")
+                .then(Commands.literal("erase")
                         .requires(LazoDiscsCommands::canBurn)
-                        .executes(ctx -> clear(ctx.getSource().getPlayerOrException())))
+                        .executes(ctx -> erase(ctx.getSource().getPlayerOrException())))
                 .then(Commands.literal("stopall")
                         .requires(LazoDiscsCommands::canBurn)
                         .executes(ctx -> stopAll(ctx.getSource())))
@@ -150,7 +150,7 @@ public final class LazoDiscsCommands {
         return 1;
     }
 
-    private static int clear(ServerPlayer player) {
+    private static int erase(ServerPlayer player) {
         ItemStack stack = player.getMainHandItem();
         if (!DiscDataUtil.hasCustomDisc(stack)) {
             player.sendSystemMessage(LazoDiscsText.notLazoDisc());
@@ -218,7 +218,7 @@ public final class LazoDiscsCommands {
             LavaPcmFeeder.SearchResult result = results.get(i);
             String title = sanitizeTitle(result.title());
             String author = sanitizeTitle(result.author());
-            String burnCommand = "/lazodiscs burn " + quote(result.url()) + " " + title;
+            String burnCommand = "/lazodisc burn " + quote(result.url()) + " " + title;
             Component line = Component.literal((i + 1) + ". ")
                     .withStyle(ChatFormatting.DARK_GRAY)
                     .append(Component.literal(title).withStyle(style -> style
@@ -232,7 +232,7 @@ public final class LazoDiscsCommands {
         MutableComponent nav = Component.literal("      ");
 
         if (safePage > 1) {
-            String prev = "/lazodiscs search " + quote(query) + " " + (safePage - 1);
+            String prev = "/lazodisc search " + quote(query) + " " + (safePage - 1);
             nav = nav.append(Component.literal("<").withStyle(style -> style
                     .withColor(ChatFormatting.YELLOW)
                     .withBold(true)
@@ -245,7 +245,7 @@ public final class LazoDiscsCommands {
         nav = nav.append(LazoDiscsText.page(safePage, totalPages).withStyle(ChatFormatting.GRAY));
 
         if (safePage < totalPages) {
-            String next = "/lazodiscs search " + quote(query) + " " + (safePage + 1);
+            String next = "/lazodisc search " + quote(query) + " " + (safePage + 1);
             nav = nav.append(Component.literal(">").withStyle(style -> style
                     .withColor(ChatFormatting.YELLOW)
                     .withBold(true)

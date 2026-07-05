@@ -68,7 +68,7 @@ public final class LazoDiscsConfig {
                 .define("streamLavaPlayerSources", true);
         MAX_STREAMING_TRACK_LENGTH_SECONDS = builder.comment("Maximum duration for streamed LavaPlayer sources such as YouTube/Spotify/SoundCloud. 0 disables the streaming duration limit.")
                 .defineInRange("maxStreamingTrackLengthSeconds", 0, 0, 24 * 60 * 60);
-        PRELOAD_ON_BURN = builder.comment("Start resolving/decoding audio right after /lazodiscs burn, so inserting the disc later starts faster.")
+        PRELOAD_ON_BURN = builder.comment("Start resolving/decoding audio right after /lazodisc burn, so inserting the disc later starts faster.")
                 .define("preloadOnBurn", true);
         MAX_CACHED_TRACKS = builder.comment("Maximum number of decoded tracks kept in RAM for fast jukebox start. 0 disables the cache. This is RAM-only; decoded audio is not saved to disk.")
                 .defineInRange("maxCachedTracks", 64, 0, 256);
@@ -83,9 +83,9 @@ public final class LazoDiscsConfig {
                 .define("allowHttps", true);
         ALLOWED_DOMAINS = builder.comment("Optional domain allow-list. Empty list means any domain is allowed. For YouTube/SoundCloud/Spotify, include their domains here if you enable a whitelist.")
                 .defineList("allowedDomains", List.of(), o -> o instanceof String);
-        REQUIRE_PERMISSION_FOR_BURN_COMMAND = builder.comment("If true, /lazodiscs burn requires operator permission.")
+        REQUIRE_PERMISSION_FOR_BURN_COMMAND = builder.comment("If true, /lazodisc burn requires operator permission.")
                 .define("requirePermissionForBurnCommand", true);
-        BURN_PERMISSION_LEVEL = builder.comment("Permission level required for /lazodiscs burn when requirePermissionForBurnCommand is true.")
+        BURN_PERMISSION_LEVEL = builder.comment("Permission level required for /lazodisc burn when requirePermissionForBurnCommand is true.")
                 .defineInRange("burnPermissionLevel", 2, 0, 4);
         builder.pop();
 
