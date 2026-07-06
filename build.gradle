@@ -9,7 +9,7 @@ version = '1.0.1+mc1.21.11'
 group = 'com.eyecrasher'
 
 base {
-    archivesName = 'lazodiscs'
+    archivesName = 'lazodiscs-neoforge'
 }
 
 java {
