@@ -1,24 +1,17 @@
 # Changelog
 
-## 1.0.0
+## 1.0.1
 
-### Added
-- Added custom music discs for Plasmo Voice servers.
-- Added `/lazodisc burn <url> [title]`, `/lazodisc erase`, and `/lazodisc search <song name>`.
-- Added clickable search results in chat.
-- Added YouTube, YouTube Music, SoundCloud, Spotify track link, and direct audio URL support through LavaPlayer.
-- Added separate editable server language files in `config/lazodiscs/lang`.
-- Added separate permission settings for burning, erasing, searching, and playing discs.
+- Added `/lazodisc` commands: `burn`, `erase`, and `search`.
+- `/lazodisc burn` now accepts links without quotes.
+- `/lazodisc search` now accepts song names without quotes.
+- Added clickable search results.
+- Added Spotify track support through music matching.
+- Added track validation before writing discs.
+- Improved jukebox playback stability during fast insert/eject actions.
+- Removed the public cache command.
+- Removed server-wide and per-chunk jukebox limits.
+- Improved playback cleanup after tracks finish or fail to load.
+- Added separate server-side language files.
+- Added separate permission settings for burn, erase, search, and play.
 - Added Sable / Create Aeronautics moving platform position support.
-
-### Changed
-- LavaPlayer sources stream directly into Plasmo Voice instead of being fully decoded into RAM.
-- `/lazodisc burn` now checks that LavaPlayer can resolve the track before writing the disc.
-- Search accepts song names only; links are burned through `/lazodisc burn`.
-- Active jukebox playback is managed per jukebox to stay stable during fast insert and eject spam.
-- Finished or failed playback sources are removed from the active jukebox map automatically.
-- Burned discs hide the original vanilla music disc tooltip on the server-side item data.
-
-### Removed
-- Removed the old public cache command.
-- Removed global and per-chunk jukebox limits.

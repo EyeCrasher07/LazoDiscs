@@ -2,16 +2,13 @@
 
 LazoDiscs is a server-side NeoForge addon for Plasmo Voice that lets players burn custom music links onto vanilla music discs and play them through positional voice audio.
 
-LazoDiscs is based on the original Plasmo Voice Discs addon and continues as its own mod-loader project.
+## Supported Versions
 
-## Supported versions
+Current release: `1.0.1`
 
-Current release: `1.0.0`
+Minecraft versions:
 
-Published builds:
-
-- Minecraft `1.21.1`
-- Minecraft `1.21.3` - `1.21.11`
+- `1.21.1` - `1.21.11`
 
 ## Features
 
@@ -24,10 +21,9 @@ Published builds:
 - Spotify track links resolved through metadata and matched through YouTube Music
 - Direct audio URL support through LavaPlayer
 - Track validation before discs are burned
-- English server messages for the first rewrite builds
 - Separate Plasmo Voice source line for disc volume
-- Direct streaming for LavaPlayer sources instead of decoding full tracks into RAM
-- Stable one-playback-per-jukebox lifecycle to protect TPS from right-click/eject spam
+- Direct streaming for LavaPlayer sources
+- Stable one-playback-per-jukebox lifecycle
 - Separate permission settings for burn, erase, search, and play
 - Server-side hiding of the original vanilla music disc tooltip on burned discs
 - Sable / Create Aeronautics moving platform position support
@@ -44,7 +40,7 @@ Published builds:
 
 `/lazodisc search` accepts song names only. Use `/lazodisc burn` for Spotify, YouTube, SoundCloud, or direct playable links.
 
-## Server config
+## Server Config
 
 The common config contains the main server-side options.
 
@@ -91,4 +87,4 @@ Singleplayer uses an integrated server inside the client. For singleplayer, inst
 - `/lazodisc burn` checks that LavaPlayer can resolve the track before writing the disc.
 - Finished or failed playback sources are removed from the active jukebox map automatically.
 - Apache HttpClient is relocated in the shaded jar to avoid Java module split-package crashes.
-- Jackson is bundled and relocated for Minecraft 1.21.11 because lavalink-youtube needs `JsonNode` at runtime.
+- Jackson is bundled and relocated where needed for LavaPlayer YouTube support.
