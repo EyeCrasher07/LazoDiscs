@@ -17,6 +17,15 @@ import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
+import dev.lavalink.youtube.clients.AndroidMusicWithThumbnail;
+import dev.lavalink.youtube.clients.AndroidVrWithThumbnail;
+import dev.lavalink.youtube.clients.AndroidWithThumbnail;
+import dev.lavalink.youtube.clients.IosWithThumbnail;
+import dev.lavalink.youtube.clients.MWebWithThumbnail;
+import dev.lavalink.youtube.clients.MusicWithThumbnail;
+import dev.lavalink.youtube.clients.TvHtml5SimplyWithThumbnail;
+import dev.lavalink.youtube.clients.WebEmbeddedWithThumbnail;
+import dev.lavalink.youtube.clients.WebWithThumbnail;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -44,7 +53,18 @@ public final class LavaPcmFeeder {
         manager.setPlayerCleanupThreshold(30_000L);
 
         try {
-            manager.registerSourceManager(new YoutubeAudioSourceManager());
+            manager.registerSourceManager(new YoutubeAudioSourceManager(
+                    true,
+                    new MusicWithThumbnail(),
+                    new MWebWithThumbnail(),
+                    new AndroidMusicWithThumbnail(),
+                    new AndroidWithThumbnail(),
+                    new IosWithThumbnail(),
+                    new TvHtml5SimplyWithThumbnail(),
+                    new WebWithThumbnail(),
+                    new WebEmbeddedWithThumbnail(),
+                    new AndroidVrWithThumbnail()
+            ));
             LazoDiscs.LOGGER.info("LazoDiscs registered youtube-source for LavaPlayer ({})", label);
         } catch (Throwable t) {
             LazoDiscs.LOGGER.warn("LazoDiscs could not register youtube-source ({}): {}", label, t.toString());
