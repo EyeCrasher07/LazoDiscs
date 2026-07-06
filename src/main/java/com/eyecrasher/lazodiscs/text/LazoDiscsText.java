@@ -50,6 +50,10 @@ public final class LazoDiscsText {
         return component("command.invalid_url", "reason", reason);
     }
 
+    public static MutableComponent burnUsage() {
+        return component("command.burn_usage");
+    }
+
     public static MutableComponent burned(String title) {
         return component("command.burned", "title", title);
     }
@@ -375,6 +379,7 @@ public final class LazoDiscsText {
         map.put("common.unknown", "Unknown");
         map.put("command.hold_disc", "Hold a vanilla music disc in your main hand.");
         map.put("command.invalid_url", "Invalid URL: %reason%");
+        map.put("command.burn_usage", "Usage: /lazodisc burn <url> [title]");
         map.put("command.burned", "Burned LazoDisc: %title%");
         map.put("command.resolving_track", "Checking track...");
         map.put("command.burn_failed", "Could not burn disc: %reason%");

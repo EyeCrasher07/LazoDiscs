@@ -35,10 +35,9 @@ public final class LazoDiscsCommands {
     public static void onRegisterCommands(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("lazodisc")
                 .then(Commands.literal("burn")
-                        .then(Commands.argument("url", StringArgumentType.string())
-                                .executes(ctx -> burn(ctx.getSource(), StringArgumentType.getString(ctx, "url"), null))
-                                .then(Commands.argument("title", StringArgumentType.greedyString())
-                                        .executes(ctx -> burn(ctx.getSource(), StringArgumentType.getString(ctx, "url"), StringArgumentType.getString(ctx, "title"))))))
+                        .executes(ctx -> burn(ctx.getSource(), ""))
+                        .then(Commands.argument("input", StringArgumentType.greedyString())
+                                .executes(ctx -> burn(ctx.getSource(), StringArgumentType.getString(ctx, "input")))))
                 .then(Commands.literal("erase")
                         .executes(ctx -> erase(ctx.getSource())))
                 .then(Commands.literal("search")
@@ -48,7 +47,7 @@ public final class LazoDiscsCommands {
         );
     }
 
-    private static int burn(CommandSourceStack source, String rawUrl, String rawTitle) {
+    private static int burn(CommandSourceStack source, String input) {
         if (!LazoDiscsPermissions.canBurn(source)) {
             source.sendFailure(LazoDiscsText.noPermission());
             return 0;
@@ -68,15 +67,21 @@ public final class LazoDiscsCommands {
             return 0;
         }
 
+        BurnInput burnInput = parseBurnInput(input);
+        if (burnInput == null) {
+            player.sendSystemMessage(LazoDiscsText.burnUsage().withStyle(ChatFormatting.RED));
+            return 0;
+        }
+
         String url;
         try {
-            url = DiscDataUtil.validateUrl(rawUrl);
+            url = DiscDataUtil.validateUrl(burnInput.url());
         } catch (IllegalArgumentException e) {
             player.sendSystemMessage(LazoDiscsText.invalidUrl(e.getMessage()));
             return 0;
         }
 
-        String titleHint = rawTitle == null || rawTitle.isBlank() ? null : rawTitle.trim();
+        String titleHint = burnInput.title();
         player.sendSystemMessage(LazoDiscsText.resolvingTrack().withStyle(ChatFormatting.GRAY));
 
         var server = player.createCommandSourceStack().getServer();
@@ -189,7 +194,7 @@ public final class LazoDiscsCommands {
             LavaPcmFeeder.SearchResult result = results.get(i);
             String title = sanitizeTitle(result.title());
             String author = sanitizeTitle(result.author());
-            String burnCommand = "/lazodisc burn " + quote(result.url()) + " " + title;
+            String burnCommand = "/lazodisc burn " + result.url() + " " + title;
             Component line = Component.literal((i + 1) + ". ")
                     .withStyle(ChatFormatting.DARK_GRAY)
                     .append(Component.literal(title).withStyle(style -> style
@@ -214,13 +219,33 @@ public final class LazoDiscsCommands {
                 || lower.contains("soundcloud.com/");
     }
 
-    private static String quote(String value) {
-        return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
-    }
-
     private static String sanitizeTitle(String value) {
         if (value == null || value.isBlank()) return LazoDiscsText.unknown();
         return value.replace('\n', ' ').replace('\r', ' ').trim();
+    }
+
+    private static BurnInput parseBurnInput(String input) {
+        if (input == null) return null;
+        String clean = input.trim();
+        if (clean.isBlank()) return null;
+
+        int splitAt = firstWhitespace(clean);
+        if (splitAt < 0) {
+            return new BurnInput(clean, null);
+        }
+
+        String url = clean.substring(0, splitAt);
+        String title = clean.substring(splitAt).trim();
+        return new BurnInput(url, title.isBlank() ? null : title);
+    }
+
+    private static int firstWhitespace(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            if (Character.isWhitespace(value.charAt(i))) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private static String chooseBurnTitle(String url, String titleHint, LavaPcmFeeder.ResolvedTrack resolved) {
@@ -251,6 +276,9 @@ public final class LazoDiscsCommands {
         long minutes = totalSeconds / 60L;
         long seconds = totalSeconds % 60L;
         return "(" + minutes + ":" + (seconds < 10 ? "0" : "") + seconds + ")";
+    }
+
+    private record BurnInput(String url, String title) {
     }
 
 }
