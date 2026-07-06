@@ -74,13 +74,24 @@ public final class JukeboxPlaybackManager {
             Vec3 projected = SablePositionCompat.projectJukeboxCenter(level, pos);
             boolean dynamicPosition = SablePositionCompat.isProbablySubLevel(pos) || projected.distanceToSqr(center) > 0.0001D;
 
-            var source = PlasmoVoiceBridge.INSTANCE.startStaticSource(level, pos, disc);
+            var source = PlasmoVoiceBridge.INSTANCE.startStaticSource(level, pos, disc, () -> finishAt(level, pos, disc, "track-ended"));
             active.put(sourceKey, new ActiveJukeboxSource(disc, source, dynamicPosition));
             // Stop vanilla record sound that may have started from the original music disc.
             VanillaRecordStopper.stopVanillaRecordsNear(level, pos, 4.0D);
             LazoDiscs.LOGGER.info("Started LazoDisc '{}' at {} ({}, dynamicPosition={})", disc.title(), pos.toShortString(), reason, dynamicPosition);
         } catch (Throwable e) {
             LazoDiscs.LOGGER.warn("Failed to start LazoDisc at {}: {}", pos.toShortString(), e.toString());
+        }
+    }
+
+    private void finishAt(ServerLevel level, BlockPos pos, CustomDiscData disc, String reason) {
+        SourceKey sourceKey = new SourceKey(level.dimension(), pos.immutable());
+        ActiveJukeboxSource current = active.get(sourceKey);
+        if (current == null || !current.disc().equals(disc)) {
+            return;
+        }
+        if (active.remove(sourceKey, current)) {
+            LazoDiscs.LOGGER.info("Finished LazoDisc '{}' at {} ({})", disc.title(), pos.toShortString(), reason);
         }
     }
 

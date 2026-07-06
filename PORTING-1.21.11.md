@@ -36,10 +36,14 @@ Additional runtime fix:
 
 - Version metadata updated to `1.0.0+mc1.21.11`.
 - Server messages are loaded from editable language files.
+- Commands use separate permission settings instead of one shared burn permission.
 - `/lazodisc search <song name>` accepts free text without quotes and returns clickable song results.
 - Search accepts song names only; links are burned through `/lazodisc burn`.
+- `/lazodisc burn` resolves the track with LavaPlayer before writing disc data.
 - Audio loading now uses a configurable bounded executor instead of one unmanaged thread per load/search.
 - LavaPlayer sources stream directly into Plasmo Voice instead of being fully decoded into RAM.
+- Finished or failed playback sources are removed from the active jukebox map automatically.
+- Burned discs hide the original vanilla music disc tooltip with `TOOLTIP_DISPLAY`.
 - Global and per-chunk jukebox limits were removed.
 - The public cache command was removed.
 - Added `/lazodisc stopall`.

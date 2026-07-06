@@ -54,6 +54,14 @@ public final class LazoDiscsText {
         return component("command.burned", "title", title);
     }
 
+    public static MutableComponent resolvingTrack() {
+        return component("command.resolving_track");
+    }
+
+    public static MutableComponent burnFailed(String reason) {
+        return component("command.burn_failed", "reason", clean(reason));
+    }
+
     public static MutableComponent audioLoadFailed(String title, String reason) {
         return component("audio.load_failed", "title", title, "reason", clean(reason));
     }
@@ -74,8 +82,16 @@ public final class LazoDiscsText {
         return component("dependency.plasmo_voice_required");
     }
 
-    public static MutableComponent searchPlayersOnly() {
-        return component("search.players_only");
+    public static MutableComponent noPermission() {
+        return component("permission.no_permission");
+    }
+
+    public static MutableComponent playNoPermission() {
+        return component("permission.play_no_permission");
+    }
+
+    public static MutableComponent playersOnly() {
+        return component("command.players_only");
     }
 
     public static MutableComponent searchUsage() {
@@ -364,11 +380,15 @@ public final class LazoDiscsText {
         map.put("command.hold_disc", "Hold a vanilla music disc in your main hand.");
         map.put("command.invalid_url", "Invalid URL: %reason%");
         map.put("command.burned", "Burned LazoDisc: %title%");
+        map.put("command.resolving_track", "Checking track...");
+        map.put("command.burn_failed", "Could not burn disc: %reason%");
+        map.put("command.players_only", "Only players can use this command.");
         map.put("command.not_lazodisc", "This item is not a LazoDisc.");
         map.put("command.data_removed", "LazoDisc data removed.");
         map.put("command.stopped_all", "Stopped all active LazoDisc sources.");
         map.put("dependency.plasmo_voice_required", "Plasmo Voice is required to play LazoDiscs.");
-        map.put("search.players_only", "Only players can use /lazodisc search.");
+        map.put("permission.no_permission", "You do not have permission to use LazoDiscs.");
+        map.put("permission.play_no_permission", "You do not have permission to play LazoDiscs.");
         map.put("search.usage", "Usage: /lazodisc search <song name>");
         map.put("search.names_only", "Use /lazodisc search with a song name. Use /lazodisc burn for links.");
         map.put("search.searching", "Searching: %query%");

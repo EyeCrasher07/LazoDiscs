@@ -71,6 +71,20 @@ public final class LavaPcmFeeder {
         return new StreamingPlayback(player, track);
     }
 
+    public static ResolvedTrack resolveTrack(String rawUrl, String fallbackTitle) throws InterruptedException {
+        ResolveRequest request = resolveIdentifier(rawUrl, fallbackTitle);
+        AudioTrack track = loadTrack(PLAYER_MANAGER, request.identifier(), request.metadata());
+        validateStreamingTrackLength(track);
+
+        AudioTrackInfo info = track.getInfo();
+        return new ResolvedTrack(
+                nullToUnknown(info.title),
+                nullToUnknown(info.author),
+                info.uri == null || info.uri.isBlank() ? info.identifier : info.uri,
+                info.length
+        );
+    }
+
     public static List<SearchResult> search(String input, int maxResults) throws InterruptedException {
         String cleanInput = input == null ? "" : input.trim();
         if (cleanInput.isBlank()) return List.of();
@@ -149,6 +163,8 @@ public final class LavaPcmFeeder {
                     result.set(playlist.getSelectedTrack());
                 } else if (!playlist.getTracks().isEmpty()) {
                     result.set(selectBestTrack(playlist.getTracks(), metadata));
+                } else {
+                    failure.set(new RuntimeException(LazoDiscsText.audioNoMatches()));
                 }
                 latch.countDown();
             }
@@ -172,6 +188,9 @@ public final class LavaPcmFeeder {
         }
         if (failure.get() != null) {
             throw new RuntimeException(messageOf(failure.get()));
+        }
+        if (result.get() == null) {
+            throw new RuntimeException(LazoDiscsText.audioNoMatches());
         }
         return result.get();
     }
@@ -271,6 +290,9 @@ public final class LavaPcmFeeder {
     }
 
     public record SearchResult(String title, String author, String url, long lengthMs) {
+    }
+
+    public record ResolvedTrack(String title, String author, String url, long lengthMs) {
     }
 
     public record StreamingPlayback(AudioPlayer player, AudioTrack track) implements AutoCloseable {

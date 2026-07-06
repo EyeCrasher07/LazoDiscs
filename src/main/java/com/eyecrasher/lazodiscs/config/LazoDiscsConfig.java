@@ -17,6 +17,14 @@ public final class LazoDiscsConfig {
     public static final ModConfigSpec.ConfigValue<List<? extends String>> ALLOWED_DOMAINS;
     public static final ModConfigSpec.BooleanValue REQUIRE_PERMISSION_FOR_BURN_COMMAND;
     public static final ModConfigSpec.IntValue BURN_PERMISSION_LEVEL;
+    public static final ModConfigSpec.BooleanValue REQUIRE_PERMISSION_FOR_ERASE_COMMAND;
+    public static final ModConfigSpec.IntValue ERASE_PERMISSION_LEVEL;
+    public static final ModConfigSpec.BooleanValue REQUIRE_PERMISSION_FOR_SEARCH_COMMAND;
+    public static final ModConfigSpec.IntValue SEARCH_PERMISSION_LEVEL;
+    public static final ModConfigSpec.BooleanValue REQUIRE_PERMISSION_FOR_STOPALL_COMMAND;
+    public static final ModConfigSpec.IntValue STOPALL_PERMISSION_LEVEL;
+    public static final ModConfigSpec.BooleanValue REQUIRE_PERMISSION_FOR_PLAY;
+    public static final ModConfigSpec.IntValue PLAY_PERMISSION_LEVEL;
     public static final ModConfigSpec.IntValue LAVAPLAYER_LOAD_TIMEOUT_SECONDS;
     public static final ModConfigSpec.IntValue POSITION_UPDATE_INTERVAL_TICKS;
     public static final ModConfigSpec.IntValue VALIDATION_INTERVAL_TICKS;
@@ -67,6 +75,22 @@ public final class LazoDiscsConfig {
                 .define("requirePermissionForBurnCommand", true);
         BURN_PERMISSION_LEVEL = builder.comment("Permission level required for /lazodisc burn when requirePermissionForBurnCommand is true.")
                 .defineInRange("burnPermissionLevel", 2, 0, 4);
+        REQUIRE_PERMISSION_FOR_ERASE_COMMAND = builder.comment("If true, /lazodisc erase requires operator permission.")
+                .define("requirePermissionForEraseCommand", true);
+        ERASE_PERMISSION_LEVEL = builder.comment("Permission level required for /lazodisc erase when requirePermissionForEraseCommand is true.")
+                .defineInRange("erasePermissionLevel", 2, 0, 4);
+        REQUIRE_PERMISSION_FOR_SEARCH_COMMAND = builder.comment("If true, /lazodisc search requires operator permission.")
+                .define("requirePermissionForSearchCommand", true);
+        SEARCH_PERMISSION_LEVEL = builder.comment("Permission level required for /lazodisc search when requirePermissionForSearchCommand is true.")
+                .defineInRange("searchPermissionLevel", 2, 0, 4);
+        REQUIRE_PERMISSION_FOR_STOPALL_COMMAND = builder.comment("If true, /lazodisc stopall requires operator permission.")
+                .define("requirePermissionForStopAllCommand", true);
+        STOPALL_PERMISSION_LEVEL = builder.comment("Permission level required for /lazodisc stopall when requirePermissionForStopAllCommand is true.")
+                .defineInRange("stopAllPermissionLevel", 2, 0, 4);
+        REQUIRE_PERMISSION_FOR_PLAY = builder.comment("If true, inserting and playing burned LazoDiscs requires operator permission. Disabled by default so players can use discs.")
+                .define("requirePermissionForPlay", false);
+        PLAY_PERMISSION_LEVEL = builder.comment("Permission level required to play burned LazoDiscs when requirePermissionForPlay is true.")
+                .defineInRange("playPermissionLevel", 2, 0, 4);
         builder.pop();
 
         SPEC = builder.build();

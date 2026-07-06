@@ -82,11 +82,11 @@ public final class PlasmoVoiceBridge {
         this.voiceServer = null;
     }
 
-    public PlayingVoiceSource startStaticSource(ServerLevel level, BlockPos pos, CustomDiscData disc) {
-        return startStreamingSource(level, pos, disc);
+    public PlayingVoiceSource startStaticSource(ServerLevel level, BlockPos pos, CustomDiscData disc, Runnable onFinished) {
+        return startStreamingSource(level, pos, disc, onFinished);
     }
 
-    private PlayingVoiceSource startStreamingSource(ServerLevel level, BlockPos pos, CustomDiscData disc) {
+    private PlayingVoiceSource startStreamingSource(ServerLevel level, BlockPos pos, CustomDiscData disc, Runnable onFinished) {
         PlasmoVoiceServer server = voiceServer;
         ServerSourceLine line = discsLine;
         if (server == null || line == null) {
@@ -103,6 +103,8 @@ public final class PlasmoVoiceBridge {
         ServerPos3d pvPos = new ServerPos3d(pvWorld, projected.x, projected.y, projected.z);
 
         AtomicBoolean stopped = new AtomicBoolean(false);
+        AtomicBoolean manualStop = new AtomicBoolean(false);
+        AtomicBoolean finishedNotified = new AtomicBoolean(false);
         AtomicReference<LavaPcmFeeder.StreamingPlayback> playbackRef = new AtomicReference<>();
         AtomicReference<ServerStaticSource> sourceRef = new AtomicReference<>();
         AtomicReference<AudioSender> senderRef = new AtomicReference<>();
@@ -124,6 +126,12 @@ public final class PlasmoVoiceBridge {
                 }
             }
         };
+        Runnable notifyFinished = () -> {
+            if (onFinished == null || !finishedNotified.compareAndSet(false, true)) {
+                return;
+            }
+            level.getServer().execute(onFinished);
+        };
 
         Future<?> task = AudioLoadExecutor.submit(() -> {
             try {
@@ -142,8 +150,12 @@ public final class PlasmoVoiceBridge {
                 AudioSender sender = source.createAudioSender(provider, (short) Math.max(1, Math.min(Short.MAX_VALUE, disc.range())));
                 senderRef.set(sender);
                 sender.onStop(() -> {
+                    boolean wasManual = manualStop.get();
                     stopped.set(true);
                     cleanup.run();
+                    if (!wasManual) {
+                        notifyFinished.run();
+                    }
                 });
 
                 if (stopped.get()) {
@@ -160,6 +172,9 @@ public final class PlasmoVoiceBridge {
                 }
                 stopped.set(true);
                 cleanup.run();
+                if (!manualStop.get()) {
+                    notifyFinished.run();
+                }
             }
         });
         taskRef.set(task);
@@ -168,6 +183,7 @@ public final class PlasmoVoiceBridge {
             @Override
             public void stop() {
                 if (!stopped.compareAndSet(false, true)) return;
+                manualStop.set(true);
                 Future<?> task = taskRef.getAndSet(null);
                 if (task != null) task.cancel(true);
                 AudioSender sender = senderRef.getAndSet(null);
@@ -193,14 +209,6 @@ public final class PlasmoVoiceBridge {
                 }
             }
         };
-    }
-
-    private void closeLoader(AutoCloseable loader) {
-        if (loader == null) return;
-        try {
-            loader.close();
-        } catch (Exception ignored) {
-        }
     }
 
     private void notifyLoadFailure(ServerLevel level, BlockPos pos, CustomDiscData disc, String reason) {

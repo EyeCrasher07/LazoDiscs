@@ -4,6 +4,7 @@ import com.eyecrasher.lazodiscs.LazoDiscs;
 import com.eyecrasher.lazodiscs.config.LazoDiscsConfig;
 import com.eyecrasher.lazodiscs.data.CustomDiscData;
 import com.eyecrasher.lazodiscs.data.DiscDataUtil;
+import com.eyecrasher.lazodiscs.server.LazoDiscsPermissions;
 import com.eyecrasher.lazodiscs.text.LazoDiscsText;
 import com.eyecrasher.lazodiscs.voice.AudioLoadExecutor;
 import com.eyecrasher.lazodiscs.voice.LavaPcmFeeder;
@@ -20,7 +21,6 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -35,72 +35,35 @@ public final class LazoDiscsCommands {
     public static void onRegisterCommands(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("lazodisc")
                 .then(Commands.literal("burn")
-                        .requires(LazoDiscsCommands::canBurn)
                         .then(Commands.argument("url", StringArgumentType.string())
-                                .executes(ctx -> burn(ctx.getSource().getPlayerOrException(), StringArgumentType.getString(ctx, "url"), null))
+                                .executes(ctx -> burn(ctx.getSource(), StringArgumentType.getString(ctx, "url"), null))
                                 .then(Commands.argument("title", StringArgumentType.greedyString())
-                                        .executes(ctx -> burn(ctx.getSource().getPlayerOrException(), StringArgumentType.getString(ctx, "url"), StringArgumentType.getString(ctx, "title"))))))
+                                        .executes(ctx -> burn(ctx.getSource(), StringArgumentType.getString(ctx, "url"), StringArgumentType.getString(ctx, "title"))))))
                 .then(Commands.literal("erase")
-                        .requires(LazoDiscsCommands::canBurn)
-                        .executes(ctx -> erase(ctx.getSource().getPlayerOrException())))
+                        .executes(ctx -> erase(ctx.getSource())))
                 .then(Commands.literal("stopall")
-                        .requires(LazoDiscsCommands::canBurn)
                         .executes(ctx -> stopAll(ctx.getSource())))
                 .then(Commands.literal("search")
-                        .requires(LazoDiscsCommands::canBurn)
                         .executes(ctx -> search(ctx.getSource(), ""))
                         .then(Commands.argument("query", StringArgumentType.greedyString())
                                 .executes(ctx -> search(ctx.getSource(), StringArgumentType.getString(ctx, "query")))))
         );
     }
 
-    private static boolean canBurn(CommandSourceStack source) {
-        if (!LazoDiscsConfig.REQUIRE_PERMISSION_FOR_BURN_COMMAND.get()) {
-            return true;
+    private static int burn(CommandSourceStack source, String rawUrl, String rawTitle) {
+        if (!LazoDiscsPermissions.canBurn(source)) {
+            source.sendFailure(LazoDiscsText.noPermission());
+            return 0;
         }
 
-        return lazodiscs$hasPermission(source, LazoDiscsConfig.BURN_PERMISSION_LEVEL.get());
-    }
-
-    private static boolean lazodiscs$hasPermission(CommandSourceStack source, int level) {
-        // Minecraft/NeoForge command permission API changed around 1.21.11.
-        // Use reflection here so this port does not depend on one exact method name.
-        String[] methodNames = {"hasPermission", "hasPermissionLevel", "hasPermissions"};
-
-        for (String methodName : methodNames) {
-            try {
-                Method method = source.getClass().getMethod(methodName, int.class);
-                Object result = method.invoke(source, level);
-                if (result instanceof Boolean allowed) {
-                    return allowed;
-                }
-            } catch (ReflectiveOperationException ignored) {
-                // Try the next possible method name.
-            }
-        }
-
+        ServerPlayer player;
         try {
-            Object player = source.getPlayer();
-            for (String methodName : methodNames) {
-                try {
-                    Method method = player.getClass().getMethod(methodName, int.class);
-                    Object result = method.invoke(player, level);
-                    if (result instanceof Boolean allowed) {
-                        return allowed;
-                    }
-                } catch (ReflectiveOperationException ignored) {
-                    // Try the next possible method name.
-                }
-            }
-        } catch (Exception ignored) {
-            // Console/command blocks may not have a player.
+            player = source.getPlayerOrException();
+        } catch (Exception e) {
+            source.sendFailure(LazoDiscsText.playersOnly());
+            return 0;
         }
 
-        // Fallback: do not lock everyone out if the permission API changed again.
-        return true;
-    }
-
-    private static int burn(ServerPlayer player, String rawUrl, String rawTitle) {
         ItemStack stack = player.getMainHandItem();
         if (!DiscDataUtil.isMusicDisc(stack)) {
             player.sendSystemMessage(LazoDiscsText.holdDisc());
@@ -115,15 +78,32 @@ public final class LazoDiscsCommands {
             return 0;
         }
 
-        String title;
-        if (rawTitle == null || rawTitle.isBlank()) {
-            if (SpotifyTitleResolver.looksLikeSpotify(url)) {
-                title = SpotifyTitleResolver.resolveTitle(url).orElse(url);
-            } else {
-                title = url;
+        String titleHint = rawTitle == null || rawTitle.isBlank() ? null : rawTitle.trim();
+        player.sendSystemMessage(LazoDiscsText.resolvingTrack().withStyle(ChatFormatting.GRAY));
+
+        var server = player.createCommandSourceStack().getServer();
+        AudioLoadExecutor.submit(() -> {
+            try {
+                LavaPcmFeeder.ResolvedTrack resolved = LavaPcmFeeder.resolveTrack(url, titleHint);
+                String title = chooseBurnTitle(url, titleHint, resolved);
+                server.execute(() -> finishBurn(player, url, title));
+            } catch (Throwable t) {
+                LazoDiscs.LOGGER.warn("LazoDiscs could not burn '{}': {}", url, t.toString());
+                server.execute(() -> player.sendSystemMessage(LazoDiscsText.burnFailed(messageOf(t)).withStyle(ChatFormatting.RED)));
             }
-        } else {
-            title = rawTitle.trim();
+        });
+        return 1;
+    }
+
+    private static void finishBurn(ServerPlayer player, String url, String title) {
+        if (player.isRemoved()) {
+            return;
+        }
+
+        ItemStack stack = player.getMainHandItem();
+        if (!DiscDataUtil.isMusicDisc(stack)) {
+            player.sendSystemMessage(LazoDiscsText.holdDisc());
+            return;
         }
 
         CustomDiscData data = new CustomDiscData(
@@ -135,10 +115,22 @@ public final class LazoDiscsCommands {
         );
         DiscDataUtil.write(stack, data);
         player.sendSystemMessage(LazoDiscsText.burned(title));
-        return 1;
     }
 
-    private static int erase(ServerPlayer player) {
+    private static int erase(CommandSourceStack source) {
+        if (!LazoDiscsPermissions.canErase(source)) {
+            source.sendFailure(LazoDiscsText.noPermission());
+            return 0;
+        }
+
+        ServerPlayer player;
+        try {
+            player = source.getPlayerOrException();
+        } catch (Exception e) {
+            source.sendFailure(LazoDiscsText.playersOnly());
+            return 0;
+        }
+
         ItemStack stack = player.getMainHandItem();
         if (!DiscDataUtil.hasCustomDisc(stack)) {
             player.sendSystemMessage(LazoDiscsText.notLazoDisc());
@@ -150,17 +142,27 @@ public final class LazoDiscsCommands {
     }
 
     private static int stopAll(CommandSourceStack source) {
+        if (!LazoDiscsPermissions.canStopAll(source)) {
+            source.sendFailure(LazoDiscsText.noPermission());
+            return 0;
+        }
+
         LazoDiscs.playback().stopAll("command");
         source.sendSuccess(LazoDiscsText::stoppedAll, true);
         return 1;
     }
 
     private static int search(CommandSourceStack source, String query) {
+        if (!LazoDiscsPermissions.canSearch(source)) {
+            source.sendFailure(LazoDiscsText.noPermission());
+            return 0;
+        }
+
         ServerPlayer player;
         try {
             player = source.getPlayerOrException();
         } catch (Exception e) {
-            source.sendFailure(LazoDiscsText.searchPlayersOnly());
+            source.sendFailure(LazoDiscsText.playersOnly());
             return 0;
         }
 
@@ -232,6 +234,19 @@ public final class LazoDiscsCommands {
     private static String sanitizeTitle(String value) {
         if (value == null || value.isBlank()) return LazoDiscsText.unknown();
         return value.replace('\n', ' ').replace('\r', ' ').trim();
+    }
+
+    private static String chooseBurnTitle(String url, String titleHint, LavaPcmFeeder.ResolvedTrack resolved) {
+        if (titleHint != null && !titleHint.isBlank()) {
+            return titleHint.trim();
+        }
+        if (resolved != null && resolved.title() != null && !resolved.title().isBlank() && !resolved.title().equalsIgnoreCase(LazoDiscsText.unknown())) {
+            return sanitizeTitle(resolved.title());
+        }
+        if (SpotifyTitleResolver.looksLikeSpotify(url)) {
+            return SpotifyTitleResolver.resolveTitle(url).orElse(url);
+        }
+        return url;
     }
 
     private static String messageOf(Throwable t) {

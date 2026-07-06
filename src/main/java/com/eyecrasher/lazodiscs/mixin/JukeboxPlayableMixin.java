@@ -5,6 +5,7 @@ import com.eyecrasher.lazodiscs.LazoDiscsServerBootstrap;
 import com.eyecrasher.lazodiscs.access.LazoDiscJukeboxAccess;
 import com.eyecrasher.lazodiscs.data.CustomDiscData;
 import com.eyecrasher.lazodiscs.data.DiscDataUtil;
+import com.eyecrasher.lazodiscs.server.LazoDiscsPermissions;
 import com.eyecrasher.lazodiscs.text.LazoDiscsText;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -50,6 +51,11 @@ public abstract class JukeboxPlayableMixin {
         if (!level.isClientSide()) {
             if (!LazoDiscsServerBootstrap.isLoaded()) {
                 player.displayClientMessage(LazoDiscsText.plasmoVoiceRequired(), true);
+                cir.setReturnValue(InteractionResult.FAIL);
+                return;
+            }
+            if (!LazoDiscsPermissions.canPlay(player)) {
+                player.displayClientMessage(LazoDiscsText.playNoPermission(), true);
                 cir.setReturnValue(InteractionResult.FAIL);
                 return;
             }

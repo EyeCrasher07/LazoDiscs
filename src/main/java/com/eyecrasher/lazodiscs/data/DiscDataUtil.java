@@ -10,6 +10,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.TooltipDisplay;
 
 import java.net.URI;
 import java.util.Locale;
@@ -73,6 +74,7 @@ public final class DiscDataUtil {
         root.put(ROOT_KEY, tag);
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(root));
         stack.set(DataComponents.CUSTOM_NAME, Component.literal(disc.title()).withStyle(ChatFormatting.AQUA));
+        hideVanillaDiscTooltip(stack);
         // Remove custom lore. The old extra-tooltip hide component was removed in newer Minecraft.
         stack.remove(DataComponents.LORE);
     }
@@ -89,6 +91,7 @@ public final class DiscDataUtil {
         }
         stack.remove(DataComponents.CUSTOM_NAME);
         stack.remove(DataComponents.LORE);
+        showVanillaDiscTooltip(stack);
     }
 
     public static String validateUrl(String raw) throws IllegalArgumentException {
@@ -131,5 +134,22 @@ public final class DiscDataUtil {
 
     public static int clampRange(int range) {
         return Math.max(1, Math.min(range, LazoDiscsConfig.MAX_RANGE.get()));
+    }
+
+    private static void hideVanillaDiscTooltip(ItemStack stack) {
+        TooltipDisplay tooltip = stack.getOrDefault(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT);
+        stack.set(DataComponents.TOOLTIP_DISPLAY, tooltip.withHidden(DataComponents.JUKEBOX_PLAYABLE, true));
+    }
+
+    private static void showVanillaDiscTooltip(ItemStack stack) {
+        TooltipDisplay tooltip = stack.get(DataComponents.TOOLTIP_DISPLAY);
+        if (tooltip == null) return;
+
+        TooltipDisplay visible = tooltip.withHidden(DataComponents.JUKEBOX_PLAYABLE, false);
+        if (visible.equals(TooltipDisplay.DEFAULT)) {
+            stack.remove(DataComponents.TOOLTIP_DISPLAY);
+        } else {
+            stack.set(DataComponents.TOOLTIP_DISPLAY, visible);
+        }
     }
 }
