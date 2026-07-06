@@ -22,10 +22,6 @@ public final class LazoDiscsPermissions {
         return allowed(source, LazoDiscsConfig.REQUIRE_PERMISSION_FOR_SEARCH_COMMAND.get(), LazoDiscsConfig.SEARCH_PERMISSION_LEVEL.get());
     }
 
-    public static boolean canStopAll(CommandSourceStack source) {
-        return allowed(source, LazoDiscsConfig.REQUIRE_PERMISSION_FOR_STOPALL_COMMAND.get(), LazoDiscsConfig.STOPALL_PERMISSION_LEVEL.get());
-    }
-
     public static boolean canPlay(Player player) {
         if (!LazoDiscsConfig.REQUIRE_PERMISSION_FOR_PLAY.get()) {
             return true;

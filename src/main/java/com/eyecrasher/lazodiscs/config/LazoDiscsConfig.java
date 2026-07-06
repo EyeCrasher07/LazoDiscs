@@ -21,8 +21,6 @@ public final class LazoDiscsConfig {
     public static final ModConfigSpec.IntValue ERASE_PERMISSION_LEVEL;
     public static final ModConfigSpec.BooleanValue REQUIRE_PERMISSION_FOR_SEARCH_COMMAND;
     public static final ModConfigSpec.IntValue SEARCH_PERMISSION_LEVEL;
-    public static final ModConfigSpec.BooleanValue REQUIRE_PERMISSION_FOR_STOPALL_COMMAND;
-    public static final ModConfigSpec.IntValue STOPALL_PERMISSION_LEVEL;
     public static final ModConfigSpec.BooleanValue REQUIRE_PERMISSION_FOR_PLAY;
     public static final ModConfigSpec.IntValue PLAY_PERMISSION_LEVEL;
     public static final ModConfigSpec.IntValue LAVAPLAYER_LOAD_TIMEOUT_SECONDS;
@@ -83,10 +81,6 @@ public final class LazoDiscsConfig {
                 .define("requirePermissionForSearchCommand", true);
         SEARCH_PERMISSION_LEVEL = builder.comment("Permission level required for /lazodisc search when requirePermissionForSearchCommand is true.")
                 .defineInRange("searchPermissionLevel", 2, 0, 4);
-        REQUIRE_PERMISSION_FOR_STOPALL_COMMAND = builder.comment("If true, /lazodisc stopall requires operator permission.")
-                .define("requirePermissionForStopAllCommand", true);
-        STOPALL_PERMISSION_LEVEL = builder.comment("Permission level required for /lazodisc stopall when requirePermissionForStopAllCommand is true.")
-                .defineInRange("stopAllPermissionLevel", 2, 0, 4);
         REQUIRE_PERMISSION_FOR_PLAY = builder.comment("If true, inserting and playing burned LazoDiscs requires operator permission. Disabled by default so players can use discs.")
                 .define("requirePermissionForPlay", false);
         PLAY_PERMISSION_LEVEL = builder.comment("Permission level required to play burned LazoDiscs when requirePermissionForPlay is true.")

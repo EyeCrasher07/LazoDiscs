@@ -46,4 +46,4 @@ Additional runtime fix:
 - Burned discs hide the original vanilla music disc tooltip with `TOOLTIP_DISPLAY`.
 - Global and per-chunk jukebox limits were removed.
 - The public cache command was removed.
-- Added `/lazodisc stopall`.
+- Public commands are `/lazodisc burn`, `/lazodisc erase`, and `/lazodisc search`.

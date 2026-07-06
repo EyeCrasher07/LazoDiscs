@@ -26,7 +26,7 @@ LazoDiscs is based on the original Plasmo Voice Discs addon and continues as its
 - Jukebox playback is owned per block, so replacing, ejecting, breaking, unloading, or invalidating a jukebox stops the current playback cleanly.
 - Finished or failed playback sources are removed from the active jukebox map automatically.
 - Burned discs hide the original vanilla music disc tooltip on the server-side item data.
-- Burn, erase, search, stopall, and play permission settings are separate.
+- Burn, erase, search, and play permission settings are separate.
 - Global jukebox limits are removed.
 - Yandex Music and VK Music are not part of the current scope.
 - Goat horns are not part of the current scope.

@@ -74,10 +74,6 @@ public final class LazoDiscsText {
         return component("command.data_removed");
     }
 
-    public static MutableComponent stoppedAll() {
-        return component("command.stopped_all");
-    }
-
     public static MutableComponent plasmoVoiceRequired() {
         return component("dependency.plasmo_voice_required");
     }
@@ -385,7 +381,6 @@ public final class LazoDiscsText {
         map.put("command.players_only", "Only players can use this command.");
         map.put("command.not_lazodisc", "This item is not a LazoDisc.");
         map.put("command.data_removed", "LazoDisc data removed.");
-        map.put("command.stopped_all", "Stopped all active LazoDisc sources.");
         map.put("dependency.plasmo_voice_required", "Plasmo Voice is required to play LazoDiscs.");
         map.put("permission.no_permission", "You do not have permission to use LazoDiscs.");
         map.put("permission.play_no_permission", "You do not have permission to play LazoDiscs.");

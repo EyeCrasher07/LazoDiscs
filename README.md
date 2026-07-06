@@ -18,7 +18,6 @@ Published builds:
 - `/lazodisc burn <url> [title]`
 - `/lazodisc erase`
 - `/lazodisc search <song name>`
-- `/lazodisc stopall`
 - Clickable search results in chat
 - YouTube and YouTube Music search through LavaPlayer
 - SoundCloud and other LavaPlayer-supported sources
@@ -29,7 +28,7 @@ Published builds:
 - Separate Plasmo Voice source line for disc volume
 - Direct streaming for LavaPlayer sources instead of decoding full tracks into RAM
 - Stable one-playback-per-jukebox lifecycle to protect TPS from right-click/eject spam
-- Separate permission settings for burn, erase, search, stopall, and play
+- Separate permission settings for burn, erase, search, and play
 - Server-side hiding of the original vanilla music disc tooltip on burned discs
 - Sable / Create Aeronautics moving platform position support
 - Requires Plasmo Voice wherever LazoDiscs is installed
@@ -41,7 +40,6 @@ Published builds:
 /lazodisc burn <url> [title]
 /lazodisc erase
 /lazodisc search <song name>
-/lazodisc stopall
 ```
 
 `/lazodisc search` accepts song names only. Use `/lazodisc burn` for Spotify, YouTube, SoundCloud, or direct playable links.
@@ -64,8 +62,6 @@ requirePermissionForEraseCommand = true
 erasePermissionLevel = 2
 requirePermissionForSearchCommand = true
 searchPermissionLevel = 2
-requirePermissionForStopAllCommand = true
-stopAllPermissionLevel = 2
 requirePermissionForPlay = false
 playPermissionLevel = 2
 ```

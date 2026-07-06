@@ -13,7 +13,6 @@ command.burn_failed = "Could not burn disc: %reason%"
 command.players_only = "Only players can use this command."
 command.not_lazodisc = "This item is not a LazoDisc."
 command.data_removed = "LazoDisc data removed."
-command.stopped_all = "Stopped all active LazoDisc sources."
 
 dependency.plasmo_voice_required = "Plasmo Voice is required to play LazoDiscs."
 

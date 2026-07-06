@@ -41,8 +41,6 @@ public final class LazoDiscsCommands {
                                         .executes(ctx -> burn(ctx.getSource(), StringArgumentType.getString(ctx, "url"), StringArgumentType.getString(ctx, "title"))))))
                 .then(Commands.literal("erase")
                         .executes(ctx -> erase(ctx.getSource())))
-                .then(Commands.literal("stopall")
-                        .executes(ctx -> stopAll(ctx.getSource())))
                 .then(Commands.literal("search")
                         .executes(ctx -> search(ctx.getSource(), ""))
                         .then(Commands.argument("query", StringArgumentType.greedyString())
@@ -138,17 +136,6 @@ public final class LazoDiscsCommands {
         }
         DiscDataUtil.clear(stack);
         player.sendSystemMessage(LazoDiscsText.dataRemoved());
-        return 1;
-    }
-
-    private static int stopAll(CommandSourceStack source) {
-        if (!LazoDiscsPermissions.canStopAll(source)) {
-            source.sendFailure(LazoDiscsText.noPermission());
-            return 0;
-        }
-
-        LazoDiscs.playback().stopAll("command");
-        source.sendSuccess(LazoDiscsText::stoppedAll, true);
         return 1;
     }
 

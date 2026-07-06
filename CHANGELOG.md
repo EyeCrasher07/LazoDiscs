@@ -4,11 +4,11 @@
 
 ### Added
 - Added custom music discs for Plasmo Voice servers.
-- Added `/lazodisc burn <url> [title]`, `/lazodisc erase`, `/lazodisc search <song name>`, and `/lazodisc stopall`.
+- Added `/lazodisc burn <url> [title]`, `/lazodisc erase`, and `/lazodisc search <song name>`.
 - Added clickable search results in chat.
 - Added YouTube, YouTube Music, SoundCloud, Spotify track link, and direct audio URL support through LavaPlayer.
 - Added separate editable server language files in `config/lazodiscs/lang`.
-- Added separate permission settings for burning, erasing, searching, stopping all sources, and playing discs.
+- Added separate permission settings for burning, erasing, searching, and playing discs.
 - Added Sable / Create Aeronautics moving platform position support.
 
 ### Changed
