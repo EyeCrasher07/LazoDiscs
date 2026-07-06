@@ -25,6 +25,10 @@ public final class LazoDiscsServerBootstrap {
         }
     }
 
+    public static boolean isLoaded() {
+        return loaded;
+    }
+
     public static synchronized void resetForIntegratedServer() {
         loaded = false;
     }

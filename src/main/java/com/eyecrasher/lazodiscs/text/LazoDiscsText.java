@@ -70,6 +70,10 @@ public final class LazoDiscsText {
         return component("command.stopped_all");
     }
 
+    public static MutableComponent plasmoVoiceRequired() {
+        return component("dependency.plasmo_voice_required");
+    }
+
     public static MutableComponent searchPlayersOnly() {
         return component("search.players_only");
     }
@@ -371,6 +375,7 @@ public final class LazoDiscsText {
         map.put("command.not_lazodisc", "This item is not a LazoDisc.");
         map.put("command.data_removed", "LazoDisc data removed.");
         map.put("command.stopped_all", "Stopped all active LazoDisc sources.");
+        map.put("dependency.plasmo_voice_required", "Plasmo Voice is required to play LazoDiscs.");
         map.put("search.players_only", "Only players can use /lazodisc search.");
         map.put("search.usage", "Usage: /lazodisc search \"song name or link\"");
         map.put("search.searching", "Searching: %query%");

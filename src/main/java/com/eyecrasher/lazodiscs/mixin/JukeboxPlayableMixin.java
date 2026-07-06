@@ -1,6 +1,7 @@
 package com.eyecrasher.lazodiscs.mixin;
 
 import com.eyecrasher.lazodiscs.LazoDiscs;
+import com.eyecrasher.lazodiscs.LazoDiscsServerBootstrap;
 import com.eyecrasher.lazodiscs.access.LazoDiscJukeboxAccess;
 import com.eyecrasher.lazodiscs.data.CustomDiscData;
 import com.eyecrasher.lazodiscs.data.DiscDataUtil;
@@ -47,6 +48,12 @@ public abstract class JukeboxPlayableMixin {
         }
 
         if (!level.isClientSide()) {
+            if (!LazoDiscsServerBootstrap.isLoaded()) {
+                player.displayClientMessage(LazoDiscsText.plasmoVoiceRequired(), true);
+                cir.setReturnValue(InteractionResult.FAIL);
+                return;
+            }
+
             ItemStack record = stack.consumeAndReturn(1, player);
             if (level.getBlockEntity(pos) instanceof JukeboxBlockEntity jukebox) {
                 if (jukebox instanceof LazoDiscJukeboxAccess access) {

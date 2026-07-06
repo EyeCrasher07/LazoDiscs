@@ -29,6 +29,7 @@ Published builds:
 - Direct streaming for LavaPlayer sources instead of decoding full tracks into RAM
 - Stable one-playback-per-jukebox lifecycle to protect TPS from right-click/eject spam
 - Sable / Create Aeronautics moving platform position support
+- Requires Plasmo Voice wherever LazoDiscs is installed
 - Server-side on dedicated servers: players need Plasmo Voice, not LazoDiscs
 
 ## Commands

@@ -64,7 +64,7 @@ public final class JukeboxPlaybackManager {
         if (old != null) {
             try {
                 old.stop();
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 LazoDiscs.LOGGER.warn("Failed to stop old LazoDisc at {}: {}", pos.toShortString(), e.toString());
             }
         }
@@ -79,7 +79,7 @@ public final class JukeboxPlaybackManager {
             // Stop vanilla record sound that may have started from the original music disc.
             VanillaRecordStopper.stopVanillaRecordsNear(level, pos, 4.0D);
             LazoDiscs.LOGGER.info("Started LazoDisc '{}' at {} ({}, dynamicPosition={})", disc.title(), pos.toShortString(), reason, dynamicPosition);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LazoDiscs.LOGGER.warn("Failed to start LazoDisc at {}: {}", pos.toShortString(), e.toString());
         }
     }
@@ -93,7 +93,7 @@ public final class JukeboxPlaybackManager {
         if (old != null) {
             try {
                 old.stop();
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 LazoDiscs.LOGGER.warn("Failed to stop LazoDisc at {}: {}", pos.toShortString(), e.toString());
             }
             LazoDiscs.LOGGER.info("Stopped LazoDisc at {} ({})", pos.toShortString(), reason);
@@ -112,7 +112,7 @@ public final class JukeboxPlaybackManager {
                 it.remove();
                 try {
                     e.getValue().stop();
-                } catch (Exception ex) {
+                } catch (Throwable ex) {
                     LazoDiscs.LOGGER.warn("Failed to stop LazoDisc during chunk unload: {}", ex.toString());
                 }
             }
@@ -152,7 +152,7 @@ public final class JukeboxPlaybackManager {
         for (ActiveJukeboxSource source : active.values()) {
             try {
                 source.stop();
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 LazoDiscs.LOGGER.warn("Failed to stop LazoDisc during stopAll: {}", e.toString());
             }
         }
