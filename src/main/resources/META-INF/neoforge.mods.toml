@@ -11,8 +11,9 @@ displayTest="IGNORE_ALL_VERSION"
 logoFile="lazodiscs_icon.png"
 authors="EyeCrasher"
 description='''
-Custom URL music discs for NeoForge using Plasmo Voice positional audio.
-Server-side mod for dedicated servers, with integrated singleplayer server support. Port for Minecraft 1.21.11.
+Custom music discs with Plasmo Voice positional audio.
+Burn YouTube, YouTube Music, SoundCloud, Spotify track links, and direct playable audio URLs onto vanilla music discs.
+Supports dedicated servers and integrated singleplayer servers.
 '''
 
 [[mixins]]
