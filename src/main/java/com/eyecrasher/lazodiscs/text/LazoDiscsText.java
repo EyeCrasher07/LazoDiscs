@@ -82,6 +82,10 @@ public final class LazoDiscsText {
         return component("search.usage");
     }
 
+    public static MutableComponent searchNamesOnly() {
+        return component("search.names_only");
+    }
+
     public static MutableComponent searching(String query) {
         return component("search.searching", "query", query);
     }
@@ -377,7 +381,8 @@ public final class LazoDiscsText {
         map.put("command.stopped_all", "Stopped all active LazoDisc sources.");
         map.put("dependency.plasmo_voice_required", "Plasmo Voice is required to play LazoDiscs.");
         map.put("search.players_only", "Only players can use /lazodisc search.");
-        map.put("search.usage", "Usage: /lazodisc search \"song name or link\"");
+        map.put("search.usage", "Usage: /lazodisc search \"song name\"");
+        map.put("search.names_only", "Use /lazodisc search with a song name. Use /lazodisc burn for links.");
         map.put("search.searching", "Searching: %query%");
         map.put("search.failed", "Search failed: %reason%");
         map.put("search.no_songs", "No songs found for: %query%");

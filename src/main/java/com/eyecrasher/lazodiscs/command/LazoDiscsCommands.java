@@ -23,7 +23,9 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 public final class LazoDiscsCommands {
@@ -172,6 +174,10 @@ public final class LazoDiscsCommands {
             player.sendSystemMessage(LazoDiscsText.searchUsage());
             return 0;
         }
+        if (looksLikeLink(cleanQuery)) {
+            player.sendSystemMessage(LazoDiscsText.searchNamesOnly().withStyle(ChatFormatting.RED));
+            return 0;
+        }
         int safePage = Math.max(1, page);
         player.sendSystemMessage(LazoDiscsText.searching(cleanQuery).withStyle(ChatFormatting.GRAY));
 
@@ -242,6 +248,19 @@ public final class LazoDiscsCommands {
         }
 
         player.sendSystemMessage(nav);
+    }
+
+    private static boolean looksLikeLink(String value) {
+        if (SpotifyTitleResolver.looksLikeSpotify(value)) return true;
+        String lower = value.toLowerCase(Locale.ROOT);
+        if (lower.startsWith("http://") || lower.startsWith("https://") || lower.contains("://")) return true;
+        try {
+            URI uri = URI.create(value.trim());
+            String scheme = uri.getScheme();
+            return scheme != null && !scheme.isBlank();
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     private static String quote(String value) {

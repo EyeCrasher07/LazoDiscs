@@ -17,7 +17,8 @@ LazoDiscs is based on the original Plasmo Voice Discs addon and continues as its
 
 ## Current Changes
 
-- Search accepts song names, Spotify track links, and direct playable links.
+- Search accepts song names only.
+- Links are burned through `/lazodisc burn`.
 - Spotify track links are resolved as metadata and matched through YouTube Music.
 - Playback streams through LavaPlayer directly into Plasmo Voice.
 - The RAM cache and preload playback path were removed.

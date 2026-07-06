@@ -17,7 +17,7 @@ Published builds:
 
 - `/lazodisc burn <url> [title]`
 - `/lazodisc erase`
-- `/lazodisc search "<song name or link>" [page]`
+- `/lazodisc search "<song name>" [page]`
 - `/lazodisc stopall`
 - Clickable search results and page navigation in chat
 - YouTube and YouTube Music search through LavaPlayer
@@ -37,11 +37,11 @@ Published builds:
 ```text
 /lazodisc burn <url> [title]
 /lazodisc erase
-/lazodisc search "<song name or link>" [page]
+/lazodisc search "<song name>" [page]
 /lazodisc stopall
 ```
 
-`/lazodisc search` accepts song names, Spotify track links, and direct playable links. Spotify is resolved as metadata and matched through YouTube Music.
+`/lazodisc search` accepts song names only. Use `/lazodisc burn` for Spotify, YouTube, SoundCloud, or direct playable links.
 
 ## Server config
 
