@@ -1,34 +1,32 @@
 # LazoDiscs
 
-LazoDiscs is a server-side NeoForge addon for Plasmo Voice that lets players burn custom music links onto vanilla music discs and play them through positional voice audio.
+LazoDiscs lets players burn custom music links onto vanilla music discs and play them through Plasmo Voice positional audio.
 
-## Supported Versions
+[![GitHub release](https://img.shields.io/github/v/release/EyeCrasher07/LazoDiscs?label=release)](https://github.com/EyeCrasher07/LazoDiscs/releases)
+[![Modrinth](https://img.shields.io/modrinth/dt/lazodiscs?label=modrinth)](https://modrinth.com/mod/lazodiscs)
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 
-Current release: `1.0.1`
+## Download
 
-Minecraft versions:
+- [GitHub Releases](https://github.com/EyeCrasher07/LazoDiscs/releases)
+- [Modrinth](https://modrinth.com/mod/lazodiscs)
 
-- `1.21.1` - `1.21.11`
+## Requirements
+
+- Minecraft `1.21.1` - `1.21.11`
+- NeoForge
+- Plasmo Voice
 
 ## Features
 
-- `/lazodisc burn <url> [title]`
-- `/lazodisc erase`
-- `/lazodisc search <song name>`
-- Clickable search results in chat
-- YouTube and YouTube Music search through LavaPlayer
-- SoundCloud and other LavaPlayer-supported sources
-- Spotify track links resolved through metadata and matched through YouTube Music
-- Direct audio URL support through LavaPlayer
-- Track validation before discs are burned
-- Separate Plasmo Voice source line for disc volume
-- Direct streaming for LavaPlayer sources
-- Stable one-playback-per-jukebox lifecycle
-- Separate permission settings for burn, erase, search, and play
-- Server-side hiding of the original vanilla music disc tooltip on burned discs
-- Sable / Create Aeronautics moving platform position support
-- Requires Plasmo Voice wherever LazoDiscs is installed
-- Server-side on dedicated servers: players need Plasmo Voice, not LazoDiscs
+- Burn music links onto vanilla music discs.
+- Search tracks from chat and burn them from clickable results.
+- Play discs through Plasmo Voice positional audio.
+- Supports YouTube, YouTube Music, SoundCloud, Spotify track links, and direct playable audio URLs.
+- Streams playback directly through LavaPlayer.
+- Keeps one active playback per jukebox and cleans it up automatically.
+- Supports Sable / Create Aeronautics moving platform positions.
+- Server owners can edit all messages through language files.
 
 ## Commands
 
@@ -42,7 +40,19 @@ Minecraft versions:
 
 ## Server Config
 
-The common config contains the main server-side options.
+Config file:
+
+```text
+config/lazodiscs/config.toml
+```
+
+Language files:
+
+```text
+config/lazodiscs/lang/<language>.toml
+```
+
+Default config:
 
 ```toml
 language = "en_us"
@@ -62,10 +72,6 @@ requirePermissionForPlay = false
 playPermissionLevel = 2
 ```
 
-Config path: `config/lazodiscs/config.toml`
-
-Language files path: `config/lazodiscs/lang/<language>.toml`
-
 The built-in English file is created as `config/lazodiscs/lang/en_us.toml` on first start. Server owners can edit it or add another file such as `ru_ru.toml`, then set `language = "ru_ru"`.
 
 `maxStreamingTrackLengthSeconds = 0` means streamed LavaPlayer tracks are unlimited by length.
@@ -74,17 +80,18 @@ The built-in English file is created as `config/lazodiscs/lang/en_us.toml` on fi
 
 ## Singleplayer
 
-On a dedicated server, LazoDiscs is server-side: players do not need the mod installed locally, only Plasmo Voice.
+On a dedicated server, install LazoDiscs on the server. Players need Plasmo Voice to hear discs, but they do not need LazoDiscs installed locally.
 
 Singleplayer uses an integrated server inside the client. For singleplayer, install LazoDiscs in the local client's `mods` folder together with Plasmo Voice.
 
-## Notes
+## Building
 
-- The public cache command was removed.
-- The legacy RAM cache/preload playback path was removed.
-- Global and per-chunk jukebox limits were removed.
-- LavaPlayer sources stream directly into Plasmo Voice.
-- `/lazodisc burn` checks that LavaPlayer can resolve the track before writing the disc.
-- Finished or failed playback sources are removed from the active jukebox map automatically.
-- Apache HttpClient is relocated in the shaded jar to avoid Java module split-package crashes.
-- Jackson is bundled and relocated where needed for LavaPlayer YouTube support.
+```text
+./gradlew build
+```
+
+Use the normal jar from `build/libs`. Do not use the `-thin` jar.
+
+## Credits
+
+Based on the original Plasmo Voice Discs addon.
