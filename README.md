@@ -17,9 +17,9 @@ Published builds:
 
 - `/lazodisc burn <url> [title]`
 - `/lazodisc erase`
-- `/lazodisc search "<song name>" [page]`
+- `/lazodisc search <song name>`
 - `/lazodisc stopall`
-- Clickable search results and page navigation in chat
+- Clickable search results in chat
 - YouTube and YouTube Music search through LavaPlayer
 - SoundCloud and other LavaPlayer-supported sources
 - Spotify track links resolved through metadata and matched through YouTube Music
@@ -37,7 +37,7 @@ Published builds:
 ```text
 /lazodisc burn <url> [title]
 /lazodisc erase
-/lazodisc search "<song name>" [page]
+/lazodisc search <song name>
 /lazodisc stopall
 ```
 

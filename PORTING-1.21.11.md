@@ -35,7 +35,11 @@ Additional runtime fix:
 1.0.0 changes:
 
 - Version metadata updated to `1.0.0+mc1.21.11`.
-- Broken Russian config defaults and broken search chat glyphs fixed.
+- Server messages are loaded from editable language files.
+- `/lazodisc search <song name>` accepts free text without quotes and returns clickable song results.
+- Search accepts song names only; links are burned through `/lazodisc burn`.
 - Audio loading now uses a configurable bounded executor instead of one unmanaged thread per load/search.
-- `maxActiveSources=0` keeps active jukebox playback unlimited by default.
-- Added `/lazodiscs stopall`, `/lazodiscs cache stats`, and `/lazodiscs cache clear`.
+- LavaPlayer sources stream directly into Plasmo Voice instead of being fully decoded into RAM.
+- Global and per-chunk jukebox limits were removed.
+- The public cache command was removed.
+- Added `/lazodisc stopall`.

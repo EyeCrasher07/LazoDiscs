@@ -106,18 +106,6 @@ public final class LazoDiscsText {
         return text("search.click_to_paste", "command", command);
     }
 
-    public static MutableComponent previousPage() {
-        return component("search.previous_page");
-    }
-
-    public static MutableComponent nextPage() {
-        return component("search.next_page");
-    }
-
-    public static MutableComponent page(int page, int totalPages) {
-        return component("search.page", "page", page, "total", totalPages);
-    }
-
     public static String unknown() {
         return text("common.unknown");
     }
@@ -381,16 +369,13 @@ public final class LazoDiscsText {
         map.put("command.stopped_all", "Stopped all active LazoDisc sources.");
         map.put("dependency.plasmo_voice_required", "Plasmo Voice is required to play LazoDiscs.");
         map.put("search.players_only", "Only players can use /lazodisc search.");
-        map.put("search.usage", "Usage: /lazodisc search \"song name\"");
+        map.put("search.usage", "Usage: /lazodisc search <song name>");
         map.put("search.names_only", "Use /lazodisc search with a song name. Use /lazodisc burn for links.");
         map.put("search.searching", "Searching: %query%");
         map.put("search.failed", "Search failed: %reason%");
         map.put("search.no_songs", "No songs found for: %query%");
         map.put("search.header", "=== LazoDiscs Search: %query% ===");
         map.put("search.click_to_paste", "Click to paste: %command%");
-        map.put("search.previous_page", "Previous page");
-        map.put("search.next_page", "Next page");
-        map.put("search.page", "  Page %page%/%total%  ");
         map.put("search.timed_out", "Search timed out after %seconds% seconds");
         map.put("url.empty", "URL is empty");
         map.put("url.invalid", "Invalid URL");

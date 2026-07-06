@@ -8,7 +8,6 @@ import com.eyecrasher.lazodiscs.text.LazoDiscsText;
 import com.eyecrasher.lazodiscs.voice.AudioLoadExecutor;
 import com.eyecrasher.lazodiscs.voice.LavaPcmFeeder;
 import com.eyecrasher.lazodiscs.voice.SpotifyTitleResolver;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -16,21 +15,18 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 import java.lang.reflect.Method;
-import java.net.URI;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
 public final class LazoDiscsCommands {
-    private static final int SEARCH_PAGE_SIZE = 5;
-    private static final int SEARCH_MAX_RESULTS = 20;
+    private static final int SEARCH_MAX_RESULTS = 5;
 
     private LazoDiscsCommands() {
     }
@@ -52,10 +48,9 @@ public final class LazoDiscsCommands {
                         .executes(ctx -> stopAll(ctx.getSource())))
                 .then(Commands.literal("search")
                         .requires(LazoDiscsCommands::canBurn)
-                        .then(Commands.argument("query", StringArgumentType.string())
-                                .executes(ctx -> search(ctx.getSource(), StringArgumentType.getString(ctx, "query"), 1))
-                                .then(Commands.argument("page", IntegerArgumentType.integer(1, 20))
-                                        .executes(ctx -> search(ctx.getSource(), StringArgumentType.getString(ctx, "query"), IntegerArgumentType.getInteger(ctx, "page"))))))
+                        .executes(ctx -> search(ctx.getSource(), ""))
+                        .then(Commands.argument("query", StringArgumentType.greedyString())
+                                .executes(ctx -> search(ctx.getSource(), StringArgumentType.getString(ctx, "query")))))
         );
     }
 
@@ -160,7 +155,7 @@ public final class LazoDiscsCommands {
         return 1;
     }
 
-    private static int search(CommandSourceStack source, String query, int page) {
+    private static int search(CommandSourceStack source, String query) {
         ServerPlayer player;
         try {
             player = source.getPlayerOrException();
@@ -178,14 +173,13 @@ public final class LazoDiscsCommands {
             player.sendSystemMessage(LazoDiscsText.searchNamesOnly().withStyle(ChatFormatting.RED));
             return 0;
         }
-        int safePage = Math.max(1, page);
         player.sendSystemMessage(LazoDiscsText.searching(cleanQuery).withStyle(ChatFormatting.GRAY));
 
         var server = source.getServer();
         AudioLoadExecutor.submit(() -> {
             try {
                 List<LavaPcmFeeder.SearchResult> results = LavaPcmFeeder.search(cleanQuery, SEARCH_MAX_RESULTS);
-                server.execute(() -> sendSearchPage(player, cleanQuery, safePage, results));
+                server.execute(() -> sendSearchResults(player, cleanQuery, results));
             } catch (Throwable t) {
                 LazoDiscs.LOGGER.warn("LazoDiscs search failed for '{}': {}", cleanQuery, t.toString());
                 server.execute(() -> player.sendSystemMessage(LazoDiscsText.searchFailed(messageOf(t)).withStyle(ChatFormatting.RED)));
@@ -194,19 +188,15 @@ public final class LazoDiscsCommands {
         return 1;
     }
 
-    private static void sendSearchPage(ServerPlayer player, String query, int page, List<LavaPcmFeeder.SearchResult> results) {
+    private static void sendSearchResults(ServerPlayer player, String query, List<LavaPcmFeeder.SearchResult> results) {
         if (results.isEmpty()) {
             player.sendSystemMessage(LazoDiscsText.noSongsFound(query).withStyle(ChatFormatting.RED));
             return;
         }
 
-        int totalPages = Math.max(1, (results.size() + SEARCH_PAGE_SIZE - 1) / SEARCH_PAGE_SIZE);
-        int safePage = Math.max(1, Math.min(page, totalPages));
-        int start = (safePage - 1) * SEARCH_PAGE_SIZE;
-        int end = Math.min(results.size(), start + SEARCH_PAGE_SIZE);
-
         player.sendSystemMessage(LazoDiscsText.searchHeader(query).withStyle(ChatFormatting.GOLD));
-        for (int i = start; i < end; i++) {
+        int end = Math.min(results.size(), SEARCH_MAX_RESULTS);
+        for (int i = 0; i < end; i++) {
             LavaPcmFeeder.SearchResult result = results.get(i);
             String title = sanitizeTitle(result.title());
             String author = sanitizeTitle(result.author());
@@ -220,47 +210,19 @@ public final class LazoDiscsCommands {
                     .append(Component.literal(" - " + author + " " + formatDuration(result.lengthMs())).withStyle(ChatFormatting.GRAY));
             player.sendSystemMessage(line);
         }
-
-        MutableComponent nav = Component.literal("      ");
-
-        if (safePage > 1) {
-            String prev = "/lazodisc search " + quote(query) + " " + (safePage - 1);
-            nav = nav.append(Component.literal("<").withStyle(style -> style
-                    .withColor(ChatFormatting.YELLOW)
-                    .withBold(true)
-                    .withClickEvent(new ClickEvent.RunCommand(prev))
-                    .withHoverEvent(new HoverEvent.ShowText(LazoDiscsText.previousPage()))));
-        } else {
-            nav = nav.append(Component.literal("<").withStyle(ChatFormatting.DARK_GRAY));
-        }
-
-        nav = nav.append(LazoDiscsText.page(safePage, totalPages).withStyle(ChatFormatting.GRAY));
-
-        if (safePage < totalPages) {
-            String next = "/lazodisc search " + quote(query) + " " + (safePage + 1);
-            nav = nav.append(Component.literal(">").withStyle(style -> style
-                    .withColor(ChatFormatting.YELLOW)
-                    .withBold(true)
-                    .withClickEvent(new ClickEvent.RunCommand(next))
-                    .withHoverEvent(new HoverEvent.ShowText(LazoDiscsText.nextPage()))));
-        } else {
-            nav = nav.append(Component.literal(">").withStyle(ChatFormatting.DARK_GRAY));
-        }
-
-        player.sendSystemMessage(nav);
     }
 
     private static boolean looksLikeLink(String value) {
         if (SpotifyTitleResolver.looksLikeSpotify(value)) return true;
-        String lower = value.toLowerCase(Locale.ROOT);
-        if (lower.startsWith("http://") || lower.startsWith("https://") || lower.contains("://")) return true;
-        try {
-            URI uri = URI.create(value.trim());
-            String scheme = uri.getScheme();
-            return scheme != null && !scheme.isBlank();
-        } catch (Exception ignored) {
-            return false;
-        }
+        String lower = value.trim().toLowerCase(Locale.ROOT);
+        return lower.startsWith("http://")
+                || lower.startsWith("https://")
+                || lower.startsWith("www.")
+                || lower.contains("://")
+                || lower.contains("youtube.com/")
+                || lower.contains("youtu.be/")
+                || lower.contains("spotify.com/")
+                || lower.contains("soundcloud.com/");
     }
 
     private static String quote(String value) {
