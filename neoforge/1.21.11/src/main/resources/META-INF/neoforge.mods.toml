@@ -5,7 +5,7 @@ issueTrackerURL="https://github.com/EyeCrasher07/LazoDiscs/issues"
 
 [[mods]]
 modId="lazodiscs"
-version="1.0.1+mc1.21.11"
+version="1.0.2+mc1.21.11"
 displayName="LazoDiscs"
 displayTest="IGNORE_ALL_VERSION"
 logoFile="lazodiscs_icon.png"
@@ -29,7 +29,7 @@ side="BOTH"
 [[dependencies.lazodiscs]]
 modId="minecraft"
 type="required"
-versionRange="[1.21.1,1.21.12)"
+versionRange="[1.21.11,1.21.12)"
 ordering="NONE"
 side="BOTH"
 
