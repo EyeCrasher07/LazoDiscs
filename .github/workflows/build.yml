@@ -1,4 +1,4 @@
-name: Build All Versions
+﻿name: Build All Versions
 
 on:
   push:
@@ -127,7 +127,7 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           files: artifacts/*.jar
-          generate_release_notes: true
+          generate_release_notes: false
           draft: false
           prerelease: false
         env:
