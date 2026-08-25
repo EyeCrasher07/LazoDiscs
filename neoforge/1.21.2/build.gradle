@@ -1,8 +1,8 @@
 plugins {
     id 'java-library'
     id 'net.neoforged.moddev' version '2.0.113'
-    // Shadow 8.3.6 supports Java 21 class files used by Minecraft 1.21.2.
-    id 'com.gradleup.shadow' version '8.3.6'
+    // Shadow 8.3.7 supports Java 21 class files used by Minecraft 1.21.2.
+    id 'com.gradleup.shadow' version '8.3.7'
 }
 
 version = '1.0.2+mc1.21.2'
