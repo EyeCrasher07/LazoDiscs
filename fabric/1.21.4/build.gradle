@@ -68,7 +68,7 @@ dependencies {
         exclude group: 'org.jetbrains.kotlin'
         exclude group: 'org.jetbrains.kotlinx'
     }
-    shade('dev.lavalink.youtube:v2:008faf9f7a39c3f98d24fc1d5c98a9dc960a377c-SNAPSHOT') {
+    shade('dev.lavalink.youtube:v2:f45bbb7aebfcbc1c553769e04af6cd43afa8b7c3-SNAPSHOT') {
         exclude group: 'org.slf4j', module: 'slf4j-api'
         exclude group: 'commons-io', module: 'commons-io'
         exclude group: 'commons-codec', module: 'commons-codec'
