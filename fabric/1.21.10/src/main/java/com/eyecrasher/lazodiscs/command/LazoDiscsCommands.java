@@ -202,8 +202,8 @@ public final class LazoDiscsCommands {
                     .withStyle(ChatFormatting.DARK_GRAY)
                     .append(Component.literal(title).withStyle(style -> style
                             .withColor(ChatFormatting.AQUA)
-                            .withClickEvent(ClickEvent.builder(ClickEvent.Action.SUGGEST_COMMAND, burnCommand).build())
-                            .withHoverEvent(HoverEvent.builder(HoverEvent.Action.SHOW_TEXT, Component.literal(LazoDiscsText.clickToPaste(burnCommand))).build())))
+                            .withClickEvent(new ClickEvent.SuggestCommand(burnCommand))
+                            .withHoverEvent(new HoverEvent.ShowText(Component.literal(LazoDiscsText.clickToPaste(burnCommand))))))
                     .append(Component.literal(" - " + author + " " + formatDuration(result.lengthMs())).withStyle(ChatFormatting.GRAY));
             player.sendSystemMessage(line);
         }
