@@ -1,0 +1,41 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="GPL-3.0-only"
+issueTrackerURL="https://github.com/EyeCrasher07/LazoDiscs/issues"
+
+[[mods]]
+modId="lazodiscs"
+version="1.0.1+mc1.21.7"
+displayName="LazoDiscs"
+displayTest="IGNORE_ALL_VERSION"
+logoFile="lazodiscs_icon.png"
+authors="EyeCrasher"
+description='''
+Custom music discs with Plasmo Voice positional audio.
+Burn YouTube, YouTube Music, SoundCloud, Spotify track links, and direct playable audio URLs onto vanilla music discs.
+Supports dedicated servers and integrated singleplayer servers.
+'''
+
+[[mixins]]
+config="lazodiscs.mixins.json"
+
+[[dependencies.lazodiscs]]
+modId="neoforge"
+type="required"
+versionRange="[21.7.0-beta,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.lazodiscs]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.7,1.21.8)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.lazodiscs]]
+modId="plasmovoice"
+type="required"
+versionRange="[2.1.0,)"
+ordering="AFTER"
+side="BOTH"

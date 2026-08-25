@@ -1,0 +1,171 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.113'
+    // Shadow 8.3.6 supports Java 21 class files used by Minecraft 1.21.2.
+    id 'com.gradleup.shadow' version '8.3.6'
+}
+
+version = '1.0.2+mc1.21.2'
+group = 'com.eyecrasher'
+
+base {
+    archivesName = 'lazodiscs-neoforge'
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.plasmoverse.com/releases' }
+    maven { url = 'https://repo.plo.su/' }
+    maven { url = 'https://maven.lavalink.dev/releases' }
+    maven { url = 'https://maven.lavalink.dev/snapshots' }
+    maven { url = 'https://jitpack.io' }
+}
+
+configurations {
+    shade
+    shadeRuntime
+    implementation.extendsFrom(shade)
+}
+
+configurations.configureEach {
+    resolutionStrategy.force 'org.apache.httpcomponents:httpclient:4.5.13'
+}
+
+
+neoForge {
+    version = '21.2.1-beta'
+
+    mods {
+        lazodiscs {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+dependencies {
+    implementation 'net.neoforged:neoforge:21.2.1-beta'
+
+    // Plasmo Voice API is compile-only because the real Plasmo Voice mod provides it at runtime.
+    // Its transitive Guava/FastUtil versions conflict with Minecraft 1.21.2 strict dependency pins,
+    // so we keep Plasmo API transitives but exclude only the libraries Minecraft already provides.
+    compileOnly('su.plo.voice.api:server:2.1.8') {
+        exclude group: 'com.google.guava', module: 'guava'
+        exclude group: 'com.google.guava', module: 'failureaccess'
+        exclude group: 'com.google.guava', module: 'listenablefuture'
+        exclude group: 'com.google.code.findbugs', module: 'jsr305'
+        exclude group: 'org.checkerframework', module: 'checker-qual'
+        exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
+        exclude group: 'com.google.j2objc', module: 'j2objc-annotations'
+        exclude group: 'it.unimi.dsi', module: 'fastutil'
+        exclude group: 'com.google.code.gson', module: 'gson'
+    }
+    // Relocated private Jackson copy for lavalink-youtube.
+    // Keep it out of compileClasspath because Minecraft 1.21.2 strictly pins Jackson 2.13.x.
+    shadeRuntime 'com.fasterxml.jackson.core:jackson-core:2.15.2'
+    shadeRuntime 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+    shadeRuntime 'com.fasterxml.jackson.core:jackson-annotations:2.15.2'
+
+    // Built-in audio resolver/player. This makes YouTube, SoundCloud, Bandcamp, Vimeo,
+    // Twitch, direct HTTP audio, mp3/flac/wav/ogg/m4a/etc work without yt-dlp/ffmpeg.
+    // YouTube support is provided by youtube-source because LavaPlayer's old built-in
+    // YouTube source is deprecated.
+    // Most duplicated libraries stay excluded to avoid JPMS split-package crashes.
+    // Apache HttpClient/HttpCore are bundled but relocated by ShadowJar below,
+    // because LavaPlayer/youtube-source need them at runtime.
+    shade('dev.arbjerg:lavaplayer:2.2.6') {
+        exclude group: 'org.slf4j', module: 'slf4j-api'
+        exclude group: 'commons-io', module: 'commons-io'
+        exclude group: 'commons-codec', module: 'commons-codec'
+        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-core'
+        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
+        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-annotations'
+        exclude group: 'com.fasterxml.jackson', module: 'jackson-bom'
+        exclude group: 'net.java.dev.jna', module: 'jna'
+        exclude group: 'org.jetbrains', module: 'annotations'
+        exclude group: 'org.jetbrains.kotlin'
+        exclude group: 'org.jetbrains.kotlinx'
+    }
+    shade('dev.lavalink.youtube:v2:f45bbb7aebfcbc1c553769e04af6cd43afa8b7c3-SNAPSHOT') {
+        exclude group: 'org.slf4j', module: 'slf4j-api'
+        exclude group: 'commons-io', module: 'commons-io'
+        exclude group: 'commons-codec', module: 'commons-codec'
+        exclude group: 'net.java.dev.jna', module: 'jna'
+        exclude group: 'org.jetbrains', module: 'annotations'
+        exclude group: 'org.jetbrains.kotlin'
+        exclude group: 'org.jetbrains.kotlinx'
+    }
+
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+jar {
+    archiveClassifier.set('thin')
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes([
+                'Specification-Title'   : 'lazodiscs',
+                'Specification-Vendor'  : 'EyeCrasher',
+                'Specification-Version' : '1',
+                'Implementation-Title'  : project.name,
+                'Implementation-Version': project.version,
+                'Implementation-Vendor' : 'EyeCrasher'
+        ])
+    }
+}
+
+shadowJar {
+    archiveClassifier.set('')
+    configurations = [project.configurations.shade, project.configurations.shadeRuntime]
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    // LavaPlayer/youtube-source need Apache HttpClient/HttpCore at runtime.
+    // They are relocated to avoid Java module split-package crashes with NeoForge/Minecraft.
+    relocate 'org.apache.http', 'com.eyecrasher.lazodiscs.shadow.org.apache.http'
+    relocate 'org.apache.commons.logging', 'com.eyecrasher.lazodiscs.shadow.org.apache.commons.logging'
+    relocate 'com.fasterxml.jackson', 'com.eyecrasher.lazodiscs.shadow.com.fasterxml.jackson'
+
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+    exclude 'META-INF/MANIFEST.MF'
+    exclude 'module-info.class'
+
+    // Merge ServiceLoader files so relocated Jackson works correctly
+    mergeServiceFiles()
+
+    // Do not bundle libraries that are already exported by Minecraft/NeoForge/ModLauncher.
+    exclude 'org/slf4j/**'
+    exclude 'org/apache/commons/io/**'
+    exclude 'org/apache/commons/codec/**'
+    exclude 'com/google/gson/**'
+    exclude 'com/google/common/**'
+    exclude 'it/unimi/dsi/fastutil/**'
+    exclude 'com/sun/jna/**'
+    exclude 'javax/annotation/**'
+    exclude 'org/jetbrains/annotations/**'
+    exclude 'org/checkerframework/**'
+    exclude 'kotlin/**'
+    exclude 'kotlinx/**'
+
+    manifest {
+        attributes([
+                'Specification-Title'   : 'lazodiscs',
+                'Specification-Vendor'  : 'EyeCrasher',
+                'Specification-Version' : '1',
+                'Implementation-Title'  : project.name,
+                'Implementation-Version': project.version,
+                'Implementation-Vendor' : 'EyeCrasher'
+        ])
+    }
+}
+
+assemble.dependsOn shadowJar
+build.dependsOn shadowJar
+

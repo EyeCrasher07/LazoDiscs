@@ -1,4 +1,34 @@
+# Gradle
 .gradle/
 build/
 out/
+bin/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
 *.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# JAR files (built artifacts)
+*.jar
+
+# Fabric/NeoForge specific
+run/
+runClient/
+runServer/
