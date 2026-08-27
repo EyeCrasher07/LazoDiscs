@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "lazodiscs",
-  "version": "1.0.2+mc1.21.4",
+  "version": "1.0.3+mc1.21.4",
   "name": "LazoDiscs",
   "description": "Custom music discs with Plasmo Voice positional audio.",
   "authors": ["EyeCrasher"],

@@ -6,7 +6,7 @@ Target:
 - NeoForge: 21.2.1-beta
 - Parchment: disabled for this port
 - Plasmo Voice API: 2.1.8
-- Output jar: `lazodiscs-1.0.0+mc1.21.2.jar`
+- Output jar: `lazodiscs-1.0.3+mc1.21.2.jar`
 
 Do not use the `-thin` jar.
 

@@ -6,7 +6,7 @@ Target:
 - NeoForge: 21.5.97
 - Parchment: 1.21.5 / 2025.04.19
 - Plasmo Voice API: 2.1.8
-- Output jar: `lazodiscs-1.0.0+mc1.21.5.jar`
+- Output jar: `lazodiscs-1.0.3+mc1.21.5.jar`
 
 Build fixes kept:
 

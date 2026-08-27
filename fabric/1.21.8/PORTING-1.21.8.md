@@ -6,7 +6,7 @@ Target:
 - NeoForge: 21.8.42
 - Parchment: 1.21.8 / 2025.07.20
 - Plasmo Voice API: 2.1.10
-- Output jar: `lazodiscs-1.0.0+mc1.21.8.jar`
+- Output jar: `lazodiscs-1.0.3+mc1.21.8.jar`
 
 Use the NeoForge Plasmo Voice build that supports Minecraft 1.21.7–1.21.8.
 
