@@ -4,7 +4,7 @@ Custom music discs with Plasmo Voice positional audio for Fabric and NeoForge.
 
 [![GitHub release](https://img.shields.io/github/v/release/EyeCrasher07/LazoDiscs?label=release)](https://github.com/EyeCrasher07/LazoDiscs/releases)
 [![Modrinth](https://img.shields.io/modrinth/dt/lazodiscs?label=Modrinth)](https://modrinth.com/mod/lazodiscs)
-[![CurseForge](https://img.shields.io/badge/CurseForge-lazodiscs-orange)](https://www.curseforge.com/minecraft/mc-mods/pv-lazodiscs)
+[![CurseForge](https://img.shields.io/curseforge/dt/1584136?label=curseforge)](https://www.curseforge.com/minecraft/mc-mods/pv-lazodiscs)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
 
 ## Features
