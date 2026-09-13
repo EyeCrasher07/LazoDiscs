@@ -1,6 +1,7 @@
 package com.eyecrasher.lazodiscs.event;
 
 import com.eyecrasher.lazodiscs.LazoDiscs;
+import com.eyecrasher.lazodiscs.compat.sophisticatedbackpacks.LazoDiscsDiscHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
@@ -34,10 +35,12 @@ public final class JukeboxEvents {
         for (ServerLevel level : event.getServer().getAllLevels()) {
             LazoDiscs.playback().tickLevel(level);
         }
+        LazoDiscsDiscHandler.onServerTick(event.getServer());
     }
 
     @SubscribeEvent
     public static void onServerStopping(ServerStoppingEvent event) {
         LazoDiscs.playback().stopAll("server-stopping");
+        LazoDiscsDiscHandler.stopAll("server-stopping");
     }
 }

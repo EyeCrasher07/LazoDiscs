@@ -5,7 +5,7 @@ issueTrackerURL="https://github.com/EyeCrasher07/LazoDiscs/issues"
 
 [[mods]]
 modId="lazodiscs"
-version="1.0.3+mc1.21.5"
+version="1.0.4+mc1.21.5"
 displayName="LazoDiscs"
 displayTest="IGNORE_ALL_VERSION"
 logoFile="lazodiscs_icon.png"
@@ -37,5 +37,26 @@ side="BOTH"
 modId="plasmovoice"
 type="required"
 versionRange="[2.1.0,)"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies.lazodiscs]]
+modId="sophisticatedcore"
+type="optional"
+versionRange="[1.5.0,)"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies.lazodiscs]]
+modId="sophisticatedbackpacks"
+type="optional"
+versionRange="[3.20.0,)"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies.lazodiscs]]
+modId="sable"
+type="optional"
+versionRange="[2.0.0,)"
 ordering="AFTER"
 side="BOTH"

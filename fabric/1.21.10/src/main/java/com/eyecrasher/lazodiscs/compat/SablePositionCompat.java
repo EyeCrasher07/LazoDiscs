@@ -57,6 +57,14 @@ public final class SablePositionCompat {
         return Math.abs(pos.getX()) > 1_000_000 || Math.abs(pos.getZ()) > 1_000_000;
     }
 
+    public static boolean isSableLoaded() {
+        try {
+            ensureLookup();
+        } catch (Throwable ignored) {
+        }
+        return helper != null && projectOutOfSubLevel != null;
+    }
+
     private static void ensureLookup() throws ReflectiveOperationException {
         if (lookedUp) return;
         synchronized (SablePositionCompat.class) {

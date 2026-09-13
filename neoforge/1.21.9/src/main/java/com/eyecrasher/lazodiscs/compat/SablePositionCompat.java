@@ -57,6 +57,19 @@ public final class SablePositionCompat {
         return Math.abs(pos.getX()) > 1_000_000 || Math.abs(pos.getZ()) > 1_000_000;
     }
 
+    /**
+     * Returns {@code true} iff Sable is loaded and the projection helper class
+     * is available. Uses the existing reflection probe state.
+     */
+    public static boolean isSableLoaded() {
+        try {
+            ensureLookup();
+        } catch (ReflectiveOperationException ignored) {
+            // treated as not-loaded
+        }
+        return helper != null && projectOutOfSubLevel != null;
+    }
+
     private static void ensureLookup() throws ReflectiveOperationException {
         if (lookedUp) return;
         synchronized (SablePositionCompat.class) {

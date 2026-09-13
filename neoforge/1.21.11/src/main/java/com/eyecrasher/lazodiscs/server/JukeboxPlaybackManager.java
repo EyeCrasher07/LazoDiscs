@@ -52,6 +52,16 @@ public final class JukeboxPlaybackManager {
     }
 
     public void start(ServerLevel level, BlockPos pos, CustomDiscData disc, String reason) {
+        if (SablePositionCompat.isProbablySubLevel(pos) && !LazoDiscsConfig.ALLOW_PLAYBACK_ON_SABLE_PLATFORMS.get()) {
+            LazoDiscs.LOGGER.info(
+                    "Refusing to start LazoDisc '{}' at {} — block is on a Sable sub-level " +
+                    "and allowPlaybackOnSablePlatforms is disabled in config.",
+                    disc.title(), pos.toShortString()
+            );
+            VanillaRecordStopper.stopVanillaRecordsNear(level, pos, 4.0D);
+            return;
+        }
+
         SourceKey sourceKey = new SourceKey(level.dimension(), pos.immutable());
         ActiveJukeboxSource existing = active.get(sourceKey);
         if (existing != null && existing.disc().equals(disc)) {
@@ -75,7 +85,7 @@ public final class JukeboxPlaybackManager {
             boolean dynamicPosition = SablePositionCompat.isProbablySubLevel(pos) || projected.distanceToSqr(center) > 0.0001D;
 
             var source = PlasmoVoiceBridge.INSTANCE.startStaticSource(level, pos, disc, () -> finishAt(level, pos, disc, "track-ended"));
-            active.put(sourceKey, new ActiveJukeboxSource(disc, source, dynamicPosition));
+            active.put(sourceKey, new ActiveJukeboxSource(disc, source, new java.util.concurrent.atomic.AtomicBoolean(dynamicPosition)));
             // Stop vanilla record sound that may have started from the original music disc.
             VanillaRecordStopper.stopVanillaRecordsNear(level, pos, 4.0D);
             LazoDiscs.LOGGER.info("Started LazoDisc '{}' at {} ({}, dynamicPosition={})", disc.title(), pos.toShortString(), reason, dynamicPosition);
@@ -150,11 +160,48 @@ public final class JukeboxPlaybackManager {
             }
 
             ActiveJukeboxSource activeSource = e.getValue();
-            if (activeSource.dynamicPosition()) {
+            // Re-check the cheap coordinate heuristic every tick — a jukebox can start
+            // playing as a perfectly normal static block and only later get swept into a
+            // Sable sub-level (player runs the Physics Assembler under it).
+            if (!activeSource.dynamicPosition().get() && SablePositionCompat.isProbablySubLevel(key.pos())) {
+                activeSource.markDynamicPosition();
+            }
+            if (activeSource.isDynamicPosition()) {
                 // Moving Sable / Create Aeronautics assemblies must update every tick, otherwise
                 // the Plasmo source audibly lags behind the flying platform.
                 Vec3 projected = SablePositionCompat.projectJukeboxCenter(level, key.pos());
                 activeSource.updatePosition(level, projected);
+            }
+        }
+    }
+
+    /**
+     * Proactively updates positions for all active dynamic sources on the given level.
+     * Called from {@link com.eyecrasher.lazodiscs.event.SablePhysicsEvents#registerIfSablePresent}
+     * after Sable has updated all sub-level poses — more responsive than the next server tick.
+     *
+     * <p>Idempotent and safe to call when Sable is not installed (no-op).
+     */
+    public void onSablePostPhysicsTick(ServerLevel level) {
+        if (active.isEmpty()) return;
+
+        for (Map.Entry<SourceKey, ActiveJukeboxSource> e : active.entrySet()) {
+            SourceKey key = e.getKey();
+            if (!key.dimension().equals(level.dimension())) continue;
+            ActiveJukeboxSource activeSource = e.getValue();
+            if (!activeSource.dynamicPosition().get()) {
+                if (!SablePositionCompat.isProbablySubLevel(key.pos())) continue;
+                activeSource.markDynamicPosition();
+            }
+
+            try {
+                Vec3 projected = SablePositionCompat.projectJukeboxCenter(level, key.pos());
+                activeSource.updatePosition(level, projected);
+            } catch (Throwable t) {
+                LazoDiscs.LOGGER.debug(
+                        "SablePostPhysicsTick position update failed at {}: {}",
+                        key.pos().toShortString(), t.toString()
+                );
             }
         }
     }

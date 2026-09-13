@@ -54,6 +54,18 @@ public final class JukeboxPlaybackManager {
     public void start(ServerLevel level, BlockPos pos, CustomDiscData disc, String reason) {
         SourceKey sourceKey = new SourceKey(level.dimension(), pos.immutable());
         ActiveJukeboxSource existing = active.get(sourceKey);
+
+        // Sable sub-level safety gate: admins can disable playback on moving platforms.
+        if (SablePositionCompat.isProbablySubLevel(pos) && !LazoDiscsConfig.ALLOW_PLAYBACK_ON_SABLE_PLATFORMS.get()) {
+            LazoDiscs.LOGGER.info(
+                    "Refusing to start LazoDisc '{}' at {} — block is on a Sable sub-level " +
+                    "and allowPlaybackOnSablePlatforms is disabled in config.",
+                    disc.title(), pos.toShortString()
+            );
+            VanillaRecordStopper.stopVanillaRecordsNear(level, pos, 4.0D);
+            return;
+        }
+
         if (existing != null && existing.disc().equals(disc)) {
             LazoDiscs.LOGGER.debug("Ignoring duplicate LazoDisc start for '{}' at {} ({})", disc.title(), pos.toShortString(), reason);
             VanillaRecordStopper.stopVanillaRecordsNear(level, pos, 4.0D);
@@ -75,7 +87,7 @@ public final class JukeboxPlaybackManager {
             boolean dynamicPosition = SablePositionCompat.isProbablySubLevel(pos) || projected.distanceToSqr(center) > 0.0001D;
 
             var source = PlasmoVoiceBridge.INSTANCE.startStaticSource(level, pos, disc, () -> finishAt(level, pos, disc, "track-ended"));
-            active.put(sourceKey, new ActiveJukeboxSource(disc, source, dynamicPosition));
+            active.put(sourceKey, new ActiveJukeboxSource(disc, source, new java.util.concurrent.atomic.AtomicBoolean(dynamicPosition)));
             // Stop vanilla record sound that may have started from the original music disc.
             VanillaRecordStopper.stopVanillaRecordsNear(level, pos, 4.0D);
             LazoDiscs.LOGGER.info("Started LazoDisc '{}' at {} ({}, dynamicPosition={})", disc.title(), pos.toShortString(), reason, dynamicPosition);
@@ -150,11 +162,39 @@ public final class JukeboxPlaybackManager {
             }
 
             ActiveJukeboxSource activeSource = e.getValue();
-            if (activeSource.dynamicPosition()) {
+            // Re-check sub-level status: a jukebox that started as a normal block may have
+            // been swept into a Sable sub-level by the Physics Assembler.
+            if (!activeSource.dynamicPosition().get() && SablePositionCompat.isProbablySubLevel(key.pos())) {
+                activeSource.markDynamicPosition();
+            }
+            if (activeSource.isDynamicPosition()) {
                 // Moving Sable / Create Aeronautics assemblies must update every tick, otherwise
                 // the Plasmo source audibly lags behind the flying platform.
                 Vec3 projected = SablePositionCompat.projectJukeboxCenter(level, key.pos());
                 activeSource.updatePosition(level, projected);
+            }
+        }
+    }
+
+    /**
+     * Called from SablePhysicsEvents after every Sable physics step (~60 Hz) for
+     * low-latency position updates on moving platforms.
+     */
+    public void onSablePostPhysicsTick(ServerLevel level) {
+        if (active.isEmpty()) return;
+        for (Map.Entry<SourceKey, ActiveJukeboxSource> e : active.entrySet()) {
+            SourceKey key = e.getKey();
+            if (!key.dimension().equals(level.dimension())) continue;
+            ActiveJukeboxSource activeSource = e.getValue();
+            if (!activeSource.isDynamicPosition()) {
+                if (!SablePositionCompat.isProbablySubLevel(key.pos())) continue;
+                activeSource.markDynamicPosition();
+            }
+            try {
+                Vec3 projected = SablePositionCompat.projectJukeboxCenter(level, key.pos());
+                activeSource.updatePosition(level, projected);
+            } catch (Throwable t) {
+                LazoDiscs.LOGGER.debug("SablePostPhysicsTick position update failed: {}", t.toString());
             }
         }
     }

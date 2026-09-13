@@ -36,7 +36,10 @@ public final class LazoDiscsCommands {
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("lazodisc")
+        String alias = LazoDiscsConfig.COMMAND_ALIAS.get();
+        if (alias == null || alias.isBlank()) alias = "lazodisc";
+        alias = alias.trim();
+        dispatcher.register(Commands.literal(alias)
                 .then(Commands.literal("burn")
                         .executes(ctx -> burn(ctx.getSource(), ""))
                         .then(Commands.argument("input", StringArgumentType.greedyString())
@@ -197,7 +200,9 @@ public final class LazoDiscsCommands {
             LavaPcmFeeder.SearchResult result = results.get(i);
             String title = sanitizeTitle(result.title());
             String author = sanitizeTitle(result.author());
-            String burnCommand = "/lazodisc burn " + result.url() + " " + title;
+            String alias = LazoDiscsConfig.COMMAND_ALIAS.get();
+            if (alias == null || alias.isBlank()) alias = "lazodisc";
+            String burnCommand = "/" + alias.trim() + " burn " + result.url() + " " + title;
             Component line = Component.literal((i + 1) + ". ")
                     .withStyle(ChatFormatting.DARK_GRAY)
                     .append(Component.literal(title).withStyle(style -> style
