@@ -7,6 +7,7 @@ import com.eyecrasher.lazodiscs.data.CustomDiscData;
 import com.eyecrasher.lazodiscs.data.DiscDataUtil;
 import com.eyecrasher.lazodiscs.server.LazoDiscsPermissions;
 import com.eyecrasher.lazodiscs.text.LazoDiscsText;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -21,6 +22,7 @@ import net.minecraft.world.level.block.JukeboxBlock;
 import net.minecraft.world.level.block.entity.JukeboxBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -32,24 +34,18 @@ import java.util.Optional;
 public abstract class JukeboxPlayableMixin {
 
     /**
-     * Custom LazoDiscs are still based on vanilla music disc items, but vanilla would normally
-     * play the original disc sound and show the original song name. We cancel vanilla insertion
-     * for LazoDiscs, insert the item silently, show the LazoDisc title, and let Plasmo Voice play
-     * only the custom URL audio.
+     * Custom LazoDiscs are still based on vanilla music disc items, but vanilla would normally play
+     * the original disc sound and show the original song name. We cancel vanilla insertion for
+     * LazoDiscs, insert the item silently, show the LazoDisc title, and let Plasmo Voice play only
+     * the custom URL audio.
      */
-    @Inject(
-            method = "tryInsertIntoJukebox",
-            at = @At("HEAD"),
-            cancellable = true,
-            require = 0
-    )
+    @Inject(method = "tryInsertIntoJukebox", at = @At("HEAD"), cancellable = true, require = 0)
     private static void lazodiscs$tryInsertIntoJukebox(
             Level level,
             BlockPos pos,
             ItemStack stack,
             Player player,
-            CallbackInfoReturnable<ItemInteractionResult> cir
-    ) {
+            CallbackInfoReturnable<ItemInteractionResult> cir) {
         Optional<CustomDiscData> data = DiscDataUtil.read(stack);
 
         if (data.isEmpty()) {
@@ -58,29 +54,27 @@ public abstract class JukeboxPlayableMixin {
 
         BlockState blockstate = level.getBlockState(pos);
 
-        if (!blockstate.is(Blocks.JUKEBOX)
-                || blockstate.getValue(JukeboxBlock.HAS_RECORD)) {
+        if (!blockstate.is(Blocks.JUKEBOX) || blockstate.getValue(JukeboxBlock.HAS_RECORD)) {
             return;
         }
 
         if (!level.isClientSide()) {
 
             if (!LazoDiscsServerBootstrap.isLoaded()) {
-                player.displayClientMessage(
-                        LazoDiscsText.plasmoVoiceRequired(),
-                        true
-                );
+                player.displayClientMessage(LazoDiscsText.plasmoVoiceRequired(), true);
 
                 cir.setReturnValue(ItemInteractionResult.FAIL);
                 return;
             }
 
             if (!LazoDiscsPermissions.canPlay(player)) {
-                player.displayClientMessage(
-                        LazoDiscsText.playNoPermission(),
-                        true
-                );
+                player.displayClientMessage(LazoDiscsText.playNoPermission(), true);
 
+                cir.setReturnValue(ItemInteractionResult.FAIL);
+                return;
+            }
+
+            if (!(level.getBlockEntity(pos) instanceof JukeboxBlockEntity)) {
                 cir.setReturnValue(ItemInteractionResult.FAIL);
                 return;
             }
@@ -97,29 +91,18 @@ public abstract class JukeboxPlayableMixin {
 
                 if (level instanceof ServerLevel serverLevel) {
                     LazoDiscs.playback()
-                            .onJukeboxItemChanged(
-                                    serverLevel,
-                                    pos,
-                                    record,
-                                    "lazodiscsInsert"
-                            );
+                            .onJukeboxItemChanged(serverLevel, pos, record, "lazodiscsInsert");
                 }
 
                 level.gameEvent(
-                        GameEvent.BLOCK_CHANGE,
-                        pos,
-                        GameEvent.Context.of(player, blockstate)
-                );
+                        GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(player, blockstate));
             }
 
             player.awardStat(Stats.PLAY_RECORD);
 
             String title = data.get().title();
 
-            player.displayClientMessage(
-                    Component.literal(LazoDiscsText.nowPlaying(title)),
-                    true
-            );
+            player.displayClientMessage(Component.literal(LazoDiscsText.nowPlaying(title)), true);
         }
 
         cir.setReturnValue(ItemInteractionResult.SUCCESS);

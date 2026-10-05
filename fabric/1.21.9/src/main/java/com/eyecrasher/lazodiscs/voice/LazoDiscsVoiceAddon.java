@@ -1,6 +1,8 @@
 package com.eyecrasher.lazodiscs.voice;
 
 import com.eyecrasher.lazodiscs.LazoDiscs;
+import com.eyecrasher.lazodiscs.compat.sophisticatedbackpacks.LazoDiscsDiscHandler;
+
 import su.plo.voice.api.addon.AddonInitializer;
 import su.plo.voice.api.addon.InjectPlasmoVoice;
 import su.plo.voice.api.addon.annotation.Addon;
@@ -9,12 +11,10 @@ import su.plo.voice.api.server.PlasmoVoiceServer;
 @Addon(
         id = "lazodiscs",
         name = "LazoDiscs",
-        version = "1.0.4+mc1.21.9",
-        authors = {"EyeCrasher"}
-)
+        version = "1.0.5+1.21.9",
+        authors = {"EyeCrasher"})
 public final class LazoDiscsVoiceAddon implements AddonInitializer {
-    @InjectPlasmoVoice
-    private PlasmoVoiceServer voiceServer;
+    @InjectPlasmoVoice private PlasmoVoiceServer voiceServer;
 
     @Override
     public void onAddonInitialize() {
@@ -26,6 +26,7 @@ public final class LazoDiscsVoiceAddon implements AddonInitializer {
     public void onAddonShutdown() {
         PlasmoVoiceBridge.INSTANCE.shutdown();
         LazoDiscs.playback().stopAll("pv-addon-shutdown");
+        LazoDiscsDiscHandler.stopAll("pv-addon-shutdown");
         LazoDiscs.LOGGER.info("LazoDiscs Plasmo Voice addon shut down");
     }
 }

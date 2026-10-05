@@ -3,6 +3,7 @@ package com.eyecrasher.lazodiscs.data;
 import com.eyecrasher.lazodiscs.config.LazoDiscsConfig;
 import com.eyecrasher.lazodiscs.text.LazoDiscsText;
 import com.eyecrasher.lazodiscs.voice.SpotifyTitleResolver;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -25,8 +26,7 @@ public final class DiscDataUtil {
     private static final String VOLUME_KEY = "volume";
     private static final String ID_KEY = "id";
 
-    private DiscDataUtil() {
-    }
+    private DiscDataUtil() {}
 
     public static boolean isMusicDisc(ItemStack stack) {
         return !stack.isEmpty() && stack.get(DataComponents.JUKEBOX_PLAYABLE) != null;
@@ -49,8 +49,14 @@ public final class DiscDataUtil {
         try {
             String url = tag.getString(URL_KEY);
             String title = tag.contains(TITLE_KEY, 8) ? tag.getString(TITLE_KEY) : url;
-            int range = tag.contains(RANGE_KEY, 3) ? tag.getInt(RANGE_KEY) : LazoDiscsConfig.DEFAULT_RANGE.get();
-            float volume = tag.contains(VOLUME_KEY, 5) ? tag.getFloat(VOLUME_KEY) : LazoDiscsConfig.DEFAULT_VOLUME.get().floatValue();
+            int range =
+                    tag.contains(RANGE_KEY, 3)
+                            ? tag.getInt(RANGE_KEY)
+                            : LazoDiscsConfig.DEFAULT_RANGE.get();
+            float volume =
+                    tag.contains(VOLUME_KEY, 5)
+                            ? tag.getFloat(VOLUME_KEY)
+                            : LazoDiscsConfig.DEFAULT_VOLUME.get().floatValue();
             UUID id = UUID.fromString(tag.getString(ID_KEY));
             return Optional.of(new CustomDiscData(url, title, range, volume, id));
         } catch (Exception ignored) {
@@ -59,7 +65,8 @@ public final class DiscDataUtil {
     }
 
     public static void write(ItemStack stack, CustomDiscData disc) {
-        CompoundTag root = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        CompoundTag root =
+                stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
         CompoundTag tag = new CompoundTag();
         tag.putString(URL_KEY, disc.url());
         tag.putString(TITLE_KEY, disc.title());
@@ -68,7 +75,9 @@ public final class DiscDataUtil {
         tag.putString(ID_KEY, disc.id().toString());
         root.put(ROOT_KEY, tag);
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(root));
-        stack.set(DataComponents.CUSTOM_NAME, Component.literal(disc.title()).withStyle(ChatFormatting.AQUA));
+        stack.set(
+                DataComponents.CUSTOM_NAME,
+                Component.literal(disc.title()).withStyle(ChatFormatting.AQUA));
         // Remove/disable original vanilla music disc tooltip/lore, e.g. "C418 - Cat".
         stack.remove(DataComponents.LORE);
         stack.set(DataComponents.HIDE_ADDITIONAL_TOOLTIP, Unit.INSTANCE);
@@ -90,7 +99,8 @@ public final class DiscDataUtil {
     }
 
     public static String validateUrl(String raw) throws IllegalArgumentException {
-        if (StringUtil.isNullOrEmpty(raw)) throw new IllegalArgumentException(LazoDiscsText.urlEmpty());
+        if (StringUtil.isNullOrEmpty(raw))
+            throw new IllegalArgumentException(LazoDiscsText.urlEmpty());
         String trimmed = raw.trim();
         URI uri;
         try {
@@ -103,12 +113,19 @@ public final class DiscDataUtil {
         if (scheme.equals("spotify")) {
             Optional<String> spotifyError = SpotifyTitleResolver.validateSingleTrack(trimmed);
             if (spotifyError.isPresent()) throw new IllegalArgumentException(spotifyError.get());
-            return SpotifyTitleResolver.canonicalize(trimmed);
+            // Spotify URIs become HTTPS URLs and must obey the same server policy.
+            return validateUrl(SpotifyTitleResolver.canonicalize(trimmed));
         }
-        if (scheme.equals("http") && !LazoDiscsConfig.ALLOW_HTTP.get()) throw new IllegalArgumentException(LazoDiscsText.httpDisabled());
-        if (scheme.equals("https") && !LazoDiscsConfig.ALLOW_HTTPS.get()) throw new IllegalArgumentException(LazoDiscsText.httpsDisabled());
+        if (scheme.equals("http") && !LazoDiscsConfig.ALLOW_HTTP.get())
+            throw new IllegalArgumentException(LazoDiscsText.httpDisabled());
+        if (scheme.equals("https") && !LazoDiscsConfig.ALLOW_HTTPS.get())
+            throw new IllegalArgumentException(LazoDiscsText.httpsDisabled());
         if (!scheme.equals("http") && !scheme.equals("https")) {
             throw new IllegalArgumentException(LazoDiscsText.unsupportedScheme());
+        }
+
+        if (uri.getHost() == null) {
+            throw new IllegalArgumentException(LazoDiscsText.urlInvalid());
         }
 
         if (SpotifyTitleResolver.looksLikeSpotify(trimmed)) {
@@ -119,16 +136,20 @@ public final class DiscDataUtil {
         var domains = LazoDiscsConfig.ALLOWED_DOMAINS.get();
         if (!domains.isEmpty()) {
             String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase(Locale.ROOT);
-            boolean ok = domains.stream()
-                    .map(s -> s.toLowerCase(Locale.ROOT).trim())
-                    .anyMatch(allowed -> host.equals(allowed) || host.endsWith("." + allowed));
+            boolean ok =
+                    domains.stream()
+                            .map(s -> s.toLowerCase(Locale.ROOT).trim())
+                            .anyMatch(
+                                    allowed ->
+                                            host.equals(allowed) || host.endsWith("." + allowed));
             if (!ok) throw new IllegalArgumentException(LazoDiscsText.domainNotAllowed());
         }
-        return SpotifyTitleResolver.looksLikeSpotify(trimmed) ? SpotifyTitleResolver.canonicalize(trimmed) : trimmed;
+        return SpotifyTitleResolver.looksLikeSpotify(trimmed)
+                ? SpotifyTitleResolver.canonicalize(trimmed)
+                : trimmed;
     }
 
     public static int clampRange(int range) {
         return Math.max(1, Math.min(range, LazoDiscsConfig.MAX_RANGE.get()));
     }
-
 }

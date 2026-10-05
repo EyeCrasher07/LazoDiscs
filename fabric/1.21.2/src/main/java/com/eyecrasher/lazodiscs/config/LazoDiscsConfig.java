@@ -1,6 +1,7 @@
 package com.eyecrasher.lazodiscs.config;
 
 import com.eyecrasher.lazodiscs.LazoDiscs;
+
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.BufferedReader;
@@ -17,30 +18,46 @@ public final class LazoDiscsConfig {
 
     public static final IntValue DEFAULT_RANGE = intValue("playback.defaultRange", 64, 1, 512);
     public static final IntValue MAX_RANGE = intValue("playback.maxRange", 128, 1, 1024);
-    public static final DoubleValue DEFAULT_VOLUME = doubleValue("playback.defaultVolume", 1.0D, 0.0D, 4.0D);
-    public static final DoubleValue SOURCE_LINE_DEFAULT_VOLUME = doubleValue("playback.sourceLineDefaultVolume", 1.0D, 0.0D, 1.0D);
+    public static final DoubleValue DEFAULT_VOLUME =
+            doubleValue("playback.defaultVolume", 1.0D, 0.0D, 4.0D);
+    public static final DoubleValue SOURCE_LINE_DEFAULT_VOLUME =
+            doubleValue("playback.sourceLineDefaultVolume", 1.0D, 0.0D, 1.0D);
     public static final StringValue LANGUAGE = stringValue("language", "en_us");
     public static final StringValue COMMAND_ALIAS = stringValue("commandAlias", "lazodisc");
-    public static final BooleanValue ALLOW_PLAYBACK_ON_SABLE_PLATFORMS = booleanValue("playback.allowPlaybackOnSablePlatforms", false);
+    public static final BooleanValue ALLOW_PLAYBACK_ON_SABLE_PLATFORMS =
+            booleanValue("playback.allowPlaybackOnSablePlatforms", false);
     public static final BooleanValue ALLOW_HTTP = booleanValue("security.allowHttp", false);
     public static final BooleanValue ALLOW_HTTPS = booleanValue("security.allowHttps", true);
-    public static final StringListValue ALLOWED_DOMAINS = stringListValue("security.allowedDomains", List.of());
-    public static final BooleanValue REQUIRE_PERMISSION_FOR_BURN_COMMAND = booleanValue("security.requirePermissionForBurnCommand", true);
-    public static final IntValue BURN_PERMISSION_LEVEL = intValue("security.burnPermissionLevel", 2, 0, 4);
-    public static final BooleanValue REQUIRE_PERMISSION_FOR_ERASE_COMMAND = booleanValue("security.requirePermissionForEraseCommand", true);
-    public static final IntValue ERASE_PERMISSION_LEVEL = intValue("security.erasePermissionLevel", 2, 0, 4);
-    public static final BooleanValue REQUIRE_PERMISSION_FOR_SEARCH_COMMAND = booleanValue("security.requirePermissionForSearchCommand", true);
-    public static final IntValue SEARCH_PERMISSION_LEVEL = intValue("security.searchPermissionLevel", 2, 0, 4);
-    public static final BooleanValue REQUIRE_PERMISSION_FOR_PLAY = booleanValue("security.requirePermissionForPlay", false);
-    public static final IntValue PLAY_PERMISSION_LEVEL = intValue("security.playPermissionLevel", 2, 0, 4);
-    public static final IntValue LAVAPLAYER_LOAD_TIMEOUT_SECONDS = intValue("lavaplayer.loadTimeoutSeconds", 60, 5, 300);
-    public static final IntValue VALIDATION_INTERVAL_TICKS = intValue("playback.validationIntervalTicks", 20, 1, 200);
-    public static final BooleanValue SPOTIFY_SEARCH_VIA_YOUTUBE = booleanValue("lavaplayer.spotifySearchViaYoutube", true);
-    public static final IntValue MAX_STREAMING_TRACK_LENGTH_SECONDS = intValue("lavaplayer.maxStreamingTrackLengthSeconds", 0, 0, 24 * 60 * 60);
-    public static final IntValue MAX_CONCURRENT_AUDIO_LOADS = intValue("lavaplayer.maxConcurrentAudioLoads", 3, 1, 32);
+    public static final StringListValue ALLOWED_DOMAINS =
+            stringListValue("security.allowedDomains", List.of());
+    public static final BooleanValue REQUIRE_PERMISSION_FOR_BURN_COMMAND =
+            booleanValue("security.requirePermissionForBurnCommand", true);
+    public static final IntValue BURN_PERMISSION_LEVEL =
+            intValue("security.burnPermissionLevel", 2, 0, 4);
+    public static final BooleanValue REQUIRE_PERMISSION_FOR_ERASE_COMMAND =
+            booleanValue("security.requirePermissionForEraseCommand", true);
+    public static final IntValue ERASE_PERMISSION_LEVEL =
+            intValue("security.erasePermissionLevel", 2, 0, 4);
+    public static final BooleanValue REQUIRE_PERMISSION_FOR_SEARCH_COMMAND =
+            booleanValue("security.requirePermissionForSearchCommand", true);
+    public static final IntValue SEARCH_PERMISSION_LEVEL =
+            intValue("security.searchPermissionLevel", 2, 0, 4);
+    public static final BooleanValue REQUIRE_PERMISSION_FOR_PLAY =
+            booleanValue("security.requirePermissionForPlay", false);
+    public static final IntValue PLAY_PERMISSION_LEVEL =
+            intValue("security.playPermissionLevel", 2, 0, 4);
+    public static final IntValue LAVAPLAYER_LOAD_TIMEOUT_SECONDS =
+            intValue("lavaplayer.loadTimeoutSeconds", 60, 5, 300);
+    public static final IntValue VALIDATION_INTERVAL_TICKS =
+            intValue("playback.validationIntervalTicks", 20, 1, 200);
+    public static final BooleanValue SPOTIFY_SEARCH_VIA_YOUTUBE =
+            booleanValue("lavaplayer.spotifySearchViaYoutube", true);
+    public static final IntValue MAX_STREAMING_TRACK_LENGTH_SECONDS =
+            intValue("lavaplayer.maxStreamingTrackLengthSeconds", 0, 0, 24 * 60 * 60);
+    public static final IntValue MAX_CONCURRENT_AUDIO_LOADS =
+            intValue("lavaplayer.maxConcurrentAudioLoads", 3, 1, 32);
 
-    private LazoDiscsConfig() {
-    }
+    private LazoDiscsConfig() {}
 
     public static void load() {
         try {
@@ -51,7 +68,8 @@ public final class LazoDiscsConfig {
             }
             read(file);
         } catch (Exception e) {
-            LazoDiscs.LOGGER.warn("Could not load LazoDiscs config, using defaults: {}", e.toString());
+            LazoDiscs.LOGGER.warn(
+                    "Could not load LazoDiscs config, using defaults: {}", e.toString());
         }
     }
 
@@ -93,39 +111,65 @@ public final class LazoDiscsConfig {
     private static void writeDefault(Path file) throws Exception {
         try (BufferedWriter writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
             writer.write("# LazoDiscs server configuration\n");
-            writer.write("# Controls music disc burning, playback, and Plasmo Voice integration.\n\n");
-            writer.write("# Server message language. Loads from config/lazodiscs/lang/<language>.toml\n");
+            writer.write(
+                    "# Controls music disc burning, playback, and Plasmo Voice integration.\n\n");
+            writer.write(
+                    "# Server message language. Loads from"
+                            + " config/lazodiscs/lang/<language>.toml\n");
             writer.write("# Built-in: en_us. Add ru_ru.toml etc. and switch here.\n");
             writer.write("language = \"en_us\"\n\n");
-            writer.write("# Root command name. /lazodisc by default. Change to /disc, /music etc. Requires server restart.\n");
+            writer.write(
+                    "# Root command name. /lazodisc by default. Change to /disc, /music etc."
+                            + " Requires server restart.\n");
             writer.write("commandAlias = \"lazodisc\"\n\n");
             writer.write("[playback]\n");
-            writer.write("# Default hearing radius (blocks) for burned discs. Written to disc NBT on /lazodisc burn.\n");
+            writer.write(
+                    "# Default hearing radius (blocks) for burned discs. Written to disc NBT on"
+                            + " /lazodisc burn.\n");
             writer.write("defaultRange = 64\n\n");
-            writer.write("# Maximum hearing radius a disc can have. /lazodisc burn clamps to this.\n");
+            writer.write(
+                    "# Maximum hearing radius a disc can have. /lazodisc burn clamps to this.\n");
             writer.write("maxRange = 128\n\n");
-            writer.write("# Default volume multiplier for burned discs (0.0 = silent, 4.0 = very loud).\n");
+            writer.write(
+                    "# Default volume multiplier for burned discs (0.0 = silent, 4.0 = very"
+                            + " loud).\n");
             writer.write("defaultVolume = 1.0\n\n");
-            writer.write("# Default client volume for the Plasmo Voice source line \"Discs\" (0.0-1.0).\n");
+            writer.write(
+                    "# Default client volume for the Plasmo Voice source line \"Discs\""
+                            + " (0.0-1.0).\n");
             writer.write("# Players can adjust this in their Plasmo Voice client settings.\n");
             writer.write("sourceLineDefaultVolume = 1.0\n\n");
-            writer.write("# How often (in ticks) to re-validate active jukeboxes (1 = every tick, 20 = once per second).\n");
+            writer.write(
+                    "# How often (in ticks) to re-validate active jukeboxes (1 = every tick, 20 ="
+                            + " once per second).\n");
             writer.write("# Lower = more responsive to block changes, higher = less CPU usage.\n");
             writer.write("validationIntervalTicks = 20\n\n");
-            writer.write("# EXPERIMENTAL: Allow playback from jukeboxes on Sable moving platforms (Create Aeronautics).\n");
+            writer.write(
+                    "# EXPERIMENTAL: Allow playback from jukeboxes on Sable moving platforms"
+                            + " (Create Aeronautics).\n");
             writer.write("# When false, jukeboxes on moving platforms refuse to play.\n");
-            writer.write("# When true, position is projected to real-world coordinates and updated every physics tick (~60 Hz).\n");
+            writer.write(
+                    "# When true, position is projected to real-world coordinates and updated every"
+                            + " physics tick (~60 Hz).\n");
             writer.write("allowPlaybackOnSablePlatforms = false\n\n");
             writer.write("[lavaplayer]\n");
-            writer.write("# Timeout for loading/resolving audio URLs (YouTube, SoundCloud, etc.) in seconds.\n");
+            writer.write(
+                    "# Timeout for loading/resolving audio URLs (YouTube, SoundCloud, etc.) in"
+                            + " seconds.\n");
             writer.write("loadTimeoutSeconds = 60\n\n");
-            writer.write("# Resolve Spotify track links by searching YouTube Music for a matching track.\n");
-            writer.write("# Spotify doesn't provide direct audio streams, so metadata is scraped and matched.\n");
+            writer.write(
+                    "# Resolve Spotify track links by searching YouTube Music for a matching"
+                            + " track.\n");
+            writer.write(
+                    "# Spotify doesn't provide direct audio streams, so metadata is scraped and"
+                            + " matched.\n");
             writer.write("spotifySearchViaYoutube = true\n\n");
             writer.write("# Maximum streaming track length in seconds. 0 = unlimited.\n");
             writer.write("# Prevents burning very long streams (e.g. 24-hour lo-fi) onto discs.\n");
             writer.write("maxStreamingTrackLengthSeconds = 0\n\n");
-            writer.write("# Maximum concurrent audio load operations (thread pool size for /lazodisc burn and /lazodisc search).\n");
+            writer.write(
+                    "# Maximum concurrent audio load operations (thread pool size for /lazodisc"
+                            + " burn and /lazodisc search).\n");
             writer.write("maxConcurrentAudioLoads = 3\n\n");
             writer.write("[security]\n");
             writer.write("# Allow http:// URLs (not recommended \u2014 use HTTPS for security).\n");
@@ -133,18 +177,25 @@ public final class LazoDiscsConfig {
             writer.write("# Allow https:// URLs.\n");
             writer.write("allowHttps = true\n\n");
             writer.write("# Domain allowlist. Empty = any domain allowed.\n");
-            writer.write("# Example: [\"youtube.com\", \"youtu.be\", \"open.spotify.com\", \"soundcloud.com\"]\n");
+            writer.write(
+                    "# Example: [\"youtube.com\", \"youtu.be\", \"open.spotify.com\","
+                            + " \"soundcloud.com\"]\n");
             writer.write("allowedDomains = []\n\n");
             writer.write("# Permission requirements for commands.\n");
-            writer.write("# Levels: 0 = anyone, 1 = junior admin, 2 = admin (default), 3 = senior admin, 4 = owner.\n");
+            writer.write(
+                    "# Levels: 0 = anyone, 1 = junior admin, 2 = admin (default), 3 = senior admin,"
+                            + " 4 = owner.\n");
             writer.write("requirePermissionForBurnCommand = true\n");
             writer.write("burnPermissionLevel = 2\n\n");
             writer.write("requirePermissionForEraseCommand = true\n");
             writer.write("erasePermissionLevel = 2\n\n");
             writer.write("requirePermissionForSearchCommand = true\n");
             writer.write("searchPermissionLevel = 2\n\n");
-            writer.write("# Require permission to PLAY (insert into jukebox) already-burned discs.\n");
-            writer.write("# false = any player can play discs (default). true = only operators can play.\n");
+            writer.write(
+                    "# Require permission to PLAY (insert into jukebox) already-burned discs.\n");
+            writer.write(
+                    "# false = any player can play discs (default). true = only operators can"
+                            + " play.\n");
             writer.write("requirePermissionForPlay = false\n");
             writer.write("playPermissionLevel = 2\n");
         }
@@ -255,7 +306,8 @@ public final class LazoDiscsConfig {
         return value;
     }
 
-    private static DoubleValue doubleValue(String path, double defaultValue, double min, double max) {
+    private static DoubleValue doubleValue(
+            String path, double defaultValue, double min, double max) {
         DoubleValue value = new DoubleValue(path, defaultValue, min, max);
         VALUES.add(value);
         return value;
@@ -316,7 +368,7 @@ public final class LazoDiscsConfig {
             try {
                 int parsed = Integer.parseInt(stripComment(raw));
                 value = Math.max(min, Math.min(max, parsed));
-            } catch (Exception ignored) {
+            } catch (NumberFormatException ignored) {
                 value = defaultValue();
             }
         }
@@ -336,8 +388,11 @@ public final class LazoDiscsConfig {
         protected void read(String raw) {
             try {
                 double parsed = Double.parseDouble(stripComment(raw));
-                value = Math.max(min, Math.min(max, parsed));
-            } catch (Exception ignored) {
+                value =
+                        Double.isFinite(parsed)
+                                ? Math.max(min, Math.min(max, parsed))
+                                : defaultValue();
+            } catch (NumberFormatException ignored) {
                 value = defaultValue();
             }
         }

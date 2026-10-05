@@ -7,12 +7,14 @@ import com.eyecrasher.lazodiscs.data.CustomDiscData;
 import com.eyecrasher.lazodiscs.text.LazoDiscsText;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackState;
 import com.sedmelluq.discord.lavaplayer.track.playback.AudioFrame;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
+
 import su.plo.slib.api.server.entity.McServerEntity;
 import su.plo.slib.api.server.position.ServerPos3d;
 import su.plo.slib.api.server.world.McServerWorld;
@@ -39,8 +41,7 @@ public final class PlasmoVoiceBridge {
     private volatile PlasmoVoiceServer voiceServer;
     private volatile ServerSourceLine discsLine;
 
-    private PlasmoVoiceBridge() {
-    }
+    private PlasmoVoiceBridge() {}
 
     public void initialize(PlasmoVoiceServer voiceServer, Object addon) {
         this.voiceServer = voiceServer;
@@ -49,58 +50,53 @@ public final class PlasmoVoiceBridge {
 
         try (InputStream icon = getIconResource()) {
             if (icon != null) {
-                var builder = voiceServer.getSourceLineManager().createBuilder(
-                        addon,
-                        "discs",
-                        sourceLineName,
-                        icon,
-                        50
-                );
+                var builder =
+                        voiceServer
+                                .getSourceLineManager()
+                                .createBuilder(addon, "discs", sourceLineName, icon, 50);
 
                 builder.setDefaultVolume(
-                        LazoDiscsConfig.SOURCE_LINE_DEFAULT_VOLUME.get().floatValue()
-                );
+                        LazoDiscsConfig.SOURCE_LINE_DEFAULT_VOLUME.get().floatValue());
 
                 this.discsLine = builder.build();
             } else {
-                var builder = voiceServer.getSourceLineManager().createBuilder(
-                        addon,
-                        "discs",
-                        sourceLineName,
-                        "lazodiscs:textures/icons/discs.png",
-                        50
-                );
+                var builder =
+                        voiceServer
+                                .getSourceLineManager()
+                                .createBuilder(
+                                        addon,
+                                        "discs",
+                                        sourceLineName,
+                                        "lazodiscs:textures/icons/discs.png",
+                                        50);
 
                 builder.setDefaultVolume(
-                        LazoDiscsConfig.SOURCE_LINE_DEFAULT_VOLUME.get().floatValue()
-                );
+                        LazoDiscsConfig.SOURCE_LINE_DEFAULT_VOLUME.get().floatValue());
 
                 this.discsLine = builder.build();
             }
         } catch (Exception e) {
             throw new IllegalStateException(
-                    "Could not register LazoDiscs Plasmo Voice source line",
-                    e
-            );
+                    "Could not register LazoDiscs Plasmo Voice source line", e);
         }
 
         LazoDiscs.LOGGER.info(
-                "Registered Plasmo Voice source line 'discs' for LazoDiscs volume control"
-        );
+                "Registered Plasmo Voice source line 'discs' for LazoDiscs volume control");
     }
 
     private InputStream getIconResource() {
-        InputStream icon = getClass()
-                .getClassLoader()
-                .getResourceAsStream("assets/lazodiscs/icon.png");
+        InputStream icon =
+                getClass().getClassLoader().getResourceAsStream("assets/lazodiscs/icon.png");
 
         if (icon != null) {
             return icon;
         }
 
-        return getClass()
-                .getClassLoader()
-                .getResourceAsStream("lazodiscs_icon.png");
+        return getClass().getClassLoader().getResourceAsStream("lazodiscs_icon.png");
+    }
+
+    public boolean isInitialized() {
+        return voiceServer != null && discsLine != null;
     }
 
     public void shutdown() {
@@ -109,11 +105,7 @@ public final class PlasmoVoiceBridge {
     }
 
     public PlayingVoiceSource startStaticSource(
-            ServerLevel level,
-            BlockPos pos,
-            CustomDiscData disc,
-            Runnable onFinished
-    ) {
+            ServerLevel level, BlockPos pos, CustomDiscData disc, Runnable onFinished) {
         return startStreamingSource(level, pos, disc, onFinished);
     }
 
@@ -122,8 +114,7 @@ public final class PlasmoVoiceBridge {
             int entityId,
             Vec3 initialPos,
             CustomDiscData disc,
-            Runnable onFinished
-    ) {
+            Runnable onFinished) {
         PlasmoVoiceServer server = voiceServer;
         ServerSourceLine line = discsLine;
 
@@ -137,7 +128,11 @@ public final class PlasmoVoiceBridge {
         try {
             rawEntity = level.getEntity(entityId);
         } catch (Throwable t) {
-            LazoDiscs.LOGGER.debug("Failed to resolve entity by id {} in {}: {}", entityId, dimensionId(level), t.toString());
+            LazoDiscs.LOGGER.debug(
+                    "Failed to resolve entity by id {} in {}: {}",
+                    entityId,
+                    dimensionId(level),
+                    t.toString());
         }
 
         if (rawEntity instanceof ServerPlayer player) {
@@ -147,138 +142,198 @@ public final class PlasmoVoiceBridge {
                     mcEntity = vp.getInstance();
                 }
             } catch (Throwable t) {
-                LazoDiscs.LOGGER.debug("Failed to get Plasmo McServerEntity for player {}: {}", player.getName().getString(), t.toString());
+                LazoDiscs.LOGGER.debug(
+                        "Failed to get Plasmo McServerEntity for player {}: {}",
+                        player.getName().getString(),
+                        t.toString());
             }
         } else if (rawEntity != null) {
             try {
                 mcEntity = server.getMinecraftServer().getEntityByInstance(rawEntity);
             } catch (Throwable t) {
-                LazoDiscs.LOGGER.debug("Failed to get Plasmo McServerEntity for entity {}: {}", rawEntity, t.toString());
+                LazoDiscs.LOGGER.debug(
+                        "Failed to get Plasmo McServerEntity for entity {}: {}",
+                        rawEntity,
+                        t.toString());
             }
         }
 
         if (mcEntity == null) {
             // Fallback: entity unavailable — use a static source at initialPos.
             LazoDiscs.LOGGER.warn(
-                    "Could not resolve McServerEntity for entityId={} in {}; falling back to static source at ({})",
-                    entityId, dimensionId(level),
-                    String.format(Locale.ROOT, "%.2f, %.2f, %.2f", initialPos.x, initialPos.y, initialPos.z)
-            );
+                    "Could not resolve McServerEntity for entityId={} in {}; falling back to static"
+                            + " source at ({})",
+                    entityId,
+                    dimensionId(level),
+                    String.format(
+                            Locale.ROOT,
+                            "%.2f, %.2f, %.2f",
+                            initialPos.x,
+                            initialPos.y,
+                            initialPos.z));
             return startStaticFallbackSource(level, initialPos, disc, onFinished);
         }
 
         final McServerEntity finalMcEntity = mcEntity;
 
         LazoDiscs.LOGGER.info(
-                "Preparing streaming LazoDisc Plasmo ENTITY source: entityId={}, entityClass={}, discTitle='{}'",
+                "Preparing streaming LazoDisc Plasmo ENTITY source: entityId={}, entityClass={},"
+                        + " discTitle='{}'",
                 entityId,
                 rawEntity != null ? rawEntity.getClass().getSimpleName() : "?",
-                disc.title()
-        );
+                disc.title());
 
         AtomicBoolean stopped = new AtomicBoolean(false);
         AtomicBoolean manualStop = new AtomicBoolean(false);
         AtomicBoolean finishedNotified = new AtomicBoolean(false);
+        Object lifecycleLock = new Object();
 
         AtomicReference<LavaPcmFeeder.StreamingPlayback> playbackRef = new AtomicReference<>();
         AtomicReference<ServerProximitySource<?>> sourceRef = new AtomicReference<>();
         AtomicReference<AudioSender> senderRef = new AtomicReference<>();
         AtomicReference<Future<?>> taskRef = new AtomicReference<>();
 
-        Runnable cleanup = () -> {
-            LavaPcmFeeder.StreamingPlayback playback = playbackRef.getAndSet(null);
-            if (playback != null) {
-                try { playback.close(); } catch (Exception ignored) {}
-            }
-            ServerProximitySource<?> source = sourceRef.getAndSet(null);
-            if (source != null) {
-                try { source.remove(); } catch (Exception ignored) {}
-            }
-        };
-
-        Runnable notifyFinished = () -> {
-            if (onFinished == null) return;
-            if (!finishedNotified.compareAndSet(false, true)) return;
-            try { level.getServer().execute(onFinished); } catch (Exception ignored) {}
-        };
-
-        Future<?> task = AudioLoadExecutor.submit(() -> {
-            try {
-                if (stopped.get()) return;
-
-                LavaPcmFeeder.StreamingPlayback playback =
-                        LavaPcmFeeder.openStream(disc.url(), disc.title(), disc.volume());
-
-                if (stopped.get()) {
-                    playback.close();
-                    return;
-                }
-
-                playbackRef.set(playback);
-
-                ServerEntitySource source = line.createEntitySource(finalMcEntity, false);
-                source.setName(disc.title());
-                sourceRef.set(source);
-
-                AudioFrameProvider provider =
-                        new StreamingAudioFrameProvider(server, playback, stopped);
-
-                AudioSender sender = source.createAudioSender(
-                        provider,
-                        (short) Math.max(1, Math.min(Short.MAX_VALUE, disc.range()))
-                );
-                senderRef.set(sender);
-
-                sender.onStop(() -> {
-                    boolean wasManual = manualStop.get();
-                    stopped.set(true);
-                    cleanup.run();
-                    if (!wasManual) {
-                        notifyFinished.run();
+        Runnable cleanup =
+                () -> {
+                    synchronized (lifecycleLock) {
+                        LavaPcmFeeder.StreamingPlayback playback = playbackRef.getAndSet(null);
+                        if (playback != null) {
+                            try {
+                                playback.close();
+                            } catch (Exception ignored) {
+                            }
+                        }
+                        ServerProximitySource<?> source = sourceRef.getAndSet(null);
+                        if (source != null) {
+                            try {
+                                source.remove();
+                            } catch (Exception ignored) {
+                            }
+                        }
                     }
-                });
+                };
 
-                if (stopped.get()) {
-                    cleanup.run();
-                    return;
-                }
+        Runnable notifyFinished =
+                () -> {
+                    if (onFinished == null) return;
+                    if (!finishedNotified.compareAndSet(false, true)) return;
+                    try {
+                        level.getServer().execute(onFinished);
+                    } catch (Exception ignored) {
+                    }
+                };
 
-                sender.start();
+        Future<?> task =
+                AudioLoadExecutor.submit(
+                        () -> {
+                            try {
+                                if (stopped.get()) return;
 
-                LazoDiscs.LOGGER.info(
-                        "Streaming LazoDisc ENTITY audio sender started for '{}' (entityId={})",
-                        disc.title(), entityId
-                );
-            } catch (Throwable t) {
-                if (!stopped.get()) {
-                    LazoDiscs.LOGGER.warn(
-                            "Failed to start streaming LazoDisc entity audio (entityId={}): {}",
-                            entityId, t.toString()
-                    );
-                    notifyLoadFailure(level, BlockPos.containing(initialPos), disc, messageOf(t));
-                }
-                stopped.set(true);
-                cleanup.run();
-                if (!manualStop.get()) {
-                    notifyFinished.run();
-                }
-            }
-        });
+                                LavaPcmFeeder.StreamingPlayback playback =
+                                        LavaPcmFeeder.openStream(
+                                                disc.url(), disc.title(), disc.volume());
+
+                                synchronized (lifecycleLock) {
+                                    if (stopped.get()) {
+                                        playback.close();
+                                        return;
+                                    }
+
+                                    playbackRef.set(playback);
+
+                                    ServerEntitySource source =
+                                            line.createEntitySource(finalMcEntity, false);
+                                    sourceRef.set(source);
+                                    source.setName(disc.title());
+
+                                    AudioFrameProvider provider =
+                                            new StreamingAudioFrameProvider(
+                                                    server, playback, stopped);
+
+                                    AudioSender sender =
+                                            source.createAudioSender(
+                                                    provider,
+                                                    (short)
+                                                            Math.max(
+                                                                    1,
+                                                                    Math.min(
+                                                                            Short.MAX_VALUE,
+                                                                            disc.range())));
+                                    senderRef.set(sender);
+
+                                    sender.onStop(
+                                            () -> {
+                                                boolean wasManual = manualStop.get();
+                                                stopped.set(true);
+                                                cleanup.run();
+                                                if (!wasManual) {
+                                                    notifyFinished.run();
+                                                }
+                                            });
+
+                                    if (stopped.get()) {
+                                        cleanup.run();
+                                        return;
+                                    }
+
+                                    sender.start();
+                                }
+
+                                LazoDiscs.LOGGER.info(
+                                        "Streaming LazoDisc ENTITY audio sender started for '{}'"
+                                                + " (entityId={})",
+                                        disc.title(),
+                                        entityId);
+                            } catch (Throwable t) {
+                                if (!stopped.get()) {
+                                    LazoDiscs.LOGGER.warn(
+                                            "Failed to start streaming LazoDisc entity audio"
+                                                    + " (entityId={}): {}",
+                                            entityId,
+                                            t.toString());
+                                    notifyLoadFailure(
+                                            level,
+                                            BlockPos.containing(initialPos),
+                                            disc,
+                                            messageOf(t));
+                                }
+                                stopped.set(true);
+                                cleanup.run();
+                                if (!manualStop.get()) {
+                                    notifyFinished.run();
+                                }
+                            }
+                        },
+                        () -> {
+                            stopped.set(true);
+                            cleanup.run();
+                            notifyLoadFailure(
+                                    level,
+                                    BlockPos.containing(initialPos),
+                                    disc,
+                                    LazoDiscsText.audioLoadBusy());
+                            if (!manualStop.get()) notifyFinished.run();
+                        });
 
         taskRef.set(task);
 
         return new PlayingVoiceSource() {
             @Override
             public void stop() {
-                if (!stopped.compareAndSet(false, true)) return;
-                manualStop.set(true);
-                Future<?> t = taskRef.getAndSet(null);
-                if (t != null) t.cancel(true);
-                AudioSender sender = senderRef.getAndSet(null);
-                if (sender != null) {
-                    try { sender.stop(); } catch (Exception ignored) {}
+                synchronized (lifecycleLock) {
+                    manualStop.set(true);
+                    stopped.set(true);
+                    Future<?> t = taskRef.getAndSet(null);
+                    if (t != null) t.cancel(true);
+                    AudioSender sender = senderRef.getAndSet(null);
+                    if (sender != null) {
+                        try {
+                            sender.stop();
+                        } catch (Exception ignored) {
+                        }
+                    }
+                    cleanup.run();
                 }
-                cleanup.run();
             }
 
             @Override
@@ -293,11 +348,7 @@ public final class PlasmoVoiceBridge {
      * Equivalent to startStaticSource but takes a Vec3 instead of a BlockPos.
      */
     private PlayingVoiceSource startStaticFallbackSource(
-            ServerLevel level,
-            Vec3 pos,
-            CustomDiscData disc,
-            Runnable onFinished
-    ) {
+            ServerLevel level, Vec3 pos, CustomDiscData disc, Runnable onFinished) {
         PlasmoVoiceServer server = voiceServer;
         ServerSourceLine line = discsLine;
         if (server == null || line == null) {
@@ -306,7 +357,8 @@ public final class PlasmoVoiceBridge {
 
         Optional<McServerWorld> worldResult = findWorld(server, level);
         if (worldResult.isEmpty()) {
-            throw new IllegalStateException("Could not resolve Plasmo Voice world for " + dimensionId(level));
+            throw new IllegalStateException(
+                    "Could not resolve Plasmo Voice world for " + dimensionId(level));
         }
 
         McServerWorld pvWorld = worldResult.get();
@@ -315,78 +367,133 @@ public final class PlasmoVoiceBridge {
         AtomicBoolean stopped = new AtomicBoolean(false);
         AtomicBoolean manualStop = new AtomicBoolean(false);
         AtomicBoolean finishedNotified = new AtomicBoolean(false);
+        Object lifecycleLock = new Object();
         AtomicReference<LavaPcmFeeder.StreamingPlayback> playbackRef = new AtomicReference<>();
         AtomicReference<ServerStaticSource> sourceRef = new AtomicReference<>();
         AtomicReference<AudioSender> senderRef = new AtomicReference<>();
         AtomicReference<Future<?>> taskRef = new AtomicReference<>();
         AtomicReference<Vec3> lastProjectedPosition = new AtomicReference<>();
 
-        Runnable cleanup = () -> {
-            LavaPcmFeeder.StreamingPlayback playback = playbackRef.getAndSet(null);
-            if (playback != null) { try { playback.close(); } catch (Exception ignored) {} }
-            ServerStaticSource source = sourceRef.getAndSet(null);
-            if (source != null) { try { source.remove(); } catch (Exception ignored) {} }
-        };
+        Runnable cleanup =
+                () -> {
+                    synchronized (lifecycleLock) {
+                        LavaPcmFeeder.StreamingPlayback playback = playbackRef.getAndSet(null);
+                        if (playback != null) {
+                            try {
+                                playback.close();
+                            } catch (Exception ignored) {
+                            }
+                        }
+                        ServerStaticSource source = sourceRef.getAndSet(null);
+                        if (source != null) {
+                            try {
+                                source.remove();
+                            } catch (Exception ignored) {
+                            }
+                        }
+                    }
+                };
 
-        Runnable notifyFinished = () -> {
-            if (onFinished == null) return;
-            if (!finishedNotified.compareAndSet(false, true)) return;
-            try { level.getServer().execute(onFinished); } catch (Exception ignored) {}
-        };
+        Runnable notifyFinished =
+                () -> {
+                    if (onFinished == null) return;
+                    if (!finishedNotified.compareAndSet(false, true)) return;
+                    try {
+                        level.getServer().execute(onFinished);
+                    } catch (Exception ignored) {
+                    }
+                };
 
-        Future<?> task = AudioLoadExecutor.submit(() -> {
-            try {
-                if (stopped.get()) return;
-                LavaPcmFeeder.StreamingPlayback playback =
-                        LavaPcmFeeder.openStream(disc.url(), disc.title(), disc.volume());
-                if (stopped.get()) { playback.close(); return; }
-                playbackRef.set(playback);
+        Future<?> task =
+                AudioLoadExecutor.submit(
+                        () -> {
+                            try {
+                                if (stopped.get()) return;
+                                LavaPcmFeeder.StreamingPlayback playback =
+                                        LavaPcmFeeder.openStream(
+                                                disc.url(), disc.title(), disc.volume());
+                                synchronized (lifecycleLock) {
+                                    if (stopped.get()) {
+                                        playback.close();
+                                        return;
+                                    }
+                                    playbackRef.set(playback);
 
-                ServerStaticSource source = line.createStaticSource(pvPos, false);
-                source.setName(disc.title());
-                sourceRef.set(source);
+                                    ServerStaticSource source =
+                                            line.createStaticSource(pvPos, false);
+                                    sourceRef.set(source);
+                                    source.setName(disc.title());
 
-                AudioFrameProvider provider =
-                        new StreamingAudioFrameProvider(server, playback, stopped);
+                                    AudioFrameProvider provider =
+                                            new StreamingAudioFrameProvider(
+                                                    server, playback, stopped);
 
-                AudioSender sender = source.createAudioSender(
-                        provider,
-                        (short) Math.max(1, Math.min(Short.MAX_VALUE, disc.range()))
-                );
-                senderRef.set(sender);
-                sender.onStop(() -> {
-                    boolean wasManual = manualStop.get();
-                    stopped.set(true);
-                    cleanup.run();
-                    if (!wasManual) notifyFinished.run();
-                });
+                                    AudioSender sender =
+                                            source.createAudioSender(
+                                                    provider,
+                                                    (short)
+                                                            Math.max(
+                                                                    1,
+                                                                    Math.min(
+                                                                            Short.MAX_VALUE,
+                                                                            disc.range())));
+                                    senderRef.set(sender);
+                                    sender.onStop(
+                                            () -> {
+                                                boolean wasManual = manualStop.get();
+                                                stopped.set(true);
+                                                cleanup.run();
+                                                if (!wasManual) notifyFinished.run();
+                                            });
 
-                if (stopped.get()) { cleanup.run(); return; }
-                sender.start();
-            } catch (Throwable t) {
-                if (!stopped.get()) {
-                    LazoDiscs.LOGGER.warn(
-                            "Failed to start streaming LazoDisc fallback static audio at {}: {}",
-                            pos, t.toString()
-                    );
-                }
-                stopped.set(true);
-                cleanup.run();
-                if (!manualStop.get()) notifyFinished.run();
-            }
-        });
+                                    if (stopped.get()) {
+                                        cleanup.run();
+                                        return;
+                                    }
+                                    sender.start();
+                                }
+                            } catch (Throwable t) {
+                                if (!stopped.get()) {
+                                    LazoDiscs.LOGGER.warn(
+                                            "Failed to start streaming LazoDisc fallback static"
+                                                    + " audio at {}: {}",
+                                            pos,
+                                            t.toString());
+                                }
+                                stopped.set(true);
+                                cleanup.run();
+                                if (!manualStop.get()) notifyFinished.run();
+                            }
+                        },
+                        () -> {
+                            stopped.set(true);
+                            cleanup.run();
+                            notifyLoadFailure(
+                                    level,
+                                    BlockPos.containing(pos),
+                                    disc,
+                                    LazoDiscsText.audioLoadBusy());
+                            if (!manualStop.get()) notifyFinished.run();
+                        });
         taskRef.set(task);
 
         return new PlayingVoiceSource() {
             @Override
             public void stop() {
-                if (!stopped.compareAndSet(false, true)) return;
-                manualStop.set(true);
-                Future<?> t = taskRef.getAndSet(null);
-                if (t != null) t.cancel(true);
-                AudioSender sender = senderRef.getAndSet(null);
-                if (sender != null) { try { sender.stop(); } catch (Exception ignored) {} }
-                cleanup.run();
+                synchronized (lifecycleLock) {
+                    manualStop.set(true);
+                    stopped.set(true);
+                    Future<?> t = taskRef.getAndSet(null);
+                    if (t != null) t.cancel(true);
+                    AudioSender sender = senderRef.getAndSet(null);
+                    if (sender != null) {
+                        try {
+                            sender.stop();
+                        } catch (Exception ignored) {
+                        }
+                    }
+                    cleanup.run();
+                }
             }
 
             @Override
@@ -400,25 +507,25 @@ public final class PlasmoVoiceBridge {
                 try {
                     Optional<McServerWorld> w = findWorld(server, updateLevel);
                     if (w.isEmpty()) return;
-                    source.setPosition(new ServerPos3d(w.get(), projectedPosition.x, projectedPosition.y, projectedPosition.z));
-                } catch (Exception ignored) {}
+                    source.setPosition(
+                            new ServerPos3d(
+                                    w.get(),
+                                    projectedPosition.x,
+                                    projectedPosition.y,
+                                    projectedPosition.z));
+                } catch (Exception ignored) {
+                }
             }
         };
     }
 
     private PlayingVoiceSource startStreamingSource(
-            ServerLevel level,
-            BlockPos pos,
-            CustomDiscData disc,
-            Runnable onFinished
-    ) {
+            ServerLevel level, BlockPos pos, CustomDiscData disc, Runnable onFinished) {
         PlasmoVoiceServer server = voiceServer;
         ServerSourceLine line = discsLine;
 
         if (server == null || line == null) {
-            throw new IllegalStateException(
-                    "Plasmo Voice is not initialized yet"
-            );
+            throw new IllegalStateException("Plasmo Voice is not initialized yet");
         }
 
         // Resolve the Plasmo Voice world that corresponds to this ServerLevel.
@@ -431,202 +538,175 @@ public final class PlasmoVoiceBridge {
         if (worldResult.isEmpty()) {
             String dimId = dimensionId(level);
             LazoDiscs.LOGGER.warn(
-                    "Could not resolve Plasmo Voice world for Minecraft dimension '{}'." +
-                    " Available Plasmo worlds: {}",
+                    "Could not resolve Plasmo Voice world for Minecraft dimension '{}'."
+                            + " Available Plasmo worlds: {}",
                     dimId,
-                    server.getMinecraftServer()
-                            .getWorlds()
-                            .stream()
+                    server.getMinecraftServer().getWorlds().stream()
                             .map(McServerWorld::getName)
-                            .toList()
-            );
+                            .toList());
 
             throw new IllegalStateException(
-                    "Could not resolve Plasmo Voice world for Minecraft dimension "
-                            + dimId
-            );
+                    "Could not resolve Plasmo Voice world for Minecraft dimension " + dimId);
         }
 
         McServerWorld pvWorld = worldResult.get();
 
         Vec3 projected = SablePositionCompat.projectJukeboxCenter(level, pos);
 
-        boolean projectedOut =
-                projected.distanceToSqr(Vec3.atCenterOf(pos)) > 0.0001D;
+        boolean projectedOut = projected.distanceToSqr(Vec3.atCenterOf(pos)) > 0.0001D;
 
         LazoDiscs.LOGGER.info(
-                "Preparing streaming LazoDisc Plasmo source:" +
-                " mcDimension={}, pvWorld={}, blockPos={}, projectedPos={}{}",
+                "Preparing streaming LazoDisc Plasmo source:"
+                        + " mcDimension={}, pvWorld={}, blockPos={}, projectedPos={}{}",
                 dimensionId(level),
                 pvWorld.getName(),
                 pos.toShortString(),
                 String.format(
-                        Locale.ROOT,
-                        "%.2f, %.2f, %.2f",
-                        projected.x,
-                        projected.y,
-                        projected.z
-                ),
-                projectedOut
-                        ? " (Sable/sub-level projected)"
-                        : ""
-        );
+                        Locale.ROOT, "%.2f, %.2f, %.2f", projected.x, projected.y, projected.z),
+                projectedOut ? " (Sable/sub-level projected)" : "");
 
-        ServerPos3d pvPos = new ServerPos3d(
-                pvWorld,
-                projected.x,
-                projected.y,
-                projected.z
-        );
+        ServerPos3d pvPos = new ServerPos3d(pvWorld, projected.x, projected.y, projected.z);
 
         AtomicBoolean stopped = new AtomicBoolean(false);
         AtomicBoolean manualStop = new AtomicBoolean(false);
         AtomicBoolean finishedNotified = new AtomicBoolean(false);
+        Object lifecycleLock = new Object();
 
-        AtomicReference<LavaPcmFeeder.StreamingPlayback> playbackRef =
-                new AtomicReference<>();
+        AtomicReference<LavaPcmFeeder.StreamingPlayback> playbackRef = new AtomicReference<>();
 
-        AtomicReference<ServerStaticSource> sourceRef =
-                new AtomicReference<>();
+        AtomicReference<ServerStaticSource> sourceRef = new AtomicReference<>();
 
-        AtomicReference<AudioSender> senderRef =
-                new AtomicReference<>();
+        AtomicReference<AudioSender> senderRef = new AtomicReference<>();
 
-        AtomicReference<Future<?>> taskRef =
-                new AtomicReference<>();
+        AtomicReference<Future<?>> taskRef = new AtomicReference<>();
 
-        Runnable cleanup = () -> {
-            LavaPcmFeeder.StreamingPlayback playback =
-                    playbackRef.getAndSet(null);
+        Runnable cleanup =
+                () -> {
+                    synchronized (lifecycleLock) {
+                        LavaPcmFeeder.StreamingPlayback playback = playbackRef.getAndSet(null);
 
-            if (playback != null) {
-                try {
-                    playback.close();
-                } catch (Exception ignored) {
-                }
-            }
+                        if (playback != null) {
+                            try {
+                                playback.close();
+                            } catch (Exception ignored) {
+                            }
+                        }
 
-            ServerStaticSource source =
-                    sourceRef.getAndSet(null);
+                        ServerStaticSource source = sourceRef.getAndSet(null);
 
-            if (source != null) {
-                try {
-                    source.remove();
-                } catch (Exception ignored) {
-                }
-            }
-        };
-
-        Runnable notifyFinished = () -> {
-            if (onFinished == null) {
-                return;
-            }
-
-            if (!finishedNotified.compareAndSet(false, true)) {
-                return;
-            }
-
-            level.getServer().execute(onFinished);
-        };
-
-        Future<?> task = AudioLoadExecutor.submit(() -> {
-            try {
-                LavaPcmFeeder.StreamingPlayback playback =
-                        LavaPcmFeeder.openStream(
-                                disc.url(),
-                                disc.title(),
-                                disc.volume()
-                        );
-
-                if (stopped.get()) {
-                    playback.close();
-                    return;
-                }
-
-                playbackRef.set(playback);
-
-                ServerStaticSource source =
-                        line.createStaticSource(
-                                pvPos,
-                                false
-                        );
-
-                source.setName(disc.title());
-
-                sourceRef.set(source);
-
-                AudioFrameProvider provider =
-                        new StreamingAudioFrameProvider(
-                                server,
-                                playback,
-                                stopped
-                        );
-
-                AudioSender sender =
-                        source.createAudioSender(
-                                provider,
-                                (short) Math.max(
-                                        1,
-                                        Math.min(
-                                                Short.MAX_VALUE,
-                                                disc.range()
-                                        )
-                                )
-                        );
-
-                senderRef.set(sender);
-
-                sender.onStop(() -> {
-                    boolean wasManual = manualStop.get();
-
-                    stopped.set(true);
-
-                    cleanup.run();
-
-                    if (!wasManual) {
-                        notifyFinished.run();
+                        if (source != null) {
+                            try {
+                                source.remove();
+                            } catch (Exception ignored) {
+                            }
+                        }
                     }
-                });
+                };
 
-                if (stopped.get()) {
-                    cleanup.run();
-                    return;
-                }
+        Runnable notifyFinished =
+                () -> {
+                    if (onFinished == null) {
+                        return;
+                    }
 
-                sender.start();
+                    if (!finishedNotified.compareAndSet(false, true)) {
+                        return;
+                    }
 
-                LazoDiscs.LOGGER.info(
-                        "Streaming LazoDisc audio sender started for '{}' at {}",
-                        disc.title(),
-                        pos.toShortString()
-                );
+                    level.getServer().execute(onFinished);
+                };
 
-            } catch (Throwable t) {
+        Future<?> task =
+                AudioLoadExecutor.submit(
+                        () -> {
+                            try {
+                                LavaPcmFeeder.StreamingPlayback playback =
+                                        LavaPcmFeeder.openStream(
+                                                disc.url(), disc.title(), disc.volume());
 
-                if (!stopped.get()) {
-                    LazoDiscs.LOGGER.warn(
-                            "Failed to start streaming LazoDisc audio at {}: {}",
-                            pos.toShortString(),
-                            t.toString()
-                    );
+                                synchronized (lifecycleLock) {
+                                    if (stopped.get()) {
+                                        playback.close();
+                                        return;
+                                    }
 
-                    notifyLoadFailure(
-                            level,
-                            pos,
-                            disc,
-                            messageOf(t)
-                    );
-                }
+                                    playbackRef.set(playback);
 
-                stopped.set(true);
+                                    ServerStaticSource source =
+                                            line.createStaticSource(pvPos, false);
 
-                cleanup.run();
+                                    sourceRef.set(source);
 
-                if (!manualStop.get()) {
-                    notifyFinished.run();
-                }
-            }
-        });
+                                    source.setName(disc.title());
+
+                                    AudioFrameProvider provider =
+                                            new StreamingAudioFrameProvider(
+                                                    server, playback, stopped);
+
+                                    AudioSender sender =
+                                            source.createAudioSender(
+                                                    provider,
+                                                    (short)
+                                                            Math.max(
+                                                                    1,
+                                                                    Math.min(
+                                                                            Short.MAX_VALUE,
+                                                                            disc.range())));
+
+                                    senderRef.set(sender);
+
+                                    sender.onStop(
+                                            () -> {
+                                                boolean wasManual = manualStop.get();
+
+                                                stopped.set(true);
+
+                                                cleanup.run();
+
+                                                if (!wasManual) {
+                                                    notifyFinished.run();
+                                                }
+                                            });
+
+                                    if (stopped.get()) {
+                                        cleanup.run();
+                                        return;
+                                    }
+
+                                    sender.start();
+                                }
+
+                                LazoDiscs.LOGGER.info(
+                                        "Streaming LazoDisc audio sender started for '{}' at {}",
+                                        disc.title(),
+                                        pos.toShortString());
+
+                            } catch (Throwable t) {
+
+                                if (!stopped.get()) {
+                                    LazoDiscs.LOGGER.warn(
+                                            "Failed to start streaming LazoDisc audio at {}: {}",
+                                            pos.toShortString(),
+                                            t.toString());
+
+                                    notifyLoadFailure(level, pos, disc, messageOf(t));
+                                }
+
+                                stopped.set(true);
+
+                                cleanup.run();
+
+                                if (!manualStop.get()) {
+                                    notifyFinished.run();
+                                }
+                            }
+                        },
+                        () -> {
+                            stopped.set(true);
+                            cleanup.run();
+                            notifyLoadFailure(level, pos, disc, LazoDiscsText.audioLoadBusy());
+                            if (!manualStop.get()) notifyFinished.run();
+                        });
 
         taskRef.set(task);
 
@@ -634,35 +714,31 @@ public final class PlasmoVoiceBridge {
 
             @Override
             public void stop() {
-                if (!stopped.compareAndSet(false, true)) {
-                    return;
-                }
+                synchronized (lifecycleLock) {
+                    manualStop.set(true);
+                    stopped.set(true);
 
-                manualStop.set(true);
+                    Future<?> t = taskRef.getAndSet(null);
 
-                Future<?> t = taskRef.getAndSet(null);
-
-                if (t != null) {
-                    t.cancel(true);
-                }
-
-                AudioSender sender = senderRef.getAndSet(null);
-
-                if (sender != null) {
-                    try {
-                        sender.stop();
-                    } catch (Exception ignored) {
+                    if (t != null) {
+                        t.cancel(true);
                     }
-                }
 
-                cleanup.run();
+                    AudioSender sender = senderRef.getAndSet(null);
+
+                    if (sender != null) {
+                        try {
+                            sender.stop();
+                        } catch (Exception ignored) {
+                        }
+                    }
+
+                    cleanup.run();
+                }
             }
 
             @Override
-            public void updatePosition(
-                    ServerLevel updateLevel,
-                    Vec3 projectedPosition
-            ) {
+            public void updatePosition(ServerLevel updateLevel, Vec3 projectedPosition) {
                 if (stopped.get()) {
                     return;
                 }
@@ -682,61 +758,47 @@ public final class PlasmoVoiceBridge {
                     // one for the overworld that pvWorld might represent.
                     McServerWorld updateWorld =
                             findWorld(server, updateLevel)
-                                    .orElseThrow(() -> new IllegalStateException(
-                                            "Could not resolve Plasmo Voice world for" +
-                                            " updated dimension: " + dimensionId(updateLevel)
-                                    ));
+                                    .orElseThrow(
+                                            () ->
+                                                    new IllegalStateException(
+                                                            "Could not resolve Plasmo Voice world"
+                                                                    + " for updated dimension: "
+                                                                    + dimensionId(updateLevel)));
 
                     source.setPosition(
                             new ServerPos3d(
                                     updateWorld,
                                     projectedPosition.x,
                                     projectedPosition.y,
-                                    projectedPosition.z
-                            )
-                    );
+                                    projectedPosition.z));
 
                 } catch (Exception e) {
                     LazoDiscs.LOGGER.debug(
                             "Failed to update streaming LazoDisc source position at {}: {}",
                             pos.toShortString(),
-                            e.toString()
-                    );
+                            e.toString());
                 }
             }
         };
     }
 
     private void notifyLoadFailure(
-            ServerLevel level,
-            BlockPos pos,
-            CustomDiscData disc,
-            String reason
-    ) {
-        double range = Math.max(
-                32.0D,
-                Math.min(
-                        256.0D,
-                        disc.range()
-                )
-        );
+            ServerLevel level, BlockPos pos, CustomDiscData disc, String reason) {
+        level.getServer()
+                .execute(
+                        () -> {
+                            double range = Math.max(32.0D, Math.min(256.0D, disc.range()));
 
-        double rangeSqr = range * range;
-
-        Vec3 center = Vec3.atCenterOf(pos);
-
-        for (ServerPlayer player : level.players()) {
-            if (player.position().distanceToSqr(center) <= rangeSqr) {
-                player.sendSystemMessage(
-                        LazoDiscsText
-                                .audioLoadFailed(
-                                        disc.title(),
-                                        reason
-                                )
-                                .withStyle(ChatFormatting.RED)
-                );
-            }
-        }
+                            double rangeSqr = range * range;
+                            Vec3 center = Vec3.atCenterOf(pos);
+                            for (ServerPlayer player : level.players()) {
+                                if (player.position().distanceToSqr(center) <= rangeSqr) {
+                                    player.sendSystemMessage(
+                                            LazoDiscsText.audioLoadFailed(disc.title(), reason)
+                                                    .withStyle(ChatFormatting.RED));
+                                }
+                            }
+                        });
     }
 
     private static String messageOf(Throwable t) {
@@ -751,15 +813,11 @@ public final class PlasmoVoiceBridge {
             return messageOf(cause);
         }
 
-        if (cause != null
-                && message != null
-                && message.equals(cause.toString())) {
+        if (cause != null && message != null && message.equals(cause.toString())) {
             return messageOf(cause);
         }
 
-        return message == null || message.isBlank()
-                ? t.getClass().getSimpleName()
-                : message;
+        return message == null || message.isBlank() ? t.getClass().getSimpleName() : message;
     }
 
     // -------------------------------------------------------------------------
@@ -767,52 +825,53 @@ public final class PlasmoVoiceBridge {
     // -------------------------------------------------------------------------
 
     /**
-     * Returns the {@link McServerWorld} that Plasmo Voice has registered for the
-     * given {@link ServerLevel}.
+     * Returns the {@link McServerWorld} that Plasmo Voice has registered for the given {@link
+     * ServerLevel}.
      *
      * <h3>How mc-slib sets McServerWorld.getName()</h3>
+     *
      * <p>In {@code ModServerWorld.kt} (mc-slib, the library backing Plasmo Voice on
      * Fabric/NeoForge) the name is initialised as:
+     *
      * <pre>
      *   override val name: String = level.dimension().location().toString()
      *   // or .value().toString() in MC 1.21.11+ where location() was renamed to value()
      * </pre>
-     * Either way, {@code getName()} returns the full {@code "namespace:path"} string
-     * of the dimension's ResourceLocation — e.g. {@code "minecraft:overworld"},
-     * {@code "minecraft:the_nether"}, {@code "superflatdimension:overworld"}, etc.
+     *
+     * Either way, {@code getName()} returns the full {@code "namespace:path"} string of the
+     * dimension's ResourceLocation — e.g. {@code "minecraft:overworld"}, {@code
+     * "minecraft:the_nether"}, {@code "superflatdimension:overworld"}, etc.
      *
      * <h3>Why the old code was broken</h3>
-     * <p>The old {@code findWorld()} extracted only the <em>path</em> part
-     * ({@code "overworld"}) from the Minecraft dimension key and tried to match it
-     * against {@code pvWorld.getName()}.  For the vanilla overworld both sides
-     * happen to produce {@code "overworld"}, so the match succeeded.  But for
-     * {@code superflatdimension:overworld} the path is still {@code "overworld"},
-     * which matched {@code minecraft:overworld} — the wrong world.  The source was
-     * then created in the vanilla overworld even though the jukebox was placed in a
-     * custom dimension, making the audio inaudible there.
+     *
+     * <p>The old {@code findWorld()} extracted only the <em>path</em> part ({@code "overworld"})
+     * from the Minecraft dimension key and tried to match it against {@code pvWorld.getName()}. For
+     * the vanilla overworld both sides happen to produce {@code "overworld"}, so the match
+     * succeeded. But for {@code superflatdimension:overworld} the path is still {@code
+     * "overworld"}, which matched {@code minecraft:overworld} — the wrong world. The source was
+     * then created in the vanilla overworld even though the jukebox was placed in a custom
+     * dimension, making the audio inaudible there.
      *
      * <h3>The fix — version-agnostic approach</h3>
-     * <p>We call {@code level.dimension().toString()}, which returns the stable
-     * {@code ResourceKey} string present in every Minecraft version:
+     *
+     * <p>We call {@code level.dimension().toString()}, which returns the stable {@code ResourceKey}
+     * string present in every Minecraft version:
+     *
      * <pre>
      *   "ResourceKey[minecraft:dimension / minecraft:overworld]"
      *   "ResourceKey[minecraft:dimension / superflatdimension:overworld]"
      * </pre>
-     * We then parse out the {@code "namespace:path"} portion after the {@code " / "}
-     * separator.  This avoids importing {@code ResourceLocation} or calling
-     * {@code .location()} / {@code .value()} directly — both of which changed
-     * between MC 1.21.10 and 1.21.11 (Mojang renamed the method and moved the class).
-     * The resulting string exactly matches what mc-slib stores as {@code getName()}.
+     *
+     * We then parse out the {@code "namespace:path"} portion after the {@code " / "} separator.
+     * This avoids importing {@code ResourceLocation} or calling {@code .location()} / {@code
+     * .value()} directly — both of which changed between MC 1.21.10 and 1.21.11 (Mojang renamed the
+     * method and moved the class). The resulting string exactly matches what mc-slib stores as
+     * {@code getName()}.
      */
-    private Optional<McServerWorld> findWorld(
-            PlasmoVoiceServer server,
-            ServerLevel level
-    ) {
+    private Optional<McServerWorld> findWorld(PlasmoVoiceServer server, ServerLevel level) {
         String exactKey = dimensionId(level); // "namespace:path", e.g. "minecraft:overworld"
 
-        return server.getMinecraftServer()
-                .getWorlds()
-                .stream()
+        return server.getMinecraftServer().getWorlds().stream()
                 .filter(world -> world.getName().equalsIgnoreCase(exactKey))
                 .findFirst();
     }
@@ -822,18 +881,19 @@ public final class PlasmoVoiceBridge {
     // -------------------------------------------------------------------------
 
     /**
-     * Returns the canonical {@code "namespace:path"} dimension identifier for the
-     * given level, e.g. {@code "minecraft:overworld"} or
-     * {@code "superflatdimension:overworld"}.
+     * Returns the canonical {@code "namespace:path"} dimension identifier for the given level, e.g.
+     * {@code "minecraft:overworld"} or {@code "superflatdimension:overworld"}.
      *
-     * <p>Uses only {@code level.dimension().toString()} — a method available on
-     * {@code java.lang.Object} — so it compiles against every Minecraft version
-     * without any version-specific imports or method calls.
+     * <p>Uses only {@code level.dimension().toString()} — a method available on {@code
+     * java.lang.Object} — so it compiles against every Minecraft version without any
+     * version-specific imports or method calls.
      *
      * <p>{@code ResourceKey.toString()} always returns:
+     *
      * <pre>
      *   "ResourceKey[minecraft:dimension / minecraft:overworld]"
      * </pre>
+     *
      * We extract the substring after the last {@code " / "} and before {@code "]"}.
      */
     private static String dimensionId(ServerLevel level) {
@@ -841,9 +901,9 @@ public final class PlasmoVoiceBridge {
     }
 
     /**
-     * Parses the {@code "namespace:path"} out of a {@code ResourceKey.toString()}
-     * value such as {@code "ResourceKey[minecraft:dimension / minecraft:overworld]"}.
-     * Falls back to the raw string if the expected format is not found.
+     * Parses the {@code "namespace:path"} out of a {@code ResourceKey.toString()} value such as
+     * {@code "ResourceKey[minecraft:dimension / minecraft:overworld]"}. Falls back to the raw
+     * string if the expected format is not found.
      */
     private static String parseDimensionKey(String resourceKeyString) {
         if (resourceKeyString == null || resourceKeyString.isBlank()) {
@@ -853,16 +913,12 @@ public final class PlasmoVoiceBridge {
         String result = resourceKeyString.trim();
 
         // Format: "ResourceKey[minecraft:dimension / minecraft:overworld]"
-        if (result.startsWith("ResourceKey[")
-                && result.contains(" / ")
-                && result.endsWith("]")) {
+        if (result.startsWith("ResourceKey[") && result.contains(" / ") && result.endsWith("]")) {
 
             int separatorIdx = result.lastIndexOf(" / ");
             if (separatorIdx >= 0) {
-                return result.substring(
-                        separatorIdx + 3,
-                        result.length() - 1
-                ).toLowerCase(Locale.ROOT);
+                return result.substring(separatorIdx + 3, result.length() - 1)
+                        .toLowerCase(Locale.ROOT);
             }
         }
 
@@ -874,8 +930,7 @@ public final class PlasmoVoiceBridge {
     // Audio frame provider
     // -------------------------------------------------------------------------
 
-    private static final class StreamingAudioFrameProvider
-            implements AudioFrameProvider {
+    private static final class StreamingAudioFrameProvider implements AudioFrameProvider {
 
         private final PlasmoVoiceServer server;
         private final LavaPcmFeeder.StreamingPlayback playback;
@@ -884,8 +939,7 @@ public final class PlasmoVoiceBridge {
         private StreamingAudioFrameProvider(
                 PlasmoVoiceServer server,
                 LavaPcmFeeder.StreamingPlayback playback,
-                AtomicBoolean stopped
-        ) {
+                AtomicBoolean stopped) {
             this.server = server;
             this.playback = playback;
             this.stopped = stopped;
@@ -898,36 +952,26 @@ public final class PlasmoVoiceBridge {
             }
 
             try {
-                AudioTrackState state =
-                        playback.track().getState();
-
-                if (state == AudioTrackState.FINISHED
-                        || (
-                        state == AudioTrackState.INACTIVE
-                                && playback.track().getPosition() > 0L
-                )) {
-                    return AudioFrameResult.Finished.INSTANCE;
+                // LavaPlayer may finish decoding while its final frames remain buffered.
+                AudioFrame frame = playback.player().provide();
+                if (frame != null) {
+                    byte[] encrypted = server.getDefaultEncryption().encrypt(frame.getData());
+                    return new AudioFrameResult.Provided(encrypted);
                 }
 
-                AudioFrame frame =
-                        playback.player().provide();
-
-                byte[] encrypted =
-                        frame == null
-                                ? null
-                                : server
-                                .getDefaultEncryption()
-                                .encrypt(frame.getData());
-
-                return new AudioFrameResult.Provided(encrypted);
+                AudioTrackState state = playback.track().getState();
+                if (state == AudioTrackState.FINISHED
+                        || (state == AudioTrackState.INACTIVE
+                                && playback.track().getPosition() > 0L)) {
+                    return AudioFrameResult.Finished.INSTANCE;
+                }
+                return new AudioFrameResult.Provided(null);
 
             } catch (Throwable t) {
                 stopped.set(true);
 
                 LazoDiscs.LOGGER.warn(
-                        "Failed to provide LazoDisc streaming frame: {}",
-                        t.toString()
-                );
+                        "Failed to provide LazoDisc streaming frame: {}", t.toString());
 
                 return AudioFrameResult.Finished.INSTANCE;
             }

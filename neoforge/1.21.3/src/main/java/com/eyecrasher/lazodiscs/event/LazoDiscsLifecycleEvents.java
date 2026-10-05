@@ -2,14 +2,13 @@ package com.eyecrasher.lazodiscs.event;
 
 import com.eyecrasher.lazodiscs.LazoDiscs;
 import com.eyecrasher.lazodiscs.LazoDiscsServerBootstrap;
-import com.eyecrasher.lazodiscs.voice.AudioLoadExecutor;
+
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 
 public final class LazoDiscsLifecycleEvents {
-    private LazoDiscsLifecycleEvents() {
-    }
+    private LazoDiscsLifecycleEvents() {}
 
     @SubscribeEvent
     public static void onServerAboutToStart(ServerAboutToStartEvent event) {

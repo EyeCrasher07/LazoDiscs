@@ -18,23 +18,12 @@ import java.util.Set;
 public final class SpotifyTitleResolver {
     private static final int MAX_REDIRECTS = 5;
     private static final String OPEN_SPOTIFY_HOST = "open.spotify.com";
-    private static final Set<String> SPOTIFY_SHORT_HOSTS = Set.of(
-            "spotify.link",
-            "www.spotify.link",
-            "spotify.app.link",
-            "www.spotify.app.link"
-    );
-    private static final Set<String> SPOTIFY_OBJECT_TYPES = Set.of(
-            "track",
-            "album",
-            "playlist",
-            "artist",
-            "show",
-            "episode"
-    );
+    private static final Set<String> SPOTIFY_SHORT_HOSTS =
+            Set.of("spotify.link", "www.spotify.link", "spotify.app.link", "www.spotify.app.link");
+    private static final Set<String> SPOTIFY_OBJECT_TYPES =
+            Set.of("track", "album", "playlist", "artist", "show", "episode");
 
-    private SpotifyTitleResolver() {
-    }
+    private SpotifyTitleResolver() {}
 
     public static boolean looksLikeSpotify(String value) {
         if (value == null || value.isBlank()) return false;
@@ -56,9 +45,7 @@ public final class SpotifyTitleResolver {
     public static String canonicalize(String value) {
         if (value == null) return "";
         String trimmed = value.trim();
-        return parseSpotifyReference(trimmed)
-                .map(SpotifyReference::canonicalUrl)
-                .orElse(trimmed);
+        return parseSpotifyReference(trimmed).map(SpotifyReference::canonicalUrl).orElse(trimmed);
     }
 
     public static Optional<String> validateSingleTrack(String value) {
@@ -90,7 +77,10 @@ public final class SpotifyTitleResolver {
         String resolvedUrl = resolveSpotifyRedirects(canonical).orElse(canonical);
         Optional<String> validationError = validateSingleTrack(resolvedUrl);
         if (validationError.isPresent()) {
-            LazoDiscs.LOGGER.debug("Skipping Spotify metadata resolve for '{}': {}", spotifyUrl, validationError.get());
+            LazoDiscs.LOGGER.debug(
+                    "Skipping Spotify metadata resolve for '{}': {}",
+                    spotifyUrl,
+                    validationError.get());
             return Optional.empty();
         }
 
@@ -108,13 +98,16 @@ public final class SpotifyTitleResolver {
 
             String current = spotifyUrl;
             for (int i = 0; i < MAX_REDIRECTS; i++) {
-                HttpURLConnection connection = (HttpURLConnection) URI.create(current).toURL().openConnection();
+                HttpURLConnection connection =
+                        (HttpURLConnection) URI.create(current).toURL().openConnection();
                 try {
                     connection.setInstanceFollowRedirects(false);
                     connection.setConnectTimeout(7000);
                     connection.setReadTimeout(7000);
-                    connection.setRequestProperty("User-Agent", "Mozilla/5.0 LazoDiscs/1.0.3");
-                    connection.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+                    connection.setRequestProperty("User-Agent", "Mozilla/5.0 LazoDiscs");
+                    connection.setRequestProperty(
+                            "Accept",
+                            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
 
                     int code = connection.getResponseCode();
                     if (code < 300 || code >= 400) {
@@ -128,7 +121,8 @@ public final class SpotifyTitleResolver {
 
                     current = URI.create(current).resolve(location).toString();
                     String canonical = canonicalize(current);
-                    if (!canonical.equals(current) || isOpenSpotifyHost(normalizedHost(URI.create(canonical)))) {
+                    if (!canonical.equals(current)
+                            || isOpenSpotifyHost(normalizedHost(URI.create(canonical)))) {
                         return Optional.of(canonical);
                     }
                 } finally {
@@ -136,7 +130,8 @@ public final class SpotifyTitleResolver {
                 }
             }
         } catch (Exception e) {
-            LazoDiscs.LOGGER.debug("Could not resolve Spotify redirect for '{}': {}", spotifyUrl, e.toString());
+            LazoDiscs.LOGGER.debug(
+                    "Could not resolve Spotify redirect for '{}': {}", spotifyUrl, e.toString());
         }
         return Optional.empty();
     }
@@ -160,7 +155,11 @@ public final class SpotifyTitleResolver {
             if (!isOpenSpotifyHost(normalizedHost(uri))) return Optional.empty();
 
             List<String> segments = pathSegments(uri.getPath());
-            int index = !segments.isEmpty() && segments.get(0).toLowerCase(Locale.ROOT).startsWith("intl-") ? 1 : 0;
+            int index =
+                    !segments.isEmpty()
+                                    && segments.get(0).toLowerCase(Locale.ROOT).startsWith("intl-")
+                            ? 1
+                            : 0;
             if (segments.size() <= index + 1) return Optional.empty();
 
             String type = segments.get(index).toLowerCase(Locale.ROOT);
@@ -204,54 +203,70 @@ public final class SpotifyTitleResolver {
     }
 
     private static Optional<SpotifyMetadata> resolveFromSpotifyPage(String spotifyUrl) {
+        HttpURLConnection connection = null;
         try {
-            HttpURLConnection connection = (HttpURLConnection) URI.create(spotifyUrl).toURL().openConnection();
+            connection = (HttpURLConnection) URI.create(spotifyUrl).toURL().openConnection();
             connection.setConnectTimeout(7000);
             connection.setReadTimeout(12000);
-            connection.setRequestProperty("User-Agent", "Mozilla/5.0 LazoDiscs/1.0.3");
-            connection.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-            if (connection.getResponseCode() < 200 || connection.getResponseCode() >= 300) return Optional.empty();
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 LazoDiscs");
+            connection.setRequestProperty(
+                    "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+            if (connection.getResponseCode() < 200 || connection.getResponseCode() >= 300)
+                return Optional.empty();
 
             StringBuilder html = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+            try (BufferedReader reader =
+                    new BufferedReader(
+                            new InputStreamReader(
+                                    connection.getInputStream(), StandardCharsets.UTF_8))) {
                 String line;
                 while ((line = reader.readLine()) != null) html.append(line).append('\n');
             }
             return parseMetadataFromHtml(html.toString());
         } catch (Exception e) {
-            LazoDiscs.LOGGER.debug("Could not resolve Spotify page metadata for '{}': {}", spotifyUrl, e.toString());
+            LazoDiscs.LOGGER.debug(
+                    "Could not resolve Spotify page metadata for '{}': {}",
+                    spotifyUrl,
+                    e.toString());
             return Optional.empty();
+        } finally {
+            if (connection != null) connection.disconnect();
         }
     }
 
     private static Optional<SpotifyMetadata> parseMetadataFromHtml(String html) {
-        String title = extractMeta(html, "og:title")
-                .or(() -> extractMeta(html, "twitter:title"))
-                .map(SpotifyTitleResolver::cleanPlainText)
-                .orElse(null);
-        String description = extractMeta(html, "og:description")
-                .or(() -> extractMeta(html, "twitter:description"))
-                .map(SpotifyTitleResolver::cleanPlainText)
-                .orElse("");
-        SplitTitle titleTag = extractTitleTag(html)
-                .map(SpotifyTitleResolver::stripSpotifyDecorations)
-                .map(SpotifyTitleResolver::splitTitleAndArtist)
-                .orElse(null);
+        String title =
+                extractMeta(html, "og:title")
+                        .or(() -> extractMeta(html, "twitter:title"))
+                        .map(SpotifyTitleResolver::cleanPlainText)
+                        .orElse(null);
+        String description =
+                extractMeta(html, "og:description")
+                        .or(() -> extractMeta(html, "twitter:description"))
+                        .map(SpotifyTitleResolver::cleanPlainText)
+                        .orElse("");
+        SplitTitle titleTag =
+                extractTitleTag(html)
+                        .map(SpotifyTitleResolver::stripSpotifyDecorations)
+                        .map(SpotifyTitleResolver::splitTitleAndArtist)
+                        .orElse(null);
         if ((title == null || title.isBlank()) && titleTag != null) {
             title = titleTag.title();
         }
 
         List<String> artists = new ArrayList<>();
-        Long durationMs = extractMeta(html, "music:duration")
-                .map(SpotifyTitleResolver::parseSecondsMillis)
-                .orElse(null);
+        Long durationMs =
+                extractMeta(html, "music:duration")
+                        .map(SpotifyTitleResolver::parseSecondsMillis)
+                        .orElse(null);
 
         extractMeta(html, "music:musician_description")
                 .map(SpotifyTitleResolver::cleanPlainText)
                 .ifPresent(artist -> addArtists(artists, artist));
         if (artists.isEmpty() && titleTag != null) {
             for (String artist : titleTag.artists()) {
-                if (isValidArtistHint(artist, title) && !artists.contains(artist)) artists.add(artist);
+                if (isValidArtistHint(artist, title) && !artists.contains(artist))
+                    artists.add(artist);
             }
         }
 
@@ -270,18 +285,21 @@ public final class SpotifyTitleResolver {
             }
 
             if (durationMs == null) {
-                durationMs = extractJsonString(ldJson, "duration")
-                        .map(SpotifyTitleResolver::parseIsoDurationMillis)
-                        .orElse(null);
+                durationMs =
+                        extractJsonString(ldJson, "duration")
+                                .map(SpotifyTitleResolver::parseIsoDurationMillis)
+                                .orElse(null);
             }
         }
 
         // Spotify descriptions often contain title, artist, and year chunks separated by
         // middle-dot/bullet characters. Some launchers/logs store mojibake variants.
         if (artists.isEmpty() && !description.isBlank()) {
-            parseArtistsFromDescription(description, title).forEach(a -> {
-                if (!artists.contains(a)) artists.add(a);
-            });
+            parseArtistsFromDescription(description, title)
+                    .forEach(
+                            a -> {
+                                if (!artists.contains(a)) artists.add(a);
+                            });
         }
 
         if (title == null || title.isBlank()) return Optional.empty();
@@ -297,26 +315,37 @@ public final class SpotifyTitleResolver {
     }
 
     private static Optional<SpotifyMetadata> resolveFromOEmbed(String spotifyUrl) {
+        HttpURLConnection connection = null;
         try {
             String encoded = URLEncoder.encode(spotifyUrl, StandardCharsets.UTF_8);
             URI uri = URI.create("https://open.spotify.com/oembed?url=" + encoded);
-            HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
+            connection = (HttpURLConnection) uri.toURL().openConnection();
             connection.setConnectTimeout(7000);
             connection.setReadTimeout(10000);
-            connection.setRequestProperty("User-Agent", "LazoDiscs/1.0.3");
-            if (connection.getResponseCode() < 200 || connection.getResponseCode() >= 300) return Optional.empty();
+            connection.setRequestProperty("User-Agent", "LazoDiscs");
+            if (connection.getResponseCode() < 200 || connection.getResponseCode() >= 300)
+                return Optional.empty();
             StringBuilder json = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+            try (BufferedReader reader =
+                    new BufferedReader(
+                            new InputStreamReader(
+                                    connection.getInputStream(), StandardCharsets.UTF_8))) {
                 String line;
                 while ((line = reader.readLine()) != null) json.append(line);
             }
             String rawTitle = extractJsonString(json.toString(), "title").orElse(null);
             if (rawTitle == null || rawTitle.isBlank()) return Optional.empty();
             SplitTitle split = splitTitleAndArtist(stripSpotifyDecorations(rawTitle));
-            return Optional.of(new SpotifyMetadata(split.title(), List.copyOf(split.artists()), null));
+            return Optional.of(
+                    new SpotifyMetadata(split.title(), List.copyOf(split.artists()), null));
         } catch (Exception e) {
-            LazoDiscs.LOGGER.debug("Could not resolve Spotify oEmbed title for '{}': {}", spotifyUrl, e.toString());
+            LazoDiscs.LOGGER.debug(
+                    "Could not resolve Spotify oEmbed title for '{}': {}",
+                    spotifyUrl,
+                    e.toString());
             return Optional.empty();
+        } finally {
+            if (connection != null) connection.disconnect();
         }
     }
 
@@ -372,11 +401,7 @@ public final class SpotifyTitleResolver {
         List<String> artists = new ArrayList<>();
 
         String[] patterns = {
-                " - song and lyrics by ",
-                " - song by ",
-                " - single by ",
-                " - album by ",
-                " by "
+            " - song and lyrics by ", " - song by ", " - single by ", " - album by ", " by "
         };
         for (String pattern : patterns) {
             int idx = t.toLowerCase(Locale.ROOT).indexOf(pattern);
@@ -441,10 +466,10 @@ public final class SpotifyTitleResolver {
 
     private static Optional<String> extractMeta(String html, String property) {
         String[] needles = {
-                "property=\"" + property + "\"",
-                "name=\"" + property + "\"",
-                "property='" + property + "'",
-                "name='" + property + "'"
+            "property=\"" + property + "\"",
+            "name=\"" + property + "\"",
+            "property='" + property + "'",
+            "name='" + property + "'"
         };
         for (String needle : needles) {
             int pos = html.indexOf(needle);
@@ -636,8 +661,7 @@ public final class SpotifyTitleResolver {
         }
     }
 
-    private record SplitTitle(String title, List<String> artists) {
-    }
+    private record SplitTitle(String title, List<String> artists) {}
 
     public record SpotifyMetadata(String title, List<String> artists, Long durationMs) {
         public String searchQuery() {

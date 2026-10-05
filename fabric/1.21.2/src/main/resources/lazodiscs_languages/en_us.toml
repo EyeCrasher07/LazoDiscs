@@ -42,6 +42,7 @@ spotify.disabled = "Spotify search is disabled in config"
 spotify.metadata_failed = "Could not read Spotify track metadata"
 
 audio.load_failed = "%reason%"
+audio.load_busy = "Too many audio requests. Try again shortly."
 audio.no_matches = "No matching audio was found"
 audio.resolve_timed_out = "Audio resolve timed out after %seconds% seconds"
 audio.zero_samples = "Decoded audio contains no samples"

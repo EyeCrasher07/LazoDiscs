@@ -8,15 +8,17 @@ import com.eyecrasher.lazodiscs.event.LazoDiscsLifecycleEvents;
 import com.eyecrasher.lazodiscs.event.SablePhysicsEvents;
 import com.eyecrasher.lazodiscs.server.JukeboxPlaybackManager;
 import com.eyecrasher.lazodiscs.text.LazoDiscsText;
+
 import net.minecraft.server.MinecraftServer;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.loading.FMLEnvironment;
-import net.neoforged.api.distmarker.Dist;
 import net.neoforged.neoforge.common.NeoForge;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +38,10 @@ public final class LazoDiscs {
     }
 
     public LazoDiscs(IEventBus modBus) {
-        ModLoadingContext.get().getActiveContainer().registerConfig(ModConfig.Type.COMMON, LazoDiscsConfig.SPEC, "lazodiscs/config.toml");
+        ModLoadingContext.get()
+                .getActiveContainer()
+                .registerConfig(
+                        ModConfig.Type.COMMON, LazoDiscsConfig.SPEC, "lazodiscs/config.toml");
         LazoDiscsText.reload();
 
         NeoForge.EVENT_BUS.register(LazoDiscsCommands.class);
@@ -46,7 +51,8 @@ public final class LazoDiscs {
         modBus.addListener(LazoDiscs::onCommonSetup);
 
         // LazoDiscs remains server-side for multiplayer.
-        // Dedicated servers load here; integrated singleplayer servers load from the lifecycle event.
+        // Dedicated servers load here; integrated singleplayer servers load from the lifecycle
+        // event.
 
         if (FMLEnvironment.dist == Dist.DEDICATED_SERVER) {
             LazoDiscsServerBootstrap.loadPlasmoAddon();
@@ -56,10 +62,11 @@ public final class LazoDiscs {
     }
 
     private static void onCommonSetup(FMLCommonSetupEvent event) {
-        event.enqueueWork(() -> {
-            LazoDiscsDiscHandler.register();
-            SablePhysicsEvents.registerIfSablePresent();
-        });
+        event.enqueueWork(
+                () -> {
+                    LazoDiscsDiscHandler.register();
+                    SablePhysicsEvents.registerIfSablePresent();
+                });
     }
 
     public static JukeboxPlaybackManager playback() {

@@ -2,16 +2,17 @@ package com.eyecrasher.lazodiscs.mixin;
 
 import com.eyecrasher.lazodiscs.LazoDiscs;
 import com.eyecrasher.lazodiscs.access.LazoDiscJukeboxAccess;
-import com.eyecrasher.lazodiscs.data.DiscDataUtil;
+
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.JukeboxBlock;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.JukeboxBlock;
 import net.minecraft.world.level.block.entity.JukeboxBlockEntity;
-import net.minecraft.core.HolderLookup;
+import net.minecraft.world.level.block.state.BlockState;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -21,18 +22,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(JukeboxBlockEntity.class)
 public abstract class JukeboxBlockEntityMixin implements LazoDiscJukeboxAccess {
-    @Shadow
-    private ItemStack item;
+    @Shadow private ItemStack item;
 
     @Shadow
     public abstract void onSongChanged();
 
     /**
-     * Minecraft 1.21.1 does not have setTheItemWithoutPlaying().
-     * So we let vanilla update the jukebox normally, then JukeboxPlaybackManager
-     * immediately sends a RECORDS stop packet near this jukebox and starts the
-     * Plasmo Voice source. This removes the original disc sound without relying
-     * on a non-existent vanilla helper method.
+     * Minecraft 1.21.1 does not have setTheItemWithoutPlaying(). So we let vanilla update the
+     * jukebox normally, then JukeboxPlaybackManager immediately sends a RECORDS stop packet near
+     * this jukebox and starts the Plasmo Voice source. This removes the original disc sound without
+     * relying on a non-existent vanilla helper method.
      */
     @Inject(method = "setTheItem", at = @At("RETURN"), require = 0)
     private void lazodiscs$setTheItem(ItemStack stack, CallbackInfo ci) {
@@ -60,7 +59,8 @@ public abstract class JukeboxBlockEntityMixin implements LazoDiscJukeboxAccess {
     }
 
     @Inject(method = "loadAdditional", at = @At("RETURN"), require = 0)
-    private void lazodiscs$loadAdditional(CompoundTag tag, HolderLookup.Provider provider, CallbackInfo ci) {
+    private void lazodiscs$loadAdditional(
+            CompoundTag tag, HolderLookup.Provider provider, CallbackInfo ci) {
         lazodiscs$resync("loadAdditional");
     }
 
@@ -95,6 +95,7 @@ public abstract class JukeboxBlockEntityMixin implements LazoDiscJukeboxAccess {
             LazoDiscs.playback().stopAt(serverLevel, pos, reason);
         }
     }
+
     @Override
     @Unique
     public void lazodiscs$setLazoDiscItem(ItemStack stack) {
@@ -106,7 +107,8 @@ public abstract class JukeboxBlockEntityMixin implements LazoDiscJukeboxAccess {
 
         if (level != null) {
             BlockState state = level.getBlockState(pos);
-            if (state.getBlock() instanceof JukeboxBlock && !state.getValue(JukeboxBlock.HAS_RECORD)) {
+            if (state.getBlock() instanceof JukeboxBlock
+                    && !state.getValue(JukeboxBlock.HAS_RECORD)) {
                 level.setBlock(pos, state.setValue(JukeboxBlock.HAS_RECORD, true), 3);
             }
 
@@ -114,5 +116,4 @@ public abstract class JukeboxBlockEntityMixin implements LazoDiscJukeboxAccess {
             this.onSongChanged();
         }
     }
-
 }

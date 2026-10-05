@@ -32,3 +32,9 @@ Thumbs.db
 run/
 runClient/
 runServer/
+
+# Release artifacts, tool cache and private agent material
+dist/
+.cache/
+.agents/
+.sober/

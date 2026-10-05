@@ -2,13 +2,13 @@ package com.eyecrasher.lazodiscs.text;
 
 import com.eyecrasher.lazodiscs.LazoDiscs;
 import com.eyecrasher.lazodiscs.config.LazoDiscsConfig;
+
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,8 +26,7 @@ public final class LazoDiscsText {
     private static volatile String loadedLanguage = "";
     private static volatile long loadedModifiedAt = Long.MIN_VALUE;
 
-    private LazoDiscsText() {
-    }
+    private LazoDiscsText() {}
 
     public static void reload() {
         load(true);
@@ -67,6 +66,10 @@ public final class LazoDiscsText {
 
     public static MutableComponent audioLoadFailed(String title, String reason) {
         return component("audio.load_failed", "title", title, "reason", clean(reason));
+    }
+
+    public static String audioLoadBusy() {
+        return text("audio.load_busy");
     }
 
     public static MutableComponent notLazoDisc() {
@@ -264,7 +267,8 @@ public final class LazoDiscsText {
 
     private static void writeDefaultIfMissing(Path file) throws Exception {
         if (Files.exists(file)) return;
-        try (InputStream input = LazoDiscsText.class.getClassLoader().getResourceAsStream(RESOURCE_PATH)) {
+        try (InputStream input =
+                LazoDiscsText.class.getClassLoader().getResourceAsStream(RESOURCE_PATH)) {
             if (input != null) {
                 Files.copy(input, file);
                 return;
@@ -282,7 +286,8 @@ public final class LazoDiscsText {
             String line;
             while ((line = reader.readLine()) != null) {
                 String trimmed = line.trim();
-                if (trimmed.isEmpty() || trimmed.startsWith("#") || trimmed.startsWith("[")) continue;
+                if (trimmed.isEmpty() || trimmed.startsWith("#") || trimmed.startsWith("["))
+                    continue;
                 int eq = trimmed.indexOf('=');
                 if (eq <= 0) continue;
                 String key = trimmed.substring(0, eq).trim();
@@ -290,7 +295,8 @@ public final class LazoDiscsText {
                 if (!key.isBlank()) out.put(key, value);
             }
         } catch (Exception e) {
-            LazoDiscs.LOGGER.warn("Could not read LazoDiscs language file '{}': {}", file, e.toString());
+            LazoDiscs.LOGGER.warn(
+                    "Could not read LazoDiscs language file '{}': {}", file, e.toString());
         }
         return out;
     }
@@ -349,8 +355,9 @@ public final class LazoDiscsText {
         try {
             String value = LazoDiscsConfig.LANGUAGE.get();
             if (value == null || value.isBlank()) return DEFAULT_LANGUAGE;
-            return value.trim().toLowerCase(Locale.ROOT).replace('-', '_');
-        } catch (Throwable ignored) {
+            String language = value.trim().toLowerCase(Locale.ROOT).replace('-', '_');
+            return language.matches("[\\p{L}\\p{Nd}_]+") ? language : DEFAULT_LANGUAGE;
+        } catch (RuntimeException ignored) {
             return DEFAULT_LANGUAGE;
         }
     }
@@ -382,6 +389,7 @@ public final class LazoDiscsText {
         map.put("command.burned", "Burned LazoDisc: %title%");
         map.put("command.resolving_track", "Checking track...");
         map.put("command.burn_failed", "Could not burn disc: %reason%");
+        map.put("audio.load_busy", "Too many audio requests. Try again shortly.");
         map.put("command.players_only", "Only players can use this command.");
         map.put("command.not_lazodisc", "This item is not a LazoDisc.");
         map.put("command.data_removed", "LazoDisc data removed.");
@@ -389,7 +397,9 @@ public final class LazoDiscsText {
         map.put("permission.no_permission", "You do not have permission to use LazoDiscs.");
         map.put("permission.play_no_permission", "You do not have permission to play LazoDiscs.");
         map.put("search.usage", "Usage: /lazodisc search <song name>");
-        map.put("search.names_only", "Use /lazodisc search with a song name. Use /lazodisc burn for links.");
+        map.put(
+                "search.names_only",
+                "Use /lazodisc search with a song name. Use /lazodisc burn for links.");
         map.put("search.searching", "Searching: %query%");
         map.put("search.failed", "Search failed: %reason%");
         map.put("search.no_songs", "No songs found for: %query%");
@@ -402,7 +412,10 @@ public final class LazoDiscsText {
         map.put("url.https_disabled", "HTTPS URLs are disabled");
         map.put("url.unsupported_scheme", "Only HTTP/HTTPS URLs or spotify: URIs are supported");
         map.put("url.domain_not_allowed", "Domain is not allowed by config");
-        map.put("spotify.track_only", "Only Spotify track links are supported for LazoDiscs. Search album/playlist tracks by song name.");
+        map.put(
+                "spotify.track_only",
+                "Only Spotify track links are supported for LazoDiscs. Search album/playlist tracks"
+                        + " by song name.");
         map.put("spotify.invalid_track", "Invalid Spotify track link");
         map.put("spotify.disabled", "Spotify search is disabled in config");
         map.put("spotify.metadata_failed", "Could not read Spotify track metadata");

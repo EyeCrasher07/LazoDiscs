@@ -1,13 +1,13 @@
 package com.eyecrasher.lazodiscs;
 
 import com.eyecrasher.lazodiscs.voice.LazoDiscsVoiceAddon;
+
 import su.plo.voice.api.server.PlasmoVoiceServer;
 
 public final class LazoDiscsServerBootstrap {
     private static volatile boolean loaded = false;
 
-    private LazoDiscsServerBootstrap() {
-    }
+    private LazoDiscsServerBootstrap() {}
 
     public static synchronized void loadPlasmoAddon() {
         if (loaded) {
@@ -21,7 +21,8 @@ public final class LazoDiscsServerBootstrap {
         } catch (Throwable t) {
             // Dedicated servers usually load from mod construction.
             // Integrated singleplayer servers may need the later server-start lifecycle event.
-            LazoDiscs.LOGGER.warn("Could not load LazoDiscs Plasmo Voice addon yet: {}", t.toString());
+            LazoDiscs.LOGGER.warn(
+                    "Could not load LazoDiscs Plasmo Voice addon yet: {}", t.toString());
         }
     }
 

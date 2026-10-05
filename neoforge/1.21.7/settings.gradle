@@ -1,8 +1,14 @@
 pluginManagement {
     repositories {
-        maven { url = 'https://maven.neoforged.net/releases' }
-        maven { url = 'https://repo.plasmoverse.com/releases' }
-        maven { url = 'https://repo.plo.su/' }
+        maven {
+            url = 'https://maven.neoforged.net/releases'
+        }
+        maven {
+            url = 'https://repo.plasmoverse.com/releases'
+        }
+        maven {
+            url = 'https://repo.plo.su/'
+        }
         gradlePluginPortal()
     }
 }

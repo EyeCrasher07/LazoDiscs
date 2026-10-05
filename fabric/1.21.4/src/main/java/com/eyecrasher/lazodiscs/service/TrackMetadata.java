@@ -6,11 +6,15 @@ import java.util.Objects;
 public record TrackMetadata(String title, List<String> artists, Long durationMs) {
     public TrackMetadata {
         title = title == null ? "" : title.trim();
-        artists = artists == null ? List.of() : List.copyOf(artists.stream()
-                .filter(Objects::nonNull)
-                .map(String::trim)
-                .filter(value -> !value.isBlank())
-                .toList());
+        artists =
+                artists == null
+                        ? List.of()
+                        : List.copyOf(
+                                artists.stream()
+                                        .filter(Objects::nonNull)
+                                        .map(String::trim)
+                                        .filter(value -> !value.isBlank())
+                                        .toList());
     }
 
     public String searchQuery() {

@@ -1,0 +1,32 @@
+{
+  "files": [
+    {
+      "file": "LavaPlayer-2.2.7-LICENSE",
+      "artifacts": ["dev.arbjerg:lavaplayer:2.2.7", "dev.arbjerg:lava-common:2.2.7", "dev.arbjerg:lavaplayer-natives:2.2.7"],
+      "source": "https://raw.githubusercontent.com/lavalink-devs/lavaplayer/2.2.7/LICENSE",
+      "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1",
+      "extraction": "Complete upstream file, unmodified."
+    },
+    {
+      "file": "YouTube-source-2be8e542-LICENSE",
+      "artifacts": ["dev.lavalink.youtube:v2:2be8e542d3f6f178e048dca565892684c2e40177-SNAPSHOT", "dev.lavalink.youtube:common:2be8e542d3f6f178e048dca565892684c2e40177-SNAPSHOT"],
+      "source": "https://raw.githubusercontent.com/lavalink-devs/youtube-source/2be8e542d3f6f178e048dca565892684c2e40177/LICENSE",
+      "sha256": "ffa7f85dfe3dd5da7eb6e5609ea4d7c9b8b4e43d62f0a02ebe86bc282a9498fc",
+      "extraction": "Complete upstream file, unmodified."
+    },
+    {
+      "file": "Nanojson-1.7-NOTICE",
+      "artifacts": ["com.grack:nanojson:1.7"],
+      "source": "https://raw.githubusercontent.com/mmastrac/nanojson/2601212d3baa84aeae527dff098310aae530684b/src/main/java/com/grack/nanojson/JsonParser.java",
+      "sha256": "a6b1afb22a9431551114a965100b8b3b2e884794b1c138b86ff3d7347e282a88",
+      "extraction": "The complete opening copyright/license comment, including its closing delimiter and newline, from the upstream Release 1.7 commit."
+    },
+    {
+      "file": "JSON-java-20260719-LICENSE",
+      "artifacts": ["org.json:json:20260719"],
+      "source": "https://raw.githubusercontent.com/stleary/JSON-java/20260719/LICENSE",
+      "sha256": "86cc84f1773e3318ba26fd61b3ae508a167df38b361695e105f6e499e7a2736f",
+      "extraction": "Complete upstream file, unmodified."
+    }
+  ]
+}

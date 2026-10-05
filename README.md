@@ -2,6 +2,8 @@
 
 Custom music discs with Plasmo Voice positional audio for Fabric and NeoForge.
 
+Release in preparation: **1.0.5**. [Changelog](release-notes/1.0.5.md) · [Русский changelog](release-notes/1.0.5.ru.md) · [Release checklist](docs/RELEASING.md).
+
 [![GitHub release](https://img.shields.io/github/v/release/EyeCrasher07/LazoDiscs?label=release)](https://github.com/EyeCrasher07/LazoDiscs/releases)
 [![Modrinth](https://img.shields.io/modrinth/dt/lazodiscs?label=Modrinth)](https://modrinth.com/mod/lazodiscs)
 [![CurseForge](https://img.shields.io/curseforge/dt/1584136?label=curseforge)](https://www.curseforge.com/minecraft/mc-mods/pv-lazodiscs)
@@ -19,7 +21,11 @@ Custom music discs with Plasmo Voice positional audio for Fabric and NeoForge.
 - Server owners can edit messages through language files
 - No external tools required
 
-## Supported Versions
+## Build Targets
+
+The table lists source ports. Runtime support also requires a matching Plasmo Voice build for the same Minecraft version and loader.
+
+As of Plasmo Voice [2.1.17](https://github.com/plasmoapp/plasmo-voice/releases/tag/2.1.17), the official releases cover 1.21.1, 1.21.4, 1.21.6–1.21.8, and 1.21.11. The 1.21.2, 1.21.3, 1.21.5, 1.21.9, and 1.21.10 ports need a compatible Plasmo Voice build before use; compilation alone does not establish runtime support.
 
 | Minecraft | Fabric | NeoForge |
 |-----------|--------|----------|
@@ -39,7 +45,7 @@ Custom music discs with Plasmo Voice positional audio for Fabric and NeoForge.
 
 - Minecraft 1.21.1 – 1.21.11
 - Fabric Loader + Fabric API (for Fabric) **or** NeoForge (for NeoForge)
-- Plasmo Voice (server and client for multiplayer, client only for singleplayer)
+- Java 21 and Plasmo Voice 2.1.8+ (server and client for multiplayer, client only for singleplayer)
 
 ## Installation
 
@@ -113,9 +119,11 @@ The built-in English language file is created as `config/lazodiscs/lang/en_us.to
 - `maxStreamingTrackLengthSeconds = 0` means streamed LavaPlayer tracks are unlimited by length
 - `requirePermissionForPlay = false` means players can play already-burned discs by default. Set to `true` to require operator permission for playback too.
 
+The URL allowlist checks the input link; it is not a network sandbox for DNS or HTTP redirects. Only allow sources you trust, especially when granting burn/search access to ordinary players.
+
 ## Downloads
 
-- **GitHub Releases**: [All versions](https://github.com/EyeCrasher07/LazoDiscs/releases) (Fabric + NeoForge for all MC versions in one release)
+- **GitHub Releases**: [Release builds](https://github.com/EyeCrasher07/LazoDiscs/releases) for the supported Minecraft versions and loaders
 - **Modrinth**: [lazodiscs](https://modrinth.com/mod/lazodiscs)
 - **CurseForge**: [pv-lazodiscs](https://www.curseforge.com/minecraft/mc-mods/pv-lazodiscs)
 
@@ -134,6 +142,36 @@ cd neoforge/1.21.11
 ```
 
 Built JARs appear in `build/libs/`. Use the normal JAR (not `-dev`, `-dev-shadow`, `-sources`, or `-thin`).
+
+From the repository root, Java 21 and Node.js 22+ can build every target:
+
+```sh
+node tools/build-all.mjs
+```
+
+The command performs clean builds, returns a failing exit code if any target fails, and records results in `dist/build-results-all.json`. Do not build uncached projects for the same Minecraft version concurrently against a shared Loom cache.
+
+### Quality checks
+
+```sh
+node tools/verify-projects.mjs
+node tools/verify-quality-fixes.mjs
+node tools/test-jukebox-resync.mjs
+node tools/test-release-tools.mjs
+node tools/test-bundled-notices.mjs
+node tools/format-java.mjs --check
+git diff --check
+```
+
+Java uses AOSP formatting (four-space indentation); apply it with `node tools/format-java.mjs --write`. The formatter version and SHA-256 are pinned. Regression checks compile production code with controlled Minecraft/Plasmo Voice substitutes; they do not replace the in-game checklist.
+
+`node tools/prepare-release.mjs` collects checked upload candidates and checksums without publishing. See [release instructions](docs/RELEASING.md) for GitHub, Modrinth and CurseForge.
+
+### Configuration compatibility
+
+Existing configuration files are preserved. Overloaded audio loading is rejected with a retry-later message instead of an unbounded queue. Server language identifiers must contain only letters, digits and underscores.
+
+NeoForge retains the legacy nested setting `playback.playback.allowPlaybackOnSablePlatforms` to preserve existing values; Fabric uses `playback.allowPlaybackOnSablePlatforms`. A future unification needs a configuration migration, not a silent rename.
 
 ## Repository Structure
 
@@ -168,6 +206,8 @@ Each version is a completely independent Gradle project with its own `build.grad
 
 ### Prerequisites
 - Java 21
+- Node.js 22+ for repository-wide checks and release tools
+- `unzip` for release JAR inspection
 - Git
 
 ### Local Development

@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.Locale;
 
 public final class TrackMatchScorer {
-    private TrackMatchScorer() {
-    }
+    private TrackMatchScorer() {}
 
-    public static int score(String rawTitle, String rawAuthor, long lengthMs, TrackMetadata metadata) {
+    public static int score(
+            String rawTitle, String rawAuthor, long lengthMs, TrackMetadata metadata) {
         if (metadata == null) return 0;
 
         String hay = normalize(rawTitle + " " + rawAuthor);
@@ -43,16 +43,27 @@ public final class TrackMatchScorer {
             else score -= (int) Math.min(120, diff / 1000L);
         }
 
-        List<String> penalties = List.of(
-                "cover", "remix", "sped up", "slowed", "nightcore",
-                "karaoke", "instrumental", "8d", "loop", "extended",
-                "live", "reaction"
-        );
+        List<String> penalties =
+                List.of(
+                        "cover",
+                        "remix",
+                        "sped up",
+                        "slowed",
+                        "nightcore",
+                        "karaoke",
+                        "instrumental",
+                        "8d",
+                        "loop",
+                        "extended",
+                        "live",
+                        "reaction");
         for (String penalty : penalties) {
             if (hay.contains(penalty) && !titleNorm.contains(penalty)) score -= 45;
         }
 
-        if (hay.contains("official audio") || hay.contains("topic") || hay.contains("provided to youtube")) score += 15;
+        if (hay.contains("official audio")
+                || hay.contains("topic")
+                || hay.contains("provided to youtube")) score += 15;
         if (hay.contains("lyrics") && !titleNorm.contains("lyrics")) score -= 10;
         return score;
     }
@@ -72,8 +83,12 @@ public final class TrackMatchScorer {
         List<String> out = new ArrayList<>();
         for (String word : normalized.split(" ")) {
             if (word.length() < 3) continue;
-            if (word.equals("the") || word.equals("and") || word.equals("feat") || word.equals("ft")
-                    || word.equals("official") || word.equals("audio")) continue;
+            if (word.equals("the")
+                    || word.equals("and")
+                    || word.equals("feat")
+                    || word.equals("ft")
+                    || word.equals("official")
+                    || word.equals("audio")) continue;
             out.add(word);
         }
         return out;

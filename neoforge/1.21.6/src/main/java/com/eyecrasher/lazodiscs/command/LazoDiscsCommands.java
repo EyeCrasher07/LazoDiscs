@@ -10,6 +10,7 @@ import com.eyecrasher.lazodiscs.voice.AudioLoadExecutor;
 import com.eyecrasher.lazodiscs.voice.LavaPcmFeeder;
 import com.eyecrasher.lazodiscs.voice.SpotifyTitleResolver;
 import com.mojang.brigadier.arguments.StringArgumentType;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -28,26 +29,53 @@ import java.util.UUID;
 public final class LazoDiscsCommands {
     private static final int SEARCH_MAX_RESULTS = 5;
 
-    private LazoDiscsCommands() {
-    }
+    private LazoDiscsCommands() {}
 
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {
         String alias = LazoDiscsConfig.COMMAND_ALIAS.get();
         if (alias == null || alias.isBlank()) alias = "lazodisc";
         alias = alias.trim();
-        event.getDispatcher().register(Commands.literal(alias)
-                .then(Commands.literal("burn")
-                        .executes(ctx -> burn(ctx.getSource(), ""))
-                        .then(Commands.argument("input", StringArgumentType.greedyString())
-                                .executes(ctx -> burn(ctx.getSource(), StringArgumentType.getString(ctx, "input")))))
-                .then(Commands.literal("erase")
-                        .executes(ctx -> erase(ctx.getSource())))
-                .then(Commands.literal("search")
-                        .executes(ctx -> search(ctx.getSource(), ""))
-                        .then(Commands.argument("query", StringArgumentType.greedyString())
-                                .executes(ctx -> search(ctx.getSource(), StringArgumentType.getString(ctx, "query")))))
-        );
+        event.getDispatcher()
+                .register(
+                        Commands.literal(alias)
+                                .then(
+                                        Commands.literal("burn")
+                                                .executes(ctx -> burn(ctx.getSource(), ""))
+                                                .then(
+                                                        Commands.argument(
+                                                                        "input",
+                                                                        StringArgumentType
+                                                                                .greedyString())
+                                                                .executes(
+                                                                        ctx ->
+                                                                                burn(
+                                                                                        ctx
+                                                                                                .getSource(),
+                                                                                        StringArgumentType
+                                                                                                .getString(
+                                                                                                        ctx,
+                                                                                                        "input")))))
+                                .then(
+                                        Commands.literal("erase")
+                                                .executes(ctx -> erase(ctx.getSource())))
+                                .then(
+                                        Commands.literal("search")
+                                                .executes(ctx -> search(ctx.getSource(), ""))
+                                                .then(
+                                                        Commands.argument(
+                                                                        "query",
+                                                                        StringArgumentType
+                                                                                .greedyString())
+                                                                .executes(
+                                                                        ctx ->
+                                                                                search(
+                                                                                        ctx
+                                                                                                .getSource(),
+                                                                                        StringArgumentType
+                                                                                                .getString(
+                                                                                                        ctx,
+                                                                                                        "query"))))));
     }
 
     private static int burn(CommandSourceStack source, String input) {
@@ -84,41 +112,80 @@ public final class LazoDiscsCommands {
             return 0;
         }
 
+        ItemStack originalStack = stack;
+        ItemStack originalSnapshot = stack.copy();
         String titleHint = burnInput.title();
         player.sendSystemMessage(LazoDiscsText.resolvingTrack().withStyle(ChatFormatting.GRAY));
 
         var server = player.createCommandSourceStack().getServer();
-        AudioLoadExecutor.submit(() -> {
-            try {
-                LavaPcmFeeder.ResolvedTrack resolved = LavaPcmFeeder.resolveTrack(url, titleHint);
-                String title = chooseBurnTitle(url, titleHint, resolved);
-                server.execute(() -> finishBurn(player, url, title));
-            } catch (Throwable t) {
-                LazoDiscs.LOGGER.warn("LazoDiscs could not burn '{}': {}", url, t.toString());
-                server.execute(() -> player.sendSystemMessage(LazoDiscsText.burnFailed(messageOf(t)).withStyle(ChatFormatting.RED)));
-            }
-        });
+        AudioLoadExecutor.submit(
+                () -> {
+                    try {
+                        LavaPcmFeeder.ResolvedTrack resolved =
+                                LavaPcmFeeder.resolveTrack(url, titleHint);
+                        String title = chooseBurnTitle(url, titleHint, resolved);
+                        server.execute(
+                                () ->
+                                        finishBurn(
+                                                player,
+                                                originalStack,
+                                                originalSnapshot,
+                                                url,
+                                                title));
+                    } catch (InterruptedException interrupted) {
+                        Thread.currentThread().interrupt();
+                    } catch (Exception t) {
+                        LazoDiscs.LOGGER.warn(
+                                "LazoDiscs could not burn '{}': {}", url, t.toString());
+                        server.execute(
+                                () ->
+                                        player.sendSystemMessage(
+                                                LazoDiscsText.burnFailed(messageOf(t))
+                                                        .withStyle(ChatFormatting.RED)));
+                    }
+                },
+                () ->
+                        player.sendSystemMessage(
+                                LazoDiscsText.burnFailed(LazoDiscsText.audioLoadBusy())
+                                        .withStyle(ChatFormatting.RED)));
         return 1;
     }
 
-    private static void finishBurn(ServerPlayer player, String url, String title) {
+    private static void finishBurn(
+            ServerPlayer player,
+            ItemStack originalStack,
+            ItemStack originalSnapshot,
+            String url,
+            String title) {
         if (player.isRemoved()) {
             return;
         }
 
         ItemStack stack = player.getMainHandItem();
-        if (!DiscDataUtil.isMusicDisc(stack)) {
+        if (stack != originalStack
+                || !ItemStack.matches(stack, originalSnapshot)
+                || !DiscDataUtil.isMusicDisc(stack)) {
             player.sendSystemMessage(LazoDiscsText.holdDisc());
             return;
         }
+        if (!LazoDiscsPermissions.canBurn(player.createCommandSourceStack())) {
+            player.sendSystemMessage(LazoDiscsText.noPermission());
+            return;
+        }
+        try {
+            url = DiscDataUtil.validateUrl(url);
+        } catch (IllegalArgumentException e) {
+            player.sendSystemMessage(LazoDiscsText.invalidUrl(e.getMessage()));
+            return;
+        }
 
-        CustomDiscData data = new CustomDiscData(
-                url,
-                title,
-                DiscDataUtil.clampRange(LazoDiscsConfig.DEFAULT_RANGE.get()),
-                LazoDiscsConfig.DEFAULT_VOLUME.get().floatValue(),
-                UUID.randomUUID()
-        );
+        CustomDiscData data =
+                new CustomDiscData(
+                        url,
+                        title,
+                        DiscDataUtil.clampRange(LazoDiscsConfig.DEFAULT_RANGE.get()),
+                        LazoDiscsConfig.DEFAULT_VOLUME.get().floatValue(),
+                        UUID.randomUUID());
         DiscDataUtil.write(stack, data);
         player.sendSystemMessage(LazoDiscsText.burned(title));
     }
@@ -170,24 +237,41 @@ public final class LazoDiscsCommands {
             player.sendSystemMessage(LazoDiscsText.searchNamesOnly().withStyle(ChatFormatting.RED));
             return 0;
         }
-        player.sendSystemMessage(LazoDiscsText.searching(cleanQuery).withStyle(ChatFormatting.GRAY));
+        player.sendSystemMessage(
+                LazoDiscsText.searching(cleanQuery).withStyle(ChatFormatting.GRAY));
 
         var server = source.getServer();
-        AudioLoadExecutor.submit(() -> {
-            try {
-                List<LavaPcmFeeder.SearchResult> results = LavaPcmFeeder.search(cleanQuery, SEARCH_MAX_RESULTS);
-                server.execute(() -> sendSearchResults(player, cleanQuery, results));
-            } catch (Throwable t) {
-                LazoDiscs.LOGGER.warn("LazoDiscs search failed for '{}': {}", cleanQuery, t.toString());
-                server.execute(() -> player.sendSystemMessage(LazoDiscsText.searchFailed(messageOf(t)).withStyle(ChatFormatting.RED)));
-            }
-        });
+        AudioLoadExecutor.submit(
+                () -> {
+                    try {
+                        List<LavaPcmFeeder.SearchResult> results =
+                                LavaPcmFeeder.search(cleanQuery, SEARCH_MAX_RESULTS);
+                        server.execute(() -> sendSearchResults(player, cleanQuery, results));
+                    } catch (InterruptedException interrupted) {
+                        Thread.currentThread().interrupt();
+                    } catch (Exception t) {
+                        LazoDiscs.LOGGER.warn(
+                                "LazoDiscs search failed for '{}': {}", cleanQuery, t.toString());
+                        server.execute(
+                                () ->
+                                        player.sendSystemMessage(
+                                                LazoDiscsText.searchFailed(messageOf(t))
+                                                        .withStyle(ChatFormatting.RED)));
+                    }
+                },
+                () ->
+                        player.sendSystemMessage(
+                                LazoDiscsText.searchFailed(LazoDiscsText.audioLoadBusy())
+                                        .withStyle(ChatFormatting.RED)));
         return 1;
     }
 
-    private static void sendSearchResults(ServerPlayer player, String query, List<LavaPcmFeeder.SearchResult> results) {
+    private static void sendSearchResults(
+            ServerPlayer player, String query, List<LavaPcmFeeder.SearchResult> results) {
+        if (player.isRemoved()) return;
         if (results.isEmpty()) {
-            player.sendSystemMessage(LazoDiscsText.noSongsFound(query).withStyle(ChatFormatting.RED));
+            player.sendSystemMessage(
+                    LazoDiscsText.noSongsFound(query).withStyle(ChatFormatting.RED));
             return;
         }
 
@@ -200,13 +284,32 @@ public final class LazoDiscsCommands {
             String alias = LazoDiscsConfig.COMMAND_ALIAS.get();
             if (alias == null || alias.isBlank()) alias = "lazodisc";
             String burnCommand = "/" + alias.trim() + " burn " + result.url() + " " + title;
-            Component line = Component.literal((i + 1) + ". ")
-                    .withStyle(ChatFormatting.DARK_GRAY)
-                    .append(Component.literal(title).withStyle(style -> style
-                            .withColor(ChatFormatting.AQUA)
-                            .withClickEvent(new ClickEvent.SuggestCommand(burnCommand))
-                            .withHoverEvent(new HoverEvent.ShowText(Component.literal(LazoDiscsText.clickToPaste(burnCommand))))))
-                    .append(Component.literal(" - " + author + " " + formatDuration(result.lengthMs())).withStyle(ChatFormatting.GRAY));
+            Component line =
+                    Component.literal((i + 1) + ". ")
+                            .withStyle(ChatFormatting.DARK_GRAY)
+                            .append(
+                                    Component.literal(title)
+                                            .withStyle(
+                                                    style ->
+                                                            style.withColor(ChatFormatting.AQUA)
+                                                                    .withClickEvent(
+                                                                            new ClickEvent
+                                                                                    .SuggestCommand(
+                                                                                    burnCommand))
+                                                                    .withHoverEvent(
+                                                                            new HoverEvent.ShowText(
+                                                                                    Component
+                                                                                            .literal(
+                                                                                                    LazoDiscsText
+                                                                                                            .clickToPaste(
+                                                                                                                    burnCommand))))))
+                            .append(
+                                    Component.literal(
+                                                    " - "
+                                                            + author
+                                                            + " "
+                                                            + formatDuration(result.lengthMs()))
+                                            .withStyle(ChatFormatting.GRAY));
             player.sendSystemMessage(line);
         }
     }
@@ -253,11 +356,15 @@ public final class LazoDiscsCommands {
         return -1;
     }
 
-    private static String chooseBurnTitle(String url, String titleHint, LavaPcmFeeder.ResolvedTrack resolved) {
+    private static String chooseBurnTitle(
+            String url, String titleHint, LavaPcmFeeder.ResolvedTrack resolved) {
         if (titleHint != null && !titleHint.isBlank()) {
             return titleHint.trim();
         }
-        if (resolved != null && resolved.title() != null && !resolved.title().isBlank() && !resolved.title().equalsIgnoreCase(LazoDiscsText.unknown())) {
+        if (resolved != null
+                && resolved.title() != null
+                && !resolved.title().isBlank()
+                && !resolved.title().equalsIgnoreCase(LazoDiscsText.unknown())) {
             return sanitizeTitle(resolved.title());
         }
         if (SpotifyTitleResolver.looksLikeSpotify(url)) {
@@ -271,7 +378,8 @@ public final class LazoDiscsCommands {
         String message = t.getMessage();
         Throwable cause = t.getCause();
         if ((message == null || message.isBlank()) && cause != null) return messageOf(cause);
-        if (cause != null && message != null && message.equals(cause.toString())) return messageOf(cause);
+        if (cause != null && message != null && message.equals(cause.toString()))
+            return messageOf(cause);
         return message == null || message.isBlank() ? t.getClass().getSimpleName() : message;
     }
 
@@ -283,7 +391,5 @@ public final class LazoDiscsCommands {
         return "(" + minutes + ":" + (seconds < 10 ? "0" : "") + seconds + ")";
     }
 
-    private record BurnInput(String url, String title) {
-    }
-
+    private record BurnInput(String url, String title) {}
 }

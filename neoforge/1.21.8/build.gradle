@@ -1,11 +1,10 @@
 plugins {
     id 'java-library'
-    id 'net.neoforged.moddev' version '2.0.141'
-    // Shadow 8.3.6 supports Java 21 class files used by Minecraft 1.21.8.
-    id 'com.gradleup.shadow' version '8.3.6'
+    id 'net.neoforged.moddev' version '2.0.148'
+    id 'com.gradleup.shadow' version '8.3.11'
 }
 
-version = '1.0.4+1.21.8'
+version = '1.0.5+1.21.8'
 group = 'com.eyecrasher'
 
 base {
@@ -18,11 +17,21 @@ java {
 
 repositories {
     mavenCentral()
-    maven { url = 'https://repo.plasmoverse.com/releases' }
-    maven { url = 'https://repo.plo.su/' }
-    maven { url = 'https://maven.lavalink.dev/releases' }
-    maven { url = 'https://maven.lavalink.dev/snapshots' }
-    maven { url = 'https://jitpack.io' }
+    maven {
+        url = 'https://repo.plasmoverse.com/releases'
+    }
+    maven {
+        url = 'https://repo.plo.su/'
+    }
+    maven {
+        url = 'https://maven.lavalink.dev/releases'
+    }
+    maven {
+        url = 'https://maven.lavalink.dev/snapshots'
+    }
+    maven {
+        url = 'https://jitpack.io'
+    }
 }
 
 configurations {
@@ -30,11 +39,6 @@ configurations {
     shadeRuntime
     implementation.extendsFrom(shade)
 }
-
-configurations.configureEach {
-    resolutionStrategy.force 'org.apache.httpcomponents:httpclient:4.5.13'
-}
-
 
 neoForge {
     version = '21.8.50'
@@ -62,11 +66,20 @@ dependencies {
         exclude group: 'it.unimi.dsi', module: 'fastutil'
         exclude group: 'com.google.code.gson', module: 'gson'
     }
-    // Relocated private Jackson copy for lavalink-youtube.
-    // Keep it out of compileClasspath because Minecraft 1.21.8 strictly pins Jackson 2.13.x.
-    shadeRuntime 'com.fasterxml.jackson.core:jackson-core:2.15.2'
-    shadeRuntime 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
-    shadeRuntime 'com.fasterxml.jackson.core:jackson-annotations:2.15.2'
+    // Private libraries are relocated and kept off Minecraft's compile classpath.
+    // The BOM aligns core/databind 2.21.7 with annotations 2.21.
+    shadeRuntime platform('com.fasterxml.jackson:jackson-bom:2.21.7')
+    shadeRuntime 'com.fasterxml.jackson.core:jackson-core'
+    shadeRuntime 'com.fasterxml.jackson.core:jackson-databind'
+    shadeRuntime 'com.fasterxml.jackson.core:jackson-annotations'
+    shadeRuntime('org.apache.httpcomponents:httpclient:4.5.14') {
+        exclude group: 'commons-codec', module: 'commons-codec'
+    }
+
+    // Security-patched audio transitives stay off Minecraft's compile graph.
+    shadeRuntime 'org.mozilla:rhino:1.7.15.1'
+    shadeRuntime 'org.mozilla:rhino-engine:1.7.15.1'
+    shadeRuntime 'org.json:json:20260719'
 
     // Built-in audio resolver/player. This makes YouTube, SoundCloud, Bandcamp, Vimeo,
     // Twitch, direct HTTP audio, mp3/flac/wav/ogg/m4a/etc work without yt-dlp/ffmpeg.
@@ -75,20 +88,22 @@ dependencies {
     // Most duplicated libraries stay excluded to avoid JPMS split-package crashes.
     // Apache HttpClient/HttpCore are bundled but relocated by ShadowJar below,
     // because LavaPlayer/youtube-source need them at runtime.
-shade('dev.arbjerg:lavaplayer:2.2.6') {
+    shade('dev.arbjerg:lavaplayer:2.2.7') {
         exclude group: 'org.slf4j', module: 'slf4j-api'
         exclude group: 'commons-io', module: 'commons-io'
         exclude group: 'commons-codec', module: 'commons-codec'
-        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-core'
-        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
-        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-annotations'
-        exclude group: 'com.fasterxml.jackson', module: 'jackson-bom'
         exclude group: 'net.java.dev.jna', module: 'jna'
         exclude group: 'org.jetbrains', module: 'annotations'
         exclude group: 'org.jetbrains.kotlin'
         exclude group: 'org.jetbrains.kotlinx'
+
+        exclude group: 'com.fasterxml.jackson.core'
+        exclude group: 'com.fasterxml.jackson'
+        exclude group: 'org.apache.httpcomponents'
+        exclude group: 'org.mozilla'
+        exclude group: 'org.json'
     }
-    shade('dev.lavalink.youtube:v2:f45bbb7aebfcbc1c553769e04af6cd43afa8b7c3-SNAPSHOT') {
+    shade('dev.lavalink.youtube:v2:2be8e542d3f6f178e048dca565892684c2e40177-SNAPSHOT') {
         exclude group: 'org.slf4j', module: 'slf4j-api'
         exclude group: 'commons-io', module: 'commons-io'
         exclude group: 'commons-codec', module: 'commons-codec'
@@ -96,12 +111,25 @@ shade('dev.arbjerg:lavaplayer:2.2.6') {
         exclude group: 'org.jetbrains', module: 'annotations'
         exclude group: 'org.jetbrains.kotlin'
         exclude group: 'org.jetbrains.kotlinx'
+
+        exclude group: 'com.fasterxml.jackson.core'
+        exclude group: 'com.fasterxml.jackson'
+        exclude group: 'org.apache.httpcomponents'
+        exclude group: 'org.mozilla'
+        exclude group: 'org.json'
     }
 
 }
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+}
+
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand version: project.version
+    }
 }
 
 jar {
@@ -135,8 +163,12 @@ shadowJar {
     exclude 'META-INF/*.RSA'
     exclude 'META-INF/MANIFEST.MF'
     exclude 'module-info.class'
+    exclude 'META-INF/versions/**/module-info.class'
 
-    // Merge ServiceLoader files so relocated Jackson works correctly
+    // Preserve duplicate provider files for the service merger before relocation.
+    filesMatching('META-INF/services/**') {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
     mergeServiceFiles()
 
     // Do not bundle libraries that are already exported by Minecraft/NeoForge/ModLauncher.
@@ -168,3 +200,12 @@ shadowJar {
 assemble.dependsOn shadowJar
 build.dependsOn shadowJar
 
+// Include the project's license in release, development and source archives.
+tasks.withType(Jar).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+    from(file('../../LICENSE'))
+}
+
+// Preserve third-party licenses/notices and verify the final release archive.
+apply from: '../../gradle/third-party-notices.gradle'

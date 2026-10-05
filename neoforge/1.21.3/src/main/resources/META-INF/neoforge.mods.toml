@@ -5,7 +5,7 @@ issueTrackerURL="https://github.com/EyeCrasher07/LazoDiscs/issues"
 
 [[mods]]
 modId="lazodiscs"
-version="1.0.4+mc1.21.3"
+version="${version}"
 displayName="LazoDiscs"
 displayTest="IGNORE_ALL_VERSION"
 logoFile="lazodiscs_icon.png"
@@ -36,7 +36,7 @@ side="BOTH"
 [[dependencies.lazodiscs]]
 modId="plasmovoice"
 type="required"
-versionRange="[2.1.0,)"
+versionRange="[2.1.8,)"
 ordering="AFTER"
 side="BOTH"
 

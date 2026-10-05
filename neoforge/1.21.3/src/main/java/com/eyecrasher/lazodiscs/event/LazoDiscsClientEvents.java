@@ -1,12 +1,16 @@
 package com.eyecrasher.lazodiscs.event;
 
+import com.eyecrasher.lazodiscs.LazoDiscs;
 import com.eyecrasher.lazodiscs.data.DiscDataUtil;
+
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
+@EventBusSubscriber(modid = LazoDiscs.MOD_ID, value = Dist.CLIENT)
 public final class LazoDiscsClientEvents {
-    private LazoDiscsClientEvents() {
-    }
+    private LazoDiscsClientEvents() {}
 
     @SubscribeEvent
     public static void onItemTooltip(ItemTooltipEvent event) {

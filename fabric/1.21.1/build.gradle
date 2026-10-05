@@ -1,10 +1,10 @@
 plugins {
-    id 'fabric-loom' version '1.13.4'
+    id 'fabric-loom' version '1.13.6'
     id 'java-library'
-    id 'com.gradleup.shadow' version '8.3.6'
+    id 'com.gradleup.shadow' version '8.3.11'
 }
 
-version = '1.0.4+1.21.1'
+version = '1.0.5+1.21.1'
 group = 'com.eyecrasher'
 
 base {
@@ -18,11 +18,21 @@ java {
 
 repositories {
     mavenCentral()
-    maven { url = 'https://repo.plasmoverse.com/releases' }
-    maven { url = 'https://repo.plo.su/' }
-    maven { url = 'https://maven.lavalink.dev/releases' }
-    maven { url = 'https://maven.lavalink.dev/snapshots' }
-    maven { url = 'https://jitpack.io' }
+    maven {
+        url = 'https://repo.plasmoverse.com/releases'
+    }
+    maven {
+        url = 'https://repo.plo.su/'
+    }
+    maven {
+        url = 'https://maven.lavalink.dev/releases'
+    }
+    maven {
+        url = 'https://maven.lavalink.dev/snapshots'
+    }
+    maven {
+        url = 'https://jitpack.io'
+    }
 }
 
 configurations {
@@ -31,14 +41,10 @@ configurations {
     implementation.extendsFrom(shade)
 }
 
-configurations.configureEach {
-    resolutionStrategy.force 'org.apache.httpcomponents:httpclient:4.5.13'
-}
-
 dependencies {
     minecraft 'com.mojang:minecraft:1.21.1'
     mappings loom.officialMojangMappings()
-    modImplementation 'net.fabricmc:fabric-loader:0.19.3'
+    modImplementation 'net.fabricmc:fabric-loader:0.19.5'
     modImplementation 'net.fabricmc.fabric-api:fabric-api:0.102.0+1.21.1'
 
     compileOnly('su.plo.voice.api:server:2.1.10') {
@@ -53,22 +59,22 @@ dependencies {
         exclude group: 'com.google.code.gson', module: 'gson'
     }
 
-    // Relocated private Jackson copy for lavalink-youtube.
-    // Keep it out of compileClasspath because Minecraft 1.21.1 strictly pins Jackson 2.13.x.
-    shadeRuntime 'com.fasterxml.jackson.core:jackson-core:2.15.2'
-    shadeRuntime 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
-    shadeRuntime 'com.fasterxml.jackson.core:jackson-annotations:2.15.2'
-
-    shade('dev.arbjerg:lavaplayer:2.2.6') {
-        exclude group: 'org.slf4j', module: 'slf4j-api'
-        exclude group: 'commons-io', module: 'commons-io'
+    // Private libraries are relocated and kept off Minecraft's compile classpath.
+    // The BOM aligns core/databind 2.21.7 with annotations 2.21.
+    shadeRuntime platform('com.fasterxml.jackson:jackson-bom:2.21.7')
+    shadeRuntime 'com.fasterxml.jackson.core:jackson-core'
+    shadeRuntime 'com.fasterxml.jackson.core:jackson-databind'
+    shadeRuntime 'com.fasterxml.jackson.core:jackson-annotations'
+    shadeRuntime('org.apache.httpcomponents:httpclient:4.5.14') {
         exclude group: 'commons-codec', module: 'commons-codec'
-        exclude group: 'net.java.dev.jna', module: 'jna'
-        exclude group: 'org.jetbrains', module: 'annotations'
-        exclude group: 'org.jetbrains.kotlin'
-        exclude group: 'org.jetbrains.kotlinx'
     }
-    shade('dev.lavalink.youtube:v2:f45bbb7aebfcbc1c553769e04af6cd43afa8b7c3-SNAPSHOT') {
+
+    // Security-patched audio transitives stay off Minecraft's compile graph.
+    shadeRuntime 'org.mozilla:rhino:1.7.15.1'
+    shadeRuntime 'org.mozilla:rhino-engine:1.7.15.1'
+    shadeRuntime 'org.json:json:20260719'
+
+    shade('dev.arbjerg:lavaplayer:2.2.7') {
         exclude group: 'org.slf4j', module: 'slf4j-api'
         exclude group: 'commons-io', module: 'commons-io'
         exclude group: 'commons-codec', module: 'commons-codec'
@@ -76,6 +82,25 @@ dependencies {
         exclude group: 'org.jetbrains', module: 'annotations'
         exclude group: 'org.jetbrains.kotlin'
         exclude group: 'org.jetbrains.kotlinx'
+        exclude group: 'com.fasterxml.jackson.core'
+        exclude group: 'com.fasterxml.jackson'
+        exclude group: 'org.apache.httpcomponents'
+        exclude group: 'org.mozilla'
+        exclude group: 'org.json'
+    }
+    shade('dev.lavalink.youtube:v2:2be8e542d3f6f178e048dca565892684c2e40177-SNAPSHOT') {
+        exclude group: 'org.slf4j', module: 'slf4j-api'
+        exclude group: 'commons-io', module: 'commons-io'
+        exclude group: 'commons-codec', module: 'commons-codec'
+        exclude group: 'net.java.dev.jna', module: 'jna'
+        exclude group: 'org.jetbrains', module: 'annotations'
+        exclude group: 'org.jetbrains.kotlin'
+        exclude group: 'org.jetbrains.kotlinx'
+        exclude group: 'com.fasterxml.jackson.core'
+        exclude group: 'com.fasterxml.jackson'
+        exclude group: 'org.apache.httpcomponents'
+        exclude group: 'org.mozilla'
+        exclude group: 'org.json'
     }
 }
 
@@ -99,6 +124,10 @@ shadowJar {
     archiveClassifier.set('dev-shadow')
     configurations = [project.configurations.shade, project.configurations.shadeRuntime]
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    filesMatching('META-INF/services/**') {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
+    mergeServiceFiles()
 
     relocate 'org.apache.http', 'com.eyecrasher.lazodiscs.shadow.org.apache.http'
     relocate 'org.apache.commons.logging', 'com.eyecrasher.lazodiscs.shadow.org.apache.commons.logging'
@@ -109,7 +138,7 @@ shadowJar {
     exclude 'META-INF/*.RSA'
     exclude 'META-INF/MANIFEST.MF'
     exclude 'module-info.class'
-    exclude 'META-INF/services/com.fasterxml.jackson.*'
+    exclude 'META-INF/versions/**/module-info.class'
 
     exclude 'org/slf4j/**'
     exclude 'org/apache/commons/io/**'
@@ -133,3 +162,12 @@ remapJar {
 
 build.dependsOn remapJar
 
+// Include the project's license in release, development and source archives.
+tasks.withType(Jar).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+    from(file('../../LICENSE'))
+}
+
+// Preserve third-party licenses/notices and verify the final release archive.
+apply from: '../../gradle/third-party-notices.gradle'
