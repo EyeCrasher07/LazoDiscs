@@ -222,9 +222,14 @@ function compile(project, baseline = false) {
   const directory = join(temp, baseline ? 'baseline' : project.minecraft);
   const fakes = { ...sources, 'net/neoforged/neoforge/event/level/ChunkEvent.java': chunkEvent(legacy) };
   const files = Object.entries(fakes).map(([name, text]) => write(join(directory, 'src', name), text));
-  const production = baseline
-    ? run('git', ['show', `HEAD:${project.relative}/${relativeSource}`])
-    : readFileSync(join(project.directory, relativeSource), 'utf8');
+  let production = readFileSync(join(project.directory, relativeSource), 'utf8');
+  if (baseline) {
+    // Disable only the deferred recovery call. HEAD changes after a commit,
+    // and a shallow CI checkout does not contain the historical broken class.
+    const recoveryCall = 'resyncLoadedJukeboxes();';
+    assert.equal(production.split(recoveryCall).length - 1, 1, 'Expected one deferred recovery call');
+    production = production.replace(recoveryCall, '// Deferred recovery disabled by the negative control.');
+  }
   files.push(write(join(directory, 'src/com/eyecrasher/lazodiscs/event/JukeboxEvents.java'), production));
   const output = join(directory, 'classes');
   mkdirSync(output, { recursive: true });
@@ -241,9 +246,9 @@ try {
   const negative = spawnSync(java('java'), ['-cp', output, 'JukeboxResyncRegression', api, 'baseline'], {
     cwd: root, encoding: 'utf8', timeout: 30_000,
   });
-  assert.equal(negative.status, 1, 'Original NeoForge event class unexpectedly recovered saved playback');
+  assert.equal(negative.status, 1, 'Disabled startup recovery unexpectedly restored saved playback');
   assert.match(negative.stderr, /saved jukebox was not recovered after Plasmo initialized/);
-  console.log('PASS: original NeoForge event class fails the startup-recovery negative control.');
+  console.log('PASS: disabling deferred recovery fails the startup-recovery negative control.');
 } finally {
   rmSync(temp, { recursive: true, force: true });
 }
