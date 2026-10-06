@@ -143,30 +143,6 @@ cd neoforge/1.21.11
 
 Built JARs appear in `build/libs/`. Use the normal JAR (not `-dev`, `-dev-shadow`, `-sources`, or `-thin`).
 
-From the repository root, Java 21 and Node.js 22+ can build every target:
-
-```sh
-node tools/build-all.mjs
-```
-
-The command performs clean builds, returns a failing exit code if any target fails, and records results in `dist/build-results-all.json`. Do not build uncached projects for the same Minecraft version concurrently against a shared Loom cache.
-
-### Quality checks
-
-```sh
-node tools/verify-projects.mjs
-node tools/verify-quality-fixes.mjs
-node tools/test-jukebox-resync.mjs
-node tools/test-release-tools.mjs
-node tools/test-bundled-notices.mjs
-node tools/format-java.mjs --check
-git diff --check
-```
-
-Java uses AOSP formatting (four-space indentation); apply it with `node tools/format-java.mjs --write`. The formatter version and SHA-256 are pinned. Regression checks compile production code with controlled Minecraft/Plasmo Voice substitutes; they do not replace the in-game checklist.
-
-`node tools/prepare-release.mjs` collects checked upload candidates and checksums without publishing. See [release instructions](docs/RELEASING.md) for GitHub, Modrinth and CurseForge.
-
 ### Configuration compatibility
 
 Existing configuration files are preserved. Overloaded audio loading is rejected with a retry-later message instead of an unbounded queue. Server language identifiers must contain only letters, digits and underscores.
