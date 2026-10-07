@@ -20,11 +20,14 @@ shadedArchive.configure {
     }
 }
 
-def releaseArchive = plugins.hasPlugin('fabric-loom') ? tasks.named('remapJar') : shadedArchive
+// Minecraft 26.1+ is unobfuscated, so Loom produces ordinary (non-remapped) JARs.
+def releaseArchive = project.hasProperty('lazoReleaseArchive') ? tasks.named(project.lazoReleaseArchive) :
+        tasks.findByName('remapJar') != null ? tasks.named('remapJar') : shadedArchive
 def verifyBundledNotices = tasks.register('verifyBundledNotices') {
     group = 'verification'
     description = 'Checks that release archives preserve every bundled upstream legal resource.'
     dependsOn releaseArchive
+    if (project.hasProperty('lazoReleasePreparationTasks')) dependsOn project.lazoReleasePreparationTasks
     inputs.file(releaseArchive.flatMap { it.archiveFile })
     inputs.files(provider { shadedArchive.get().includedDependencies })
     inputs.dir(supplementalNotices)

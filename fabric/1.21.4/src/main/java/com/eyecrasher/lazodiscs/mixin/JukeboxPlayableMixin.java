@@ -38,7 +38,7 @@ public abstract class JukeboxPlayableMixin {
      * LazoDiscs, insert the item silently, show the LazoDisc title, and let Plasmo Voice play only
      * the custom URL audio.
      */
-    @Inject(method = "tryInsertIntoJukebox", at = @At("HEAD"), cancellable = true, require = 0)
+    @Inject(method = "tryInsertIntoJukebox", at = @At("HEAD"), cancellable = true, require = 1)
     private static void lazodiscs$tryInsertIntoJukebox(
             Level level,
             BlockPos pos,

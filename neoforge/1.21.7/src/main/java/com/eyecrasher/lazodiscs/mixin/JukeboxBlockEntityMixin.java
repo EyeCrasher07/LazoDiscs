@@ -13,58 +13,43 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(JukeboxBlockEntity.class)
 public abstract class JukeboxBlockEntityMixin implements LazoDiscJukeboxAccess {
-    @Shadow private ItemStack item;
-
-    @Shadow
-    public abstract void onSongChanged();
-
-    /**
-     * Minecraft 1.21.1 does not have setTheItemWithoutPlaying(). So we let vanilla update the
-     * jukebox normally, then JukeboxPlaybackManager immediately sends a RECORDS stop packet near
-     * this jukebox and starts the Plasmo Voice source. This removes the original disc sound without
-     * relying on a non-existent vanilla helper method.
-     */
-    @Inject(method = "setTheItem", at = @At("RETURN"), require = 0)
+    @Inject(method = "setTheItem", at = @At("RETURN"))
     private void lazodiscs$setTheItem(ItemStack stack, CallbackInfo ci) {
-        lazodiscs$changed(stack, "setTheItem");
+        JukeboxBlockEntity self = (JukeboxBlockEntity) (Object) this;
+        lazodiscs$changed(self.getTheItem(), "setTheItem");
     }
 
-    @Inject(method = "popOutTheItem", at = @At("HEAD"), require = 0)
+    @Inject(method = "popOutTheItem", at = @At("HEAD"))
     private void lazodiscs$popOutTheItem(CallbackInfo ci) {
         lazodiscs$stop("popOutTheItem");
     }
 
-    @Inject(method = "removeTheItem", at = @At("HEAD"), require = 0)
-    private void lazodiscs$removeTheItem(CallbackInfo ci) {
-        lazodiscs$stop("removeTheItem");
+    // ContainerSingleItem's inherited removal helpers delegate here.
+    // A no-op removal must not stop or rewind an already-playing custom disc.
+    @Inject(method = "splitTheItem", at = @At("RETURN"))
+    private void lazodiscs$splitTheItem(int count, CallbackInfoReturnable<ItemStack> cir) {
+        if (!cir.getReturnValue().isEmpty()) {
+            JukeboxBlockEntity self = (JukeboxBlockEntity) (Object) this;
+            lazodiscs$changed(self.getTheItem(), "splitTheItem");
+        }
     }
 
-    @Inject(method = "clearContent", at = @At("HEAD"), require = 0)
-    private void lazodiscs$clearContent(CallbackInfo ci) {
-        lazodiscs$stop("clearContent");
-    }
-
-    @Inject(method = "setRemoved", at = @At("HEAD"), require = 0)
-    private void lazodiscs$setRemoved(CallbackInfo ci) {
-        lazodiscs$stop("setRemoved");
-    }
-
-    @Inject(method = "loadAdditional", at = @At("RETURN"), require = 0)
-    private void lazodiscs$loadAdditional(ValueInput tag, CallbackInfo ci) {
+    @Inject(method = "loadAdditional", at = @At("RETURN"))
+    private void lazodiscs$loadAdditional(ValueInput input, CallbackInfo ci) {
         lazodiscs$resync("loadAdditional");
     }
 
-    @Inject(method = "onLoad", at = @At("RETURN"), require = 0)
-    private void lazodiscs$onLoad(CallbackInfo ci) {
-        lazodiscs$resync("onLoad");
+    @Inject(method = "preRemoveSideEffects", at = @At("HEAD"))
+    private void lazodiscs$preRemoveSideEffects(BlockPos pos, BlockState state, CallbackInfo ci) {
+        lazodiscs$stop("preRemoveSideEffects");
     }
 
     private void lazodiscs$resync(String reason) {
@@ -101,9 +86,9 @@ public abstract class JukeboxBlockEntityMixin implements LazoDiscJukeboxAccess {
         Level level = self.getLevel();
         BlockPos pos = self.getBlockPos();
 
-        this.item = stack.copyWithCount(1);
-
         if (level != null) {
+            // This version has a vanilla silent setter; do not invoke startPlaying().
+            self.setSongItemWithoutPlaying(stack.copyWithCount(1));
             BlockState state = level.getBlockState(pos);
             if (state.getBlock() instanceof JukeboxBlock
                     && !state.getValue(JukeboxBlock.HAS_RECORD)) {
@@ -111,7 +96,6 @@ public abstract class JukeboxBlockEntityMixin implements LazoDiscJukeboxAccess {
             }
 
             self.setChanged();
-            this.onSongChanged();
         }
     }
 }

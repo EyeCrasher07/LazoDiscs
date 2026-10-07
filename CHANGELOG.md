@@ -1,12 +1,25 @@
-# Changelog
+# LazoDiscs Changelog
 
-All notable changes to this project will be documented in this file.
+## [1.0.6] - 2026-10-07
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+### Added
 
+- Added Forge support.
+- Added builds for more Minecraft versions, starting at 1.16.5, following stable Plasmo Voice 2.1.17 support. There are 52 builds: 25 Fabric, 15 Forge and 12 NeoForge.
 
-## [1.0.5] - Unreleased
+### Fixed
+
+- Fixed jukebox handling when inserting and removing custom discs on supported 1.21.x versions.
+- Removed unnecessary music stops and restarts when an attempted disc removal leaves the disc in the jukebox.
+
+### Changed
+
+- Updated the mod icon to the new 256×256 image in mod menus and Plasmo Voice.
+- Release builds now follow the Minecraft versions supported by stable Plasmo Voice 2.1.17. Versions supported only by old or beta Plasmo Voice releases are not included.
+
+Requires Plasmo Voice. Fabric builds also require Fabric API.
+
+## [1.0.5] - 2026-10-05
 
 ### Fixed
 

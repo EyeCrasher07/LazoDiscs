@@ -1,0 +1,86 @@
+import java.util.zip.ZipFile
+
+// Compile with Java 17, then convert the complete shaded archive to the game's JVM.
+// No Java agent or separately installed compatibility mod is needed at runtime.
+def targetJava = project.hasProperty('lazoTargetJava') ? project.lazoTargetJava as int : 8
+jvmdg.downgradeTo = JavaVersion.toVersion(targetJava)
+jvmdg.multiReleaseOriginal = false
+
+def fabric = tasks.findByName('remapJar') != null
+def input = tasks.named('shadowJar')
+input.configure { archiveClassifier.set('java17') }
+
+tasks.named('downgradeJar') {
+    dependsOn input
+    inputFile.set(input.flatMap { it.archiveFile })
+    // Boombox's excluded compile-only Discs stubs still supply class hierarchy information.
+    classpath = sourceSets.main.compileClasspath + sourceSets.main.output.classesDirs
+    archiveClassifier.set("java${targetJava}-unshaded")
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.named('shadeDowngradedApi') {
+    dependsOn tasks.named('downgradeJar')
+    inputFile.set(tasks.named('downgradeJar').flatMap { it.archiveFile })
+    // Keep helpers private to this mod. Boombox references Discs' public API, not its helpers.
+    shadePath.set("com/eyecrasher/${base.archivesName.get().split('-')[0]}/shadow/jvmdg/")
+    archiveClassifier.set(fabric ? "java${targetJava}-shadow" : '')
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from(file('../../third-party-java8')) { into 'META-INF/third-party-java8' }
+}
+
+if (fabric) {
+    // Downgrade against the named compile classpath, then let Loom remap the result.
+    // Using a named classpath on an intermediary JAR can generate incorrect bridge methods.
+    tasks.named('remapJar') {
+        dependsOn tasks.named('shadeDowngradedApi')
+        inputFile.set(tasks.named('shadeDowngradedApi').flatMap { it.archiveFile })
+        archiveClassifier.set('')
+    }
+    ext.lazoReleaseArchive = 'remapJar'
+} else {
+    tasks.named('reobfShadowJar') { enabled = false }
+    reobf { shadeDowngradedApi {} }
+    ext.lazoReleaseArchive = 'shadeDowngradedApi'
+    ext.lazoReleasePreparationTasks = ['reobfShadeDowngradedApi']
+    tasks.named('assemble') { dependsOn 'reobfShadeDowngradedApi' }
+}
+tasks.named('assemble') { dependsOn tasks.named('shadeDowngradedApi') }
+
+def finalArchive = tasks.named(project.lazoReleaseArchive)
+def verifyLegacyJavaArchive = tasks.register('verifyLegacyJavaArchive') {
+    group = 'verification'
+    description = "Checks final Java ${targetJava} class files and embedded helper legal resources."
+    dependsOn finalArchive
+    if (project.hasProperty('lazoReleasePreparationTasks')) dependsOn project.lazoReleasePreparationTasks
+    inputs.file(finalArchive.flatMap { it.archiveFile })
+    inputs.dir(file('../../third-party-java8'))
+    doLast {
+        int classes = 0
+        new ZipFile(finalArchive.get().archiveFile.get().asFile).withCloseable { archive ->
+            archive.entries().each { entry ->
+                if (!entry.directory && entry.name.endsWith('.class')) {
+                    archive.getInputStream(entry).withCloseable { raw ->
+                        def bytes = new DataInputStream(raw)
+                        if (bytes.readInt() != (int) 0xCAFEBABE) throw new GradleException("Invalid class ${entry.name}")
+                        bytes.readUnsignedShort()
+                        int major = bytes.readUnsignedShort()
+                        if (major > targetJava + 44) throw new GradleException("Not Java ${targetJava}: ${entry.name} has class version ${major}")
+                        classes++
+                    }
+                }
+            }
+            fileTree(file('../../third-party-java8')).visit { entry ->
+                if (!entry.directory) {
+                    def bundled = archive.getEntry('META-INF/third-party-java8/' + entry.relativePath.pathString)
+                    if (bundled == null || !Arrays.equals(archive.getInputStream(bundled).withCloseable { it.readAllBytes() }, entry.file.bytes)) {
+                        throw new GradleException("Missing/incomplete JVM helper legal resource: ${entry.file.name}")
+                    }
+                }
+            }
+        }
+        if (classes == 0) throw new GradleException('No classes checked')
+        logger.lifecycle("Verified ${classes} Java-${targetJava}-compatible class headers and complete helper legal resources")
+    }
+}
+tasks.named('check') { dependsOn verifyLegacyJavaArchive }

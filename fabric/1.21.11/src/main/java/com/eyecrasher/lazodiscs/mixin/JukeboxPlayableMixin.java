@@ -33,7 +33,7 @@ import java.util.Optional;
 @Mixin(JukeboxPlayable.class)
 public abstract class JukeboxPlayableMixin {
 
-    @Inject(method = "tryInsertIntoJukebox", at = @At("HEAD"), cancellable = true, require = 0)
+    @Inject(method = "tryInsertIntoJukebox", at = @At("HEAD"), cancellable = true, require = 1)
     private static void lazodiscs$tryInsertIntoJukebox(
             Level level,
             BlockPos pos,
