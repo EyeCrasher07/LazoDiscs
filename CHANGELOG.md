@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- Store the selected playable track URL when burning a Spotify disc, keeping repeated playback stable instead of repeating Spotify searches. Spotify matching now rejects unrelated track titles even when their duration is close.
 - Fixed SoundCloud playback for AAC/fMP4 HLS streams, including shared on.soundcloud.com links, while retaining support for older audio formats.
 - Restored custom-disc playback in Sophisticated Backpacks on Fabric versions that use SophisticatedCore's SoundHandler API. Recorded discs play their custom track instead of the original Minecraft song.
 - Kept support for the earlier SophisticatedCore disc-handler API on Forge and NeoForge, including releases whose stop callback takes a server world.

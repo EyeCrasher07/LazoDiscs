@@ -221,7 +221,14 @@ public final class LavaPcmFeeder {
 
                     @Override
                     public void playlistLoaded(AudioPlaylist playlist) {
-                        if (playlist.getSelectedTrack() != null) {
+                        if (metadata != null) {
+                            AudioTrack selected = selectBestTrack(playlist.getTracks(), metadata);
+                            if (selected == null) {
+                                failure.set(new RuntimeException(LazoDiscsText.audioNoMatches()));
+                            } else {
+                                result.set(selected);
+                            }
+                        } else if (playlist.getSelectedTrack() != null) {
                             result.set(playlist.getSelectedTrack());
                         } else if (!playlist.getTracks().isEmpty()) {
                             result.set(selectBestTrack(playlist.getTracks(), metadata));
@@ -288,7 +295,7 @@ public final class LavaPcmFeeder {
         if (tracks.isEmpty()) return null;
         if (metadata == null) return tracks.get(0);
 
-        AudioTrack best = tracks.get(0);
+        AudioTrack best = null;
         int bestScore = Integer.MIN_VALUE;
         for (AudioTrack track : tracks) {
             int score = scoreTrack(track, metadata);
@@ -299,11 +306,14 @@ public final class LavaPcmFeeder {
                     info.title,
                     info.author,
                     info.length);
+            // Duration and artist hints must not select a completely different song.
+            if (!TrackMatchScorer.matchesTitle(info.title, metadata.title())) continue;
             if (score > bestScore) {
                 bestScore = score;
                 best = track;
             }
         }
+        if (best == null) return null;
         AudioTrackInfo info = best.getInfo();
         LazoDiscs.LOGGER.info(
                 "LazoDiscs selected Spotify candidate: '{}' by '{}' with score {}",

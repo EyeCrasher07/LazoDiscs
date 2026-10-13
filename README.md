@@ -26,7 +26,7 @@ Record music links onto Minecraft's music discs, then play the tracks in a jukeb
 
 By default, these commands require operator permissions (level 2). In singleplayer, enable cheats to use them with the default settings. Server owners can change permissions, default volume, hearing range, and allowed music sources in `config/lazodiscs/config.toml`. Players can also adjust the **Discs** volume in their Plasmo Voice settings.
 
-Use `search` for a song name and `burn` for a link. Spotify support is for individual tracks: the mod reads the track information and looks for matching audio on YouTube Music. Playback depends on a suitable recording being available. The server needs internet access to load linked music.
+Use `search` for a song name and `burn` for a link. Spotify support is for individual tracks: the mod reads the track information and looks for matching audio on YouTube Music. Burning stores the selected recording URL so later plays use the same track. Playback depends on a suitable recording being available. The server needs internet access to load linked music.
 
 ## Installation
 
@@ -82,7 +82,7 @@ LazoDiscs позволяет записать свою музыку на обы�
 
 По умолчанию команды доступны операторам с уровнем прав 2. В одиночной игре для их использования с настройками по умолчанию нужны включённые читы. Владелец сервера может изменить права, стандартную громкость, радиус слышимости и разрешённые источники музыки в `config/lazodiscs/config.toml`. Игроки также могут настроить громкость канала **Discs** в Plasmo Voice.
 
-Для названия песни используй `search`, а для ссылки — `burn`. Поддерживаются ссылки на отдельные треки Spotify: мод получает сведения о треке и ищет подходящее аудио на YouTube Music. Воспроизведение зависит от доступности подходящей записи. Для загрузки музыки серверу нужен доступ к интернету.
+Для названия песни используй `search`, а для ссылки — `burn`. Поддерживаются ссылки на отдельные треки Spotify: мод получает сведения о треке и ищет подходящее аудио на YouTube Music. При записи сохраняется ссылка на выбранное аудио, чтобы повторные запуски воспроизводили тот же трек. Воспроизведение зависит от доступности подходящей записи. Для загрузки музыки серверу нужен доступ к интернету.
 
 ### Установка
 

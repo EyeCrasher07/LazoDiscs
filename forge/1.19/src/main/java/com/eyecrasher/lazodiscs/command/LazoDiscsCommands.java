@@ -127,6 +127,8 @@ public final class LazoDiscsCommands {
                     try {
                         LavaPcmFeeder.ResolvedTrack resolved =
                                 LavaPcmFeeder.resolveTrack(url, titleHint);
+                        String playbackUrl =
+                                SpotifyTitleResolver.looksLikeSpotify(url) ? resolved.url() : url;
                         String title = chooseBurnTitle(url, titleHint, resolved);
                         server.execute(
                                 () ->
@@ -135,6 +137,7 @@ public final class LazoDiscsCommands {
                                                 originalStack,
                                                 originalSnapshot,
                                                 url,
+                                                playbackUrl,
                                                 title));
                     } catch (InterruptedException interrupted) {
                         Thread.currentThread().interrupt();
@@ -161,6 +164,7 @@ public final class LazoDiscsCommands {
             ServerPlayer player,
             ItemStack originalStack,
             ItemStack originalSnapshot,
+            String originalUrl,
             String url,
             String title) {
         if (player.isRemoved()) {
@@ -181,6 +185,7 @@ public final class LazoDiscsCommands {
             return;
         }
         try {
+            DiscDataUtil.validateUrl(originalUrl);
             url = DiscDataUtil.validateUrl(url);
         } catch (IllegalArgumentException e) {
             com.eyecrasher.lazodiscs.compat.MinecraftMessages.send(
