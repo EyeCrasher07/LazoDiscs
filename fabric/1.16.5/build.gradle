@@ -5,7 +5,7 @@ plugins {
     id 'xyz.wagyourtail.jvmdowngrader' version '2.0.1'
 }
 
-version = '1.0.6+1.16.5'
+version = '1.0.7+1.16.5'
 group = 'com.eyecrasher'
 
 base {
@@ -183,3 +183,6 @@ apply from: '../../gradle/legacy-java-compatibility.gradle'
 
 // Preserve third-party licenses/notices and verify the final release archive.
 apply from: '../../gradle/third-party-notices.gradle'
+
+// Exclude deprecated YouTube authentication and check the final archive.
+apply from: '../../gradle/audio-sources.gradle'

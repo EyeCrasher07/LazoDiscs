@@ -12,7 +12,16 @@ import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
+import com.sedmelluq.discord.lavaplayer.source.bandcamp.BandcampAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.beam.BeamAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.getyarn.GetyarnAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.http.HttpAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.local.LocalAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.nico.NicoAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.yamusic.YandexMusicAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -72,8 +81,18 @@ public final class LavaPcmFeeder {
         }
 
         try {
-            AudioSourceManagers.registerRemoteSources(manager);
-            AudioSourceManagers.registerLocalSource(manager);
+            // Register sources explicitly: LavaPlayer's helper also loads its legacy YouTube
+            // source, which is deliberately excluded from the distributed archive.
+            manager.registerSourceManager(new YandexMusicAudioSourceManager(true));
+            manager.registerSourceManager(SoundCloudAudioSourceManager.createDefault());
+            manager.registerSourceManager(new BandcampAudioSourceManager());
+            manager.registerSourceManager(new VimeoAudioSourceManager());
+            manager.registerSourceManager(new TwitchStreamAudioSourceManager());
+            manager.registerSourceManager(new BeamAudioSourceManager());
+            manager.registerSourceManager(new GetyarnAudioSourceManager());
+            manager.registerSourceManager(new NicoAudioSourceManager());
+            manager.registerSourceManager(new HttpAudioSourceManager());
+            manager.registerSourceManager(new LocalAudioSourceManager());
         } catch (Throwable t) {
             LazoDiscs.LOGGER.warn(
                     "LazoDiscs could not register default LavaPlayer source managers ({}): {}",

@@ -1,0 +1,40 @@
+import java.util.zip.ZipFile
+
+// youtube-source supplies YouTube playback; LavaPlayer's deprecated implementation
+// must not be shipped, including its third-party Google account authentication code.
+tasks.named('shadowJar') {
+    exclude 'com/sedmelluq/discord/lavaplayer/source/youtube/**'
+    exclude 'META-INF/versions/**/com/sedmelluq/discord/lavaplayer/source/youtube/**'
+}
+
+def releaseArchive = project.hasProperty('lazoReleaseArchive') ? tasks.named(project.lazoReleaseArchive) :
+        tasks.findByName('remapJar') != null ? tasks.named('remapJar') : tasks.named('shadowJar')
+def verifyAudioSources = tasks.register('verifyAudioSources') {
+    group = 'verification'
+    description = 'Checks that release archives contain only the supported YouTube implementation.'
+    dependsOn releaseArchive
+    if (project.hasProperty('lazoReleasePreparationTasks')) dependsOn project.lazoReleasePreparationTasks
+    inputs.file(releaseArchive.flatMap { it.archiveFile })
+    doLast {
+        new ZipFile(releaseArchive.get().archiveFile.get().asFile).withCloseable { archive ->
+            archive.entries().each { entry ->
+                if (entry.name.contains('com/sedmelluq/discord/lavaplayer/source/youtube/')) {
+                    throw new GradleException("Legacy YouTube implementation in release: ${entry.name}")
+                }
+                if (!entry.directory && entry.name.endsWith('.class')) {
+                    def text = archive.getInputStream(entry).withCloseable {
+                        new String(it.readAllBytes(), 'ISO-8859-1')
+                    }
+                    if (text.contains('youtube.minerea.su')) {
+                        throw new GradleException("Legacy third-party account authentication in ${entry.name}")
+                    }
+                }
+            }
+            if (archive.getEntry('dev/lavalink/youtube/YoutubeAudioSourceManager.class') == null) {
+                throw new GradleException('Supported youtube-source implementation is missing')
+            }
+        }
+        logger.lifecycle('Verified supported YouTube source and absence of legacy account authentication')
+    }
+}
+tasks.named('check') { dependsOn verifyAudioSources }

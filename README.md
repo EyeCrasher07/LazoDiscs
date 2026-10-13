@@ -39,7 +39,7 @@ LazoBoombox has different requirements: if you use that add-on, install LazoBoom
 
 ## Supported builds
 
-LazoDiscs **1.0.6** provides the following builds, based on the stable Plasmo Voice **2.1.17** compatibility list. Download the file for your exact Minecraft version and loader, with matching dependencies.
+LazoDiscs **1.0.7** provides the following builds, based on the stable Plasmo Voice **2.1.17** compatibility list. Download the file for your exact Minecraft version and loader, with matching dependencies.
 
 | Minecraft | Fabric | Forge | NeoForge |
 | --- | :---: | :---: | :---: |
@@ -95,7 +95,7 @@ LazoDiscs позволяет записать свою музыку на обы�
 
 ### Поддерживаемые сборки
 
-В LazoDiscs **1.0.6** доступны следующие сборки по списку совместимости стабильного Plasmo Voice **2.1.17**. Выбирай файл и зависимости для своей точной версии Minecraft и загрузчика.
+В LazoDiscs **1.0.7** доступны следующие сборки по списку совместимости стабильного Plasmo Voice **2.1.17**. Выбирай файл и зависимости для своей точной версии Minecraft и загрузчика.
 
 | Minecraft | Fabric | Forge | NeoForge |
 | --- | :---: | :---: | :---: |

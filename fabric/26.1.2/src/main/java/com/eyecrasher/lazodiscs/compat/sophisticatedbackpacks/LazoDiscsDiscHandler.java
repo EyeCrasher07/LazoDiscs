@@ -54,7 +54,10 @@ public final class LazoDiscsDiscHandler {
     private static volatile boolean reflectionProbed = false;
     private static volatile boolean sophisticatedCoreAvailable = false;
     private static volatile boolean registered = false;
+    private static volatile boolean soundHandlerApi = false;
     private static volatile Method discHandlerRegistry_getHandlers;
+    private static volatile Method serverStorageSoundHandler_registerSoundHandler;
+    private static volatile Method serverStorageSoundHandler_onSoundFinished;
     private static volatile Method serverStorageSoundHandler_putSoundInfo;
     private static volatile Method serverStorageSoundHandler_stopPlayingDisc;
     private static volatile Class<?> idiscHandlerClass;
@@ -67,32 +70,49 @@ public final class LazoDiscsDiscHandler {
         synchronized (LazoDiscsDiscHandler.class) {
             if (reflectionProbed) return;
             try {
-                Class<?> registryClass =
-                        Class.forName(
-                                "net.p3pp3rf1y.sophisticatedcore.upgrades.jukebox.DiscHandlerRegistry");
                 Class<?> soundHandlerClass =
                         Class.forName(
                                 "net.p3pp3rf1y.sophisticatedcore.upgrades.jukebox.ServerStorageSoundHandler");
-                idiscHandlerClass =
-                        Class.forName("net.p3pp3rf1y.sophisticatedcore.api.IDiscHandler");
-
-                discHandlerRegistry_getHandlers = registryClass.getMethod("getHandlers");
-
-                serverStorageSoundHandler_putSoundInfo =
-                        soundHandlerClass.getMethod(
-                                "putSoundInfo",
-                                ServerLevel.class,
-                                UUID.class,
-                                Runnable.class,
-                                Vec3.class,
-                                long.class);
-
                 serverStorageSoundHandler_stopPlayingDisc =
-                        soundHandlerClass.getMethod(
-                                "stopPlayingDisc", Level.class, Vec3.class, UUID.class);
+                        findLevelMethod(
+                                soundHandlerClass,
+                                "stopPlayingDisc",
+                                Level.class,
+                                Vec3.class,
+                                UUID.class);
 
-                worldStorageSoundInfosField =
-                        soundHandlerClass.getDeclaredField("worldStorageSoundInfos");
+                try {
+                    // The Fabric port replaced IDiscHandler with SoundHandler. Core manages
+                    // keep-alive and stop callbacks itself in this API.
+                    idiscHandlerClass =
+                            Class.forName(
+                                    "net.p3pp3rf1y.sophisticatedcore.upgrades.jukebox.SoundHandler");
+                    serverStorageSoundHandler_registerSoundHandler =
+                            soundHandlerClass.getMethod("registerSoundHandler", idiscHandlerClass);
+                    serverStorageSoundHandler_onSoundFinished =
+                            findLevelMethod(
+                                    soundHandlerClass, "onSoundFinished", Level.class, UUID.class);
+                    worldStorageSoundInfosField =
+                            soundHandlerClass.getDeclaredField("worldStorageSoundKeepAlive");
+                    soundHandlerApi = true;
+                } catch (ClassNotFoundException e) {
+                    Class<?> registryClass =
+                            Class.forName(
+                                    "net.p3pp3rf1y.sophisticatedcore.upgrades.jukebox.DiscHandlerRegistry");
+                    idiscHandlerClass =
+                            Class.forName("net.p3pp3rf1y.sophisticatedcore.api.IDiscHandler");
+                    discHandlerRegistry_getHandlers = registryClass.getMethod("getHandlers");
+                    serverStorageSoundHandler_putSoundInfo =
+                            soundHandlerClass.getMethod(
+                                    "putSoundInfo",
+                                    ServerLevel.class,
+                                    UUID.class,
+                                    Runnable.class,
+                                    Vec3.class,
+                                    long.class);
+                    worldStorageSoundInfosField =
+                            soundHandlerClass.getDeclaredField("worldStorageSoundInfos");
+                }
                 worldStorageSoundInfosField.setAccessible(true);
 
                 sophisticatedCoreAvailable = true;
@@ -108,6 +128,17 @@ public final class LazoDiscsDiscHandler {
             } finally {
                 reflectionProbed = true;
             }
+        }
+    }
+
+    // Older Core releases accept ServerLevel where newer releases accept Level.
+    private static Method findLevelMethod(Class<?> owner, String name, Class<?>... parameters)
+            throws NoSuchMethodException {
+        try {
+            return owner.getMethod(name, parameters);
+        } catch (NoSuchMethodException e) {
+            parameters[0] = ServerLevel.class;
+            return owner.getMethod(name, parameters);
         }
     }
 
@@ -130,8 +161,14 @@ public final class LazoDiscsDiscHandler {
                                 (proxyObj, method, args) ->
                                         dispatchMethod(proxyObj, method.getName(), args));
 
-                Object handlers = discHandlerRegistry_getHandlers.invoke(null);
-                if (handlers instanceof java.util.List<?> list) {
+                if (soundHandlerApi) {
+                    // Fabric tries sound handlers in reverse registration order.
+                    serverStorageSoundHandler_registerSoundHandler.invoke(null, proxy);
+                    registered = true;
+                    LazoDiscs.LOGGER.info(
+                            "Registered LazoDiscs SoundHandler with SophisticatedCore.");
+                } else if (discHandlerRegistry_getHandlers.invoke(null)
+                        instanceof java.util.List<?> list) {
                     @SuppressWarnings("unchecked")
                     java.util.List<Object> rawList = (java.util.List<Object>) list;
                     rawList.add(0, proxy);
@@ -151,6 +188,37 @@ public final class LazoDiscsDiscHandler {
     private static Object dispatchMethod(Object proxyObj, String methodName, Object[] args) {
         try {
             switch (methodName) {
+                case "play" -> {
+                    if (!(args[0] instanceof ServerLevel level)) return false;
+                    UUID storageUuid = (UUID) args[2];
+                    boolean block = args[1] instanceof BlockPos;
+                    ItemStack discStack = (ItemStack) args[block ? 3 : 4];
+                    if (!DiscDataUtil.hasCustomDisc(discStack)) return false;
+                    Runnable onFinished = () -> invokeSoundFinished(level, storageUuid);
+                    if (block) {
+                        playDiscBlock(
+                                level, (BlockPos) args[1], storageUuid, discStack, onFinished);
+                    } else {
+                        playDiscEntity(
+                                level,
+                                (Vec3) args[1],
+                                storageUuid,
+                                discStack,
+                                (int) args[3],
+                                onFinished);
+                    }
+                    // A custom recording must never fall through to the vanilla song.
+                    return true;
+                }
+                case "stop" -> {
+                    stopSource((UUID) args[2]);
+                    return null;
+                }
+                case "update" -> {
+                    ActiveLazoSource active = ACTIVE.get((UUID) args[0]);
+                    if (active != null) active.lastPosition = (Vec3) args[1];
+                    return null;
+                }
                 case "supports" -> {
                     ItemStack stack = (ItemStack) args[0];
                     return DiscDataUtil.hasCustomDisc(stack);
@@ -370,13 +438,30 @@ public final class LazoDiscsDiscHandler {
 
     private static void invokePutSoundInfo(
             ServerLevel level, UUID storageUuid, Runnable onFinished, Vec3 pos, long finishTime) {
-        if (!sophisticatedCoreAvailable) return;
+        if (!sophisticatedCoreAvailable || soundHandlerApi) return;
         try {
             serverStorageSoundHandler_putSoundInfo.invoke(
                     null, level, storageUuid, onFinished, pos, finishTime);
         } catch (Throwable t) {
             LazoDiscs.LOGGER.debug("putSoundInfo reflection call failed: {}", t.toString());
         }
+    }
+
+    private static void invokeSoundFinished(ServerLevel level, UUID storageUuid) {
+        try {
+            serverStorageSoundHandler_onSoundFinished.invoke(null, level, storageUuid);
+        } catch (Throwable t) {
+            LazoDiscs.LOGGER.warn("SophisticatedCore finish callback failed: {}", t.toString());
+        }
+    }
+
+    // Core's SoundHandler.stop callback already removes its keep-alive record.
+    // Only release our voice source here; calling Core.stopPlayingDisc would recurse.
+    private static void stopSource(UUID storageUuid) {
+        ActiveLazoSource active = ACTIVE.remove(storageUuid);
+        if (active == null) return;
+        PlayingVoiceSource source = active.sourceRef.getAndSet(null);
+        if (source != null) source.stop();
     }
 
     private static void invokeStopPlayingDisc(Level level, Vec3 pos, UUID storageUuid) {
@@ -449,7 +534,9 @@ public final class LazoDiscsDiscHandler {
                         t.toString());
             }
         }
-        invokeStopPlayingDisc(expected.level, expected.lastPosition, storageUuid);
+        if (!soundHandlerApi) {
+            invokeStopPlayingDisc(expected.level, expected.lastPosition, storageUuid);
+        }
         if (expected.onFinished != null) {
             try {
                 expected.onFinished.run();
@@ -628,7 +715,7 @@ public final class LazoDiscsDiscHandler {
         final int entityId;
         final CustomDiscData disc;
         final Runnable onFinished;
-        final Vec3 lastPosition;
+        volatile Vec3 lastPosition;
         final Vec3 initialPosition;
         final BlockPos blockPos;
         final java.util.concurrent.atomic.AtomicBoolean dynamicPosition;

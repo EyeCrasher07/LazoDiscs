@@ -11,7 +11,7 @@ import su.plo.voice.api.server.PlasmoVoiceServer;
 @Addon(
         id = "lazodiscs",
         name = "LazoDiscs",
-        version = "1.0.6+1.17.1",
+        version = "1.0.7+1.17.1",
         authors = {"EyeCrasher"})
 public final class LazoDiscsVoiceAddon implements AddonInitializer {
     @InjectPlasmoVoice private PlasmoVoiceServer voiceServer;

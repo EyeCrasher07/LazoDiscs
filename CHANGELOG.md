@@ -1,5 +1,20 @@
 # LazoDiscs Changelog
 
+## [1.0.7] - 2026-10-13
+
+### Fixed
+
+- Restored custom-disc playback in Sophisticated Backpacks on Fabric versions that use SophisticatedCore's SoundHandler API. Recorded discs play their custom track instead of the original Minecraft song.
+- Kept support for the earlier SophisticatedCore disc-handler API on Forge and NeoForge, including releases whose stop callback takes a server world.
+- Kept backpack playback cleanup and track-finished callbacks working when stopping, replacing or finishing a recording.
+
+### Changed
+
+- Removed LavaPlayer's deprecated YouTube implementation and its third-party Google account authentication code from release files. YouTube playback and search continue to use youtube-source.
+- Registered the remaining LavaPlayer sources explicitly, preserving SoundCloud and direct audio playback.
+
+The 52 Minecraft/loader builds and the public interfaces used by LazoBoombox are unchanged. Requires Plasmo Voice; Fabric builds also require Fabric API.
+
 ## [1.0.6] - 2026-10-07
 
 ### Added
