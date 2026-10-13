@@ -18,7 +18,6 @@ import com.sedmelluq.discord.lavaplayer.source.getyarn.GetyarnAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.http.HttpAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.local.LocalAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.nico.NicoAudioSourceManager;
-import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.yamusic.YandexMusicAudioSourceManager;
@@ -84,7 +83,7 @@ public final class LavaPcmFeeder {
             // Register sources explicitly: LavaPlayer's helper also loads its legacy YouTube
             // source, which is deliberately excluded from the distributed archive.
             manager.registerSourceManager(new YandexMusicAudioSourceManager(true));
-            manager.registerSourceManager(SoundCloudAudioSourceManager.createDefault());
+            manager.registerSourceManager(new SoundCloudAacSourceManager());
             manager.registerSourceManager(new BandcampAudioSourceManager());
             manager.registerSourceManager(new VimeoAudioSourceManager());
             manager.registerSourceManager(new TwitchStreamAudioSourceManager());

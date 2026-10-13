@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- Fixed SoundCloud playback for AAC/fMP4 HLS streams, including shared on.soundcloud.com links, while retaining support for older audio formats.
 - Restored custom-disc playback in Sophisticated Backpacks on Fabric versions that use SophisticatedCore's SoundHandler API. Recorded discs play their custom track instead of the original Minecraft song.
 - Kept support for the earlier SophisticatedCore disc-handler API on Forge and NeoForge, including releases whose stop callback takes a server world.
 - Kept backpack playback cleanup and track-finished callbacks working when stopping, replacing or finishing a recording.

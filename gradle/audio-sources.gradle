@@ -1,5 +1,13 @@
 import java.util.zip.ZipFile
 
+// Compile against the Apache client already privately shaded at runtime. File inputs
+// avoid overriding Minecraft's own dependency versions or adding its older transitives.
+dependencies {
+    compileOnly files(configurations.shadeRuntime.filter {
+        it.name.startsWith('httpclient-') || it.name.startsWith('httpcore-')
+    })
+}
+
 // youtube-source supplies YouTube playback; LavaPlayer's deprecated implementation
 // must not be shipped, including its third-party Google account authentication code.
 tasks.named('shadowJar') {
